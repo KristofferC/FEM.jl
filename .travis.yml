@@ -1,0 +1,12 @@
+language: julia
+julia:
+    - release
+    - nightly
+notifications:
+    email: false
+script:
+    - julia -e 'Pkg.init(); Pkg.clone(pwd())'
+    - julia -e 'Pkg.test("FEM", coverage=true)'
+
+after_success:
+- julia -e 'cd(Pkg.dir("FEM")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
