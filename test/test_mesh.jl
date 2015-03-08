@@ -1,0 +1,61 @@
+facts("FEM.Mesh") do
+
+mesh = Mesh()
+
+context("FEM.Mesh.Nodes") do
+
+node_1 = Node([0, 0], 1)
+node_2 = Node([1, 1], 2)
+node_3 = Node([1, 2], 3)
+node_4 = Node([0, 1], 4)
+addnode!(mesh, node_1)
+addnode!(mesh, node_2)
+addnode!(mesh, node_3)
+addnode!(mesh, node_4)
+
+@fact is(node_2, mesh.nodes[2]) => true
+@fact length(mesh.nodes) => 4
+
+end # context
+
+context("FEM.Mesh.Elements") do
+
+# Elements
+element_1 = LinTrig([1, 2, 3], 1)
+element_2 = LinTrig([1, 2, 4], 2)
+addelem!(mesh, element_1)
+addelem!(mesh, element_2)
+
+@fact length(mesh.elements) => 2
+@fact is(element_2, mesh.elements[2]) => true
+
+end # context
+
+context("FEM.Mesh.NodeSet") do
+
+# Sets
+bottom_set = NodeSet("y0", [1])
+top_set = NodeSet("x0", [2, 3])
+
+addnodeset!(mesh, bottom_set)
+addnodeset!(mesh, top_set)
+
+@fact length(mesh.node_sets) => 2
+@fact is(bottom_set, mesh.node_sets["y0"]) => true
+
+end # context
+
+context("FEM.Mesh.ElementSet") do
+
+# Element set
+element_set = ElementSet("all", [1, 2])
+addelemset!(mesh, element_set)
+
+@fact length(mesh.node_sets) => 2
+@fact is(element_set, mesh.element_sets["all"]) => true
+
+end # context
+
+end # facts
+
+

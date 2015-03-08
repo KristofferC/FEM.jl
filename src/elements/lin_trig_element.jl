@@ -1,35 +1,51 @@
-immutable LinTrigElement <: Element
-    vertices = Array{Int}
-    gps = Array{GaussPoint}
-    n_gp::Int
+immutable LinTrig <: Element
+    vertices::Vector{Int}
+    gps::Vector{GaussPoint}
     n_dofs::Int
-    N::Vector{Float64}
-    dNdx::Vector{Float64}
-    J::Matrix{Float64}
+    n::Int
+    interp::LinTrigInterp
 end
 
-function LinTrigElement(vertices)
-    n_gp = 1
+function LinTrig(vertices::Vector{Int}, n)
+
+    n_dofs = 6
+    gps = [GaussPoint([1/3; 1/3], 0.5)]
+    interp = LinTrigInterp()
+
+    LinTrig(vertices, gps, n_dofs, n, interp)
+end
+
+function doftypes(elem::LinTrig, vertex::Int)
+    return [Du, Dv]
+end
 
 
+function Bmatrix(elem::LinTrig, gp::GaussPoint, nodes::Vector{Node})
+    dNdx = dNdxmatrix(elem.interp, gp.local_coords, elem.vertices, nodes)
+    B = zeros(4, 6)
 
-Bmatrix(elem::LinTrig, gp::GaussPoint, nodes):
-    dNdx = eval_dNdx(gp, elem.vertices, nodes)
+    B[1, 1] = dNdx[1, 1]
+    B[1, 3] = dNdx[2, 1]
+    B[1, 5] = dNdx[3, 1]
 
-    B[0, 0] = dNdx[0, 0]
-    B[0, 2] = dNdx[1, 0]
-    B[0, 4] = dNdx[2, 0]
+    B[2, 2] = dNdx[1, 2]
+    B[2, 4] = dNdx[2, 2]
+    B[2, 6] = dNdx[3, 2]
 
-    B[1, 1] = dNdx[0, 1]
-    B[1, 3] = dNdx[1, 1]
-    B[1, 5] = dNdx[2, 1]
-
-    B[3, 0] = dNdx[0, 1]
-    B[3, 1] = dNdx[0, 0]
-    B[3, 2] = dNdx[1, 1]
-    B[3, 3] = dNdx[1, 0]
-    B[3, 4] = dNdx[2, 1]
-    B[3, 5] = dNdx[2, 0]
+    B[4, 1] = dNdx[1, 2]
+    B[4, 2] = dNdx[1, 1]
+    B[4, 3] = dNdx[2, 2]
+    B[4, 4] = dNdx[2, 1]
+    B[4, 5] = dNdx[3, 2]
+    B[4, 6] = dNdx[3, 1]
 
     return B
+end
+
+
+function weight(elem::LinTrig, gp::GaussPoint, nodes::Vector{Node})
+    dN = dNmatrix(elem.interp, gp.local_coords)
+    J = Jmatrix(elem.interp, gp.local_coords, elem.vertices, nodes, dN)
+    return det(J) * gp.weight
+end
 

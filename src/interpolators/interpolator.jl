@@ -1,3 +1,3 @@
 abstract Interpolator
 
-include("lin_trig_interpolator.jl")
+include("lin_trig_interp.jl")
