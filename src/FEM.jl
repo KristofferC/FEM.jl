@@ -1,6 +1,9 @@
 module FEM
 
 using Compat
+#using ImmutableArrays
+using PyCall
+@pyimport vtk
 
 macro lintpragma(s) end
 
@@ -17,7 +20,7 @@ include("interpolators/interpolator.jl")
 include("elements/element.jl")
 include("mesh.jl")
 include("fe_problem.jl")
-
+include("vtkexport.jl")
 
 
 end

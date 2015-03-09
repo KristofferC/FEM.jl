@@ -34,7 +34,6 @@ mat = LinearIsotropic(250e9, 0.3)
 section = Section(mat)
 addelemset!(section, mesh.element_sets["all"])
 
-
 fp = FEProblem(mesh, bcs, loads, [section])
 
 context("FEM.FEProblem.") do
@@ -42,29 +41,16 @@ context("FEM.FEProblem.") do
 
     load = extload(fp)
 
-
-
     int_f = assemble_intf(fp)
-    println(load)
-    println(int_f)
     K = assembleK(fp)
     du = K \ (load - int_f)
-    println(du1)
 
     updatedofs!(fp, du)
 
+    # Verify force balance
     load = extload(fp)
     int_f = assemble_intf(fp)
-
-    du2 = K \ (load - int_f)
-
-    u = du + du2
-    norm()
-
-    #@fact norm(u - [-2.21276596e-06, 1.30553191e-05, 1.54893617e-06, 1.15063830e-05]) => roughly(0.0, 10.0^(-13))
-
-
-
+    @fact norm(load - int_f) / norm(load) => roughly(0.0, 10.0^(-10))
 
 end # context
 

@@ -1,3 +1,6 @@
+#typealias Vertex3 Vector3{Float64}
+#typealias Vertex2 Vector2{Float64}
+
 immutable GaussPoint
     local_coords::Vector{Float64}
     weight::Float64
