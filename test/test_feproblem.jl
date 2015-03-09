@@ -1,6 +1,9 @@
 import FEM.createdofs
 import FEM.extload
 import FEM.assembleK
+import FEM.intf
+import FEM.assemble_intf
+import FEM.updatedofs!
 
 facts("FEM.FEProblem") do
 
@@ -19,25 +22,46 @@ addnodeset!(mesh, bottom_set)
 addnodeset!(mesh, top_set)
 
 element_set = ElementSet("all", [1, 2])
+
 addelemset!(mesh, element_set)
 
-bcs =  [DirichletBC(0.1, [Du, Dv], mesh.node_sets["x0"])]
-loads =  [PointLoad(10e5, [Dv], mesh.node_sets["y0"])]
+bcs =  [DirichletBC(0.1, [Du(), Dv()], mesh.node_sets["x0"])]
+loads =  [PointLoad(10e5, [Dv()], mesh.node_sets["y0"])]
 
-fp = FEProblem(mesh, bcs, loads)
+
+# Element set
+mat = LinearIsotropic(250e9, 0.3)
+section = Section(mat)
+addelemset!(section, mesh.element_sets["all"])
+
+
+fp = FEProblem(mesh, bcs, loads, [section])
 
 context("FEM.FEProblem.") do
     createdofs(fp) #TODO: Test this properly
 
-    f = extload(fp)
+    load = extload(fp)
 
+
+
+    int_f = assemble_intf(fp)
+    println(load)
+    println(int_f)
     K = assembleK(fp)
+    du = K \ (load - int_f)
+    println(du1)
 
-    println(K \ f)
+    updatedofs!(fp, du)
 
+    load = extload(fp)
+    int_f = assemble_intf(fp)
 
+    du2 = K \ (load - int_f)
 
+    u = du + du2
+    norm()
 
+    #@fact norm(u - [-2.21276596e-06, 1.30553191e-05, 1.54893617e-06, 1.15063830e-05]) => roughly(0.0, 10.0^(-13))
 
 
 

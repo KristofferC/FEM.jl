@@ -4,7 +4,11 @@ immutable GaussPoint
 end
 
 
-@enum DofType Du Dv Dw
+abstract DofType
+
+type Du <: DofType end
+type Dv <: DofType end
+type Dw <: DofType end
 
 type Dof
     eq_n::Int
@@ -27,6 +31,8 @@ end
 
 
 Node(c::Vector{Int}, n::Int) = Node(convert(Vector{Float64}, c), n::Int)
+
+
 
 
 immutable NodeSet

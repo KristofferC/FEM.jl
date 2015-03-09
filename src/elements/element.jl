@@ -11,9 +11,38 @@ function stiffness(elem::Element, nodes::Vector{Node}, material::Material)
         dV = weight(elem, gp, nodes)
         Ke += Be' * De * Be * dV
     end
+
     return Ke
 end
 
-#function strain(elem::Element, gp::GaussPoint, nodes::Vector{Node})
-#    B = Bmatrix(elem, gp, nodes)'
-#end
+function get_field(elem::Element, nodes::Vector{Node})
+    u = zeros(elem.n_dofs)
+    i = 1
+    for vert in elem.vertices
+        for dof in nodes[vert].dofs
+            u[i] = dof.value
+            i += 1
+        end
+    end
+    return u
+end
+
+
+function intf(elem::Element, nodes::Vector{Node}, mat::Material)
+    f_int = zeros(elem.n_dofs)
+    u = get_field(elem, nodes)
+    for gp in elem.gps
+        B = Bmatrix(elem, gp, nodes)
+        ɛ = B * u
+        σ = stress(mat, ɛ, gp)
+        dV = weight(elem, gp, nodes)
+        f_int += B' * σ * dV
+    end
+    return f_int
+end
+
+
+function strain(elem::Element, gp::GaussPoint, nodes::Vector{Node}, u::Vector{Float64})
+    B = Bmatrix(elem, gp, nodes)
+    return B * u
+end

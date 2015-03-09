@@ -34,3 +34,18 @@ end
 
 
 
+immutable Section
+    material::Material
+    elements::Set{Int} # The elements in the section
+end
+
+function Section(mat::Material)
+    elements = Set(Int[])
+    Section(mat, elements)
+end
+
+function addelemset!(section::Section, elemset::ElementSet)
+    for i in elemset.element_ids
+        push!(section.elements, i)
+    end
+end

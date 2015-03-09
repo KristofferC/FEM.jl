@@ -8,7 +8,7 @@ export Node, NodeSet, ElementSet, GaussPoint, DirichletBC, PointLoad, Du, Dv, Dw
 export Element, LinTrig
 export Interpolator, LinTrigInterp
 export Material, LinearIsotropic
-export Mesh, addnode!, addelem!, addelemset!, addnodeset!, addnodes!
+export Mesh, addnode!, addelem!, addelemset!, addnodeset!, addnodes!, Section
 export FEProblem
 
 include("core.jl")

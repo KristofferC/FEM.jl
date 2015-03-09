@@ -26,7 +26,7 @@ function stiffness(mat::LinearIsotropic, gp::GaussPoint)
     return k
 end
 
-function stress(mat::LinearIsotropic, ɛ::Matrix{Float64}, gp::GaussPoint)
+function stress(mat::LinearIsotropic, ɛ::Vector{Float64}, gp::GaussPoint)
     D = stiffness(mat, gp)
     σ = D * ɛ
     return σ

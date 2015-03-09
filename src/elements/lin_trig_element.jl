@@ -16,7 +16,7 @@ function LinTrig(vertices::Vector{Int}, n)
 end
 
 function doftypes(elem::LinTrig, vertex::Int)
-    return [Du, Dv]
+    return [Du(), Dv()]
 end
 
 
