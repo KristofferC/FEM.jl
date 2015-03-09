@@ -18,14 +18,12 @@ function solve(solver::NRSolver, fp::FEProblem)
         end
 
         int_f = assemble_intf(fp)
-
         force_unbalance = load - int_f
-
         residual = norm(force_unbalance) / norm(load)
 
-        println("\t\tIteration $iteratopm, relative residual $residual")
+        println("\t\tIteration $iteration, relative residual $residual")
 
-        if residual < solver.tol:
+        if residual < solver.tol
             println("Converged!")
             break
         end
@@ -34,6 +32,5 @@ function solve(solver::NRSolver, fp::FEProblem)
         du = K \ force_unbalance
 
         updatedofs!(fp, du)
-
-        iteration += 1
+    end
 end
