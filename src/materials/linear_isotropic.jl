@@ -31,6 +31,3 @@ function stress(mat::LinearIsotropic, ɛ::Vector{Float64}, gp::GaussPoint)
     σ = D * ɛ
     return σ
 end
-
-
-

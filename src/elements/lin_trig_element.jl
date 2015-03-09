@@ -43,9 +43,3 @@ function Bmatrix(elem::LinTrig, gp::GaussPoint, nodes::Vector{Node})
 end
 
 
-function weight(elem::LinTrig, gp::GaussPoint, nodes::Vector{Node})
-    dN = dNmatrix(elem.interp, gp.local_coords)
-    J = Jmatrix(elem.interp, gp.local_coords, elem.vertices, nodes, dN)
-    return det(J) * gp.weight
-end
-

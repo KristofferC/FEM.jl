@@ -85,6 +85,7 @@ function extload(fp::FEProblem)
     return f
 end
 
+
 function assembleK(fp::FEProblem)
     dof_rows = Array(Int, 0)
     dof_cols = Array(Int, 0)
@@ -116,6 +117,7 @@ function assembleK(fp::FEProblem)
     K = Base.sparse(dof_rows, dof_cols, k_values, fp.n_eqs, fp.n_eqs)
     return K
 end
+
 
 function assemble_intf(fp::FEProblem)
     int_forces = intf(fp)
