@@ -15,10 +15,10 @@ type Dw <: DofType end
 
 type Dof
     eq_n::Int
-    dof_id::Int # TODO: rename dof_id to id
+    id::Int
     active::Bool
     value::Float64
-    dof_type::DofType
+    dof_type::DofType # Not here
 end
 
 
