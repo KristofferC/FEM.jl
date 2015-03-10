@@ -14,7 +14,6 @@ function create_vtk_object(mesh::Mesh)
     for element in mesh.elements
         elem_vtk = pycall(vtk.vtkTriangle, PyAny)
         for (i, vertex) in enumerate(element.vertices)
-            println(vertex)
             ids = elem_vtk[:GetPointIds]()
             ids[:SetId](i-1, vertex - 1)
         end
