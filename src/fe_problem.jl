@@ -161,5 +161,3 @@ function updatedofs!(fp::FEProblem, du::Vector{Float64})
     end
 end
 
-#function update_dofs(fp::FEProblem, du)
-

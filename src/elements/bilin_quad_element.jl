@@ -3,7 +3,7 @@ immutable BilinQuad <: Element
     gps::Vector{GaussPoint}
     n_dofs::Int
     n::Int
-    interp::LinTrigInterp
+    interp::BilinQuadInterp
 end
 
 
@@ -24,12 +24,12 @@ function BilinQuad(vertices::Vector{Int}, n)
 end
 
 
-function doftypes(elem::LinTrig, vertex::Int)
+function doftypes(elem::BilinQuad, vertex::Int)
     return [Du(), Dv()]
 end
 
 
-function Bmatrix(elem::LinTrig, gp::GaussPoint, nodes::Vector{Node})
+function Bmatrix(elem::BilinQuad, gp::GaussPoint, nodes::Vector{Node})
     dNdx = dNdxmatrix(elem.interp, gp.local_coords, elem.vertices, nodes)
     B = zeros(4, 8)
 

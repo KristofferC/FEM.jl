@@ -25,6 +25,7 @@ function dNmatrix(interp::BilinQuadInterp, loc_coords::Vector{Float64})
           [-0.25 * (1.0 + η)     0.25 * (1.0 - ξ)];
           [-0.25 * (1.0 - η)    -0.25 * (1.0 - ξ)];
           [ 0.25 * (1.0 - η)    -0.25 * (1.0 + ξ)]]
+
     return dN
 end
 

@@ -20,9 +20,11 @@ function Jmatrix(interp::Interpolator, local_coords::Vector{Float64},
 
     J = zeros(2, 2)
 
+
     for row in 1:size(dN, 1)
         x = nodes[vertices[row]].coordinates[1]
         y = nodes[vertices[row]].coordinates[2]
+
 
         J[1, 1] += dN[row, 1] * x
         J[1, 2] += dN[row, 1] * y
