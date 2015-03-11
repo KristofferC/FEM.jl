@@ -7,7 +7,7 @@ using PyCall
 
 macro lintpragma(s) end
 
-export Node, NodeSet, ElementSet, GaussPoint, DirichletBC, PointLoad, Du, Dv, Dw, Dof
+export Node, NodeSet, ElementSet, GaussPoint, DirichletBC, NodeLoad, Du, Dv, Dw, Dof
 export Element, LinTrig
 export Interpolator, LinTrigInterp
 export Material, LinearIsotropic

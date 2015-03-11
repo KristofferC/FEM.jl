@@ -3,7 +3,7 @@ import FEM.doftypes
 type FEProblem
     mesh::Mesh
     bcs::Vector{DirichletBC}
-    loads::Vector{PointLoad}
+    loads::Vector{NodeLoad}
     dofs::Vector{Dof}
     sections::Vector{Section}
     node_doftypes::Dict{Int, Vector{DofType}}
@@ -13,7 +13,7 @@ type FEProblem
 end
 
 function FEProblem(mesh::Mesh=Mesh(), bcs::Vector{DirichletBC}=Array(DirichletBC, 0),
-                    loads::Vector{PointLoad}=Array(PointLoad, 0), sections=Array(Section, 0))
+                    loads::Vector{NodeLoad}=Array(NodeLoad, 0), sections=Array(Section, 0))
     node_doftype_bc = Dict{Int, Vector{DofType}}()
     node_doftypes = Dict{Int, Vector{DofType}}()
     FEProblem(mesh, bcs, loads, Array(Dof, 0), sections, node_doftypes, node_doftype_bc, 0, 0)
