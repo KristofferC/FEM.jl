@@ -1,5 +1,7 @@
-#typealias Vertex3 Vector3{Float64}
-#typealias Vertex2 Vector2{Float64}
+#typealias Vec3 Vector3{Float64}
+#typealias Vec2 Vector2{Float64}
+#typealias Mat2 Matrix2x2{Float64}
+#typealias Mat3 Matrix3x3{Float64}
 
 immutable GaussPoint
     local_coords::Vector{Float64}
@@ -15,10 +17,10 @@ type Dw <: DofType end
 
 type Dof
     eq_n::Int
-    dof_id::Int # TODO: rename dof_id to id
+    id::Int
     active::Bool
     value::Float64
-    dof_type::DofType
+    dof_type::DofType # Not here
 end
 
 
@@ -32,10 +34,7 @@ function Node(c::Vector{Float64}, n::Int)
     Node(c, n, Array(Dof, 0))
 end
 
-
 Node(c::Vector{Int}, n::Int) = Node(convert(Vector{Float64}, c), n::Int)
-
-
 
 
 immutable NodeSet
@@ -48,6 +47,7 @@ immutable ElementSet
     element_ids::Vector{Int}
 end
 
+# TODO: Add more sets (edge set, surface set etc)
 
 immutable DirichletBC
     value::Float64
@@ -55,13 +55,10 @@ immutable DirichletBC
     node_set::NodeSet
 end
 
-
 immutable PointLoad
     value::Float64
     dof_types::Vector{DofType}
     node_set::NodeSet
 end
 
-
-
-
+# TODO Add more loads.

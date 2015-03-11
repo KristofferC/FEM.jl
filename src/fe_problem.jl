@@ -49,19 +49,19 @@ function createdofs(fp::FEProblem)
     # Create the dofs
     eq_n = 0
     pres_n = 0
-    dof_id = 0
+    id = 0
     dofs = Array(Dof, 0)
     for node in fp.mesh.nodes
         for doftype in fp.node_doftypes[node.n]
             if haskey(fp.node_doftype_bc, (node.n, doftype))
                 bc = fp.node_doftype_bc[(node.n, doftype)]
                 pres_n += 1
-                dof_id += 1
-                push!(node.dofs, Dof(pres_n, dof_id, false, bc.value, doftype))
+                id += 1
+                push!(node.dofs, Dof(pres_n, id, false, bc.value, doftype))
             else
                 eq_n += 1
-                dof_id += 1
-                push!(node.dofs, Dof(eq_n, dof_id, true, 0.0, doftype))
+                id += 1
+                push!(node.dofs, Dof(eq_n, id, true, 0.0, doftype))
             end
         end
     end
@@ -84,6 +84,7 @@ function extload(fp::FEProblem)
     end
     return f
 end
+
 
 function assembleK(fp::FEProblem)
     dof_rows = Array(Int, 0)
@@ -117,13 +118,14 @@ function assembleK(fp::FEProblem)
     return K
 end
 
+
 function assemble_intf(fp::FEProblem)
     int_forces = intf(fp)
     int_forces_assem = zeros(fp.n_eqs)
     for node in fp.mesh.nodes
         for dof in node.dofs
             if dof.active
-                int_forces_assem[dof.eq_n] += int_forces[dof.dof_id]
+                int_forces_assem[dof.eq_n] += int_forces[dof.id]
             end
         end
     end
@@ -140,7 +142,7 @@ function intf(fp::FEProblem)
             i = 1
             for vertex in element.vertices
                 for dof in fp.mesh.nodes[vertex].dofs
-                    fint[dof.dof_id] += finte[i]
+                    fint[dof.id] += finte[i]
                     i+=1
                 end
             end
@@ -158,6 +160,4 @@ function updatedofs!(fp::FEProblem, du::Vector{Float64})
         end
     end
 end
-
-#function update_dofs(fp::FEProblem, du)
 

@@ -1,4 +1,8 @@
 function create_vtk_object(mesh::Mesh)
+
+    element_vtk_table = Dict{Element, Any}
+    element_vtk_table[LinTrig]
+
     n_nodes = length(mesh.nodes)
 
     # Add points to vtkPoints
@@ -14,7 +18,6 @@ function create_vtk_object(mesh::Mesh)
     for element in mesh.elements
         elem_vtk = pycall(vtk.vtkTriangle, PyAny)
         for (i, vertex) in enumerate(element.vertices)
-            println(vertex)
             ids = elem_vtk[:GetPointIds]()
             ids[:SetId](i-1, vertex - 1)
         end
