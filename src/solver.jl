@@ -21,7 +21,7 @@ function solve(solver::NRSolver, fp::FEProblem)
         force_unbalance = load - int_f
         residual = norm(force_unbalance) / norm(load)
 
-        println("\t\tIteration $iteration, relative residual $residual")
+        @printf("\t\tIteration %d, relative residual %e\n", iteration, residual)
 
         if residual < solver.tol
             println("Converged!")

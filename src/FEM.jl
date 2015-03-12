@@ -7,7 +7,7 @@ using Compat
 
 macro lintpragma(s) end
 
-
+export MatPool, VecPool
 export Node, NodeSet, gennodeset, ElementSet, GaussPoint, DirichletBC, NodeLoad, Du, Dv, Dw, Dof
 export Element, LinTrig, BilinQuad
 export Interpolator, LinTrigInterp

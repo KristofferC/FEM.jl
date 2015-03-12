@@ -3,6 +3,9 @@
 #typealias Mat2 Matrix2x2{Float64}
 #typealias Mat3 Matrix3x3{Float64}
 
+typealias MatPool Dict{(Int, Int, ASCIIString), Array{Float64, 2}}
+typealias VecPool Dict{(Int, ASCIIString), Array{Float64, 1}}
+
 immutable GaussPoint
     local_coords::Vector{Float64}
     weight::Float64
@@ -92,3 +95,13 @@ immutable EdgeLoad
 end
 
 # TODO Add more loads.
+
+function getmat(rows::Int, cols::Int, name::ASCIIString,
+                matpool::MatPool)
+    get!(() -> Array(Float64, rows, cols), matpool, (rows, cols, name))
+end
+
+function getvec(rows::Int, name::ASCIIString,
+                vecpool::VecPool)
+    get!(() -> Array(Float64, rows), vecpool, (rows, name))
+end
