@@ -20,13 +20,9 @@ function doftypes(elem::LinTrig, vertex::Int)
 end
 
 
-function Bmatrix(elem::LinTrig, gp::GaussPoint, nodes::Vector{Node},
-                 mp::MatPool, vp::VecPool)
-
-    dNdx = dNdxmatrix(elem.interp, gp.local_coords, elem.vertices, nodes,
-                      mp, vp)
-
-    B = getmat(4, 6, "B", mp)
+function Bmatrix(elem::LinTrig, gp::GaussPoint, nodes::Vector{Node})
+    dNdx = dNdxmatrix(elem.interp, gp.local_coords, elem.vertices, nodes)
+    B = zeros(4, 6)
 
     B[1, 1] = dNdx[1, 1]
     B[1, 3] = dNdx[2, 1]

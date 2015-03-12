@@ -10,19 +10,13 @@ type FEProblem
     node_doftype_bc::Dict{(Int, DofType), DirichletBC}
     n_eqs::Int
     n_fixed::Int
-    matpool::MatPool
-    vecpool::VecPool
 end
 
 function FEProblem(mesh::Mesh=Mesh(), bcs::Vector{DirichletBC}=Array(DirichletBC, 0),
                     loads::Vector{NodeLoad}=Array(NodeLoad, 0), sections=Array(Section, 0))
     node_doftype_bc = Dict{Int, Vector{DofType}}()
     node_doftypes = Dict{Int, Vector{DofType}}()
-    matpool = MatPool()
-    vecpool= VecPool()
-
-    FEProblem(mesh, bcs, loads, Array(Dof, 0), sections, node_doftypes,
-              node_doftype_bc, 0, 0, matpool, vecpool)
+    FEProblem(mesh, bcs, loads, Array(Dof, 0), sections, node_doftypes, node_doftype_bc, 0, 0)
 end
 
 
@@ -100,7 +94,7 @@ function assembleK(fp::FEProblem)
         mat = section.material
         for element_id in section.elements
             element = fp.mesh.elements[element_id]
-            Ke = stiffness(element, fp.mesh.nodes, mat, fp.matpool, fp.vecpool)
+            Ke = stiffness(element, fp.mesh.nodes, mat)
             dof1_n = 0
             for vertex1 in element.vertices
                 for (i, dof1) in enumerate(fp.mesh.nodes[vertex1].dofs)
@@ -144,7 +138,7 @@ function intf(fp::FEProblem)
         mat = section.material
         for element_id in section.elements
             element = fp.mesh.elements[element_id]
-            finte = intf(element, fp.mesh.nodes, mat, fp.matpool, fp.vecpool)
+            finte = intf(element, fp.mesh.nodes, mat)
             i = 1
             for vertex in element.vertices
                 for dof in fp.mesh.nodes[vertex].dofs

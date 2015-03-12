@@ -11,11 +11,11 @@ function LinearIsotropic(E, ν)
     LinearIsotropic(E, ν, G)
 end
 
-function stiffness(mat::LinearIsotropic, gp::GaussPoint, mp::MatPool, vp::VecPool)
+function stiffness(mat::LinearIsotropic, gp::GaussPoint)
     ν = mat.ν
     f = mat.E / ((1.0 + ν) * (1.0 - 2.0 * ν))
 
-    k = getmat(4, 4, "k", mp)
+    k = zeros(4, 4)
 
     k[1, 1] = k[2, 2] = k[3, 3] = f * (1.0 - ν)
     k[4, 4]  = mat.G
@@ -26,12 +26,8 @@ function stiffness(mat::LinearIsotropic, gp::GaussPoint, mp::MatPool, vp::VecPoo
     return k
 end
 
-function stress(mat::LinearIsotropic, ɛ::Vector{Float64}, gp::GaussPoint,
-                mp::MatPool, vp::VecPool)
-    D = stiffness(mat, gp, mp, vp)
-    σ = getvec(4, "s", vp)
-    #println(size(σ))
-    #println(size(D*ɛ))
-    #A_mul_B!(D, ɛ, σ)
-    return D*ɛ
+function stress(mat::LinearIsotropic, ɛ::Vector{Float64}, gp::GaussPoint)
+    D = stiffness(mat, gp)
+    σ = D * ɛ
+    return σ
 end

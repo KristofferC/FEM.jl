@@ -14,8 +14,8 @@ function meshquad(nx::Int, ny::Int, corners::Matrix{Float64})
     end
 
     # Avoids a lot of -1 writing:
-    #nx -= 1
-    #ny -= 1
+    nx -= 1
+    ny -= 1
 
     mesh = Mesh()
 
