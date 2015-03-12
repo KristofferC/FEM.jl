@@ -41,5 +41,3 @@ function Bmatrix(elem::LinTrig, gp::GaussPoint, nodes::Vector{Node})
 
     return B
 end
-
-

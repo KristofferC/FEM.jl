@@ -42,12 +42,36 @@ immutable NodeSet
     node_ids::Vector{Int}
 end
 
+function gennodeset(f::Function, name::ASCIIString, nodes::Vector{Node})
+    node_ids = Int[]
+    for node in nodes
+        if f(node.coordinates)
+            push!(node_ids, node.n)
+        end
+    end
+    return NodeSet(name, node_ids)
+end
+
 immutable ElementSet
     name::String
     element_ids::Vector{Int}
 end
 
-# TODO: Add more sets (edge set, surface set etc)
+immutable EdgeSet
+    name::String
+    # (Element_id, edge_id) tuple
+    edges::Vector{(Int, Int)}
+end
+
+immutable SurfaceSet
+    name::String
+    # (Element_id, surface_id) tuple
+    surfaces::Vector{(Int, Int)}
+end
+
+
+# TODO: Add more sets
+# Only constant loads right now
 
 immutable DirichletBC
     value::Float64
@@ -55,10 +79,16 @@ immutable DirichletBC
     node_set::NodeSet
 end
 
-immutable PointLoad
+immutable NodeLoad
     value::Float64
     dof_types::Vector{DofType}
     node_set::NodeSet
+end
+
+immutable EdgeLoad
+    value::Float64
+    dof_types::Vector{DofType}
+    edge_set::EdgeSet
 end
 
 # TODO Add more loads.

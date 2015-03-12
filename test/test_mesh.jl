@@ -43,6 +43,10 @@ addnodeset!(mesh, top_set)
 @fact length(mesh.node_sets) => 2
 @fact is(bottom_set, mesh.node_sets["y0"]) => true
 
+node_s = gennodeset(x->x[1] > 0.5, "test", mesh.nodes)
+@fact node_s.name =>"test"
+@fact node_s.node_ids => [2, 3]
+
 end # context
 
 context("FEM.Mesh.ElementSet") do
