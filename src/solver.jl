@@ -7,7 +7,7 @@ end
 
 function solve(solver::NRSolver, fp::FEProblem)
     println("Starting Newton-Raphson solver..")
-
+    createdofs(fp)
     load = extload(fp)
     iteration = 0
     while true

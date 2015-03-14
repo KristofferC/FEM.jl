@@ -1,3 +1,5 @@
+import FEM.LinTrigStorage
+
 # Meshes a quadraterial area given by four corners with nx * xy * 2 triangles.
 
 # TODO: Add quadraterial option
@@ -12,10 +14,6 @@ function meshquad(nx::Int, ny::Int, corners::Matrix{Float64})
     if (nx <= 1 || ny <= 1)
         error("Need at least 2x2 elements")
     end
-
-    # Avoids a lot of -1 writing:
-    nx -= 1
-    ny -= 1
 
     mesh = Mesh()
 
@@ -46,15 +44,18 @@ function meshquad(nx::Int, ny::Int, corners::Matrix{Float64})
         end
     end
 
+    interp = LinTrigInterp()
+    lts = LinTrigStorage()
+    gps = [GaussPoint(Point2(1/3, 1/3), 0.5)]
     # Add the elements
     n_elem = 0
     for i in 1:ny
         for j in 1:nx
             n_elem += 1
-            elem1 = LinTrig([node_nr(i, j), node_nr(i+1, j), node_nr(i+1, j+1)], n_elem)
+            elem1 = LinTrig([node_nr(i, j), node_nr(i+1, j), node_nr(i+1, j+1)], n_elem, interp, lts, gps)
             addelem!(mesh, elem1)
             n_elem += 1
-            elem2 = LinTrig([node_nr(i, j), node_nr(i+1, j+1), node_nr(i, j+1)], n_elem)
+            elem2 = LinTrig([node_nr(i, j), node_nr(i+1, j+1), node_nr(i, j+1)], n_elem, interp, lts, gps)
             addelem!(mesh, elem2)
         end
     end

@@ -25,8 +25,8 @@ element_set = ElementSet("all", [1, 2])
 
 addelemset!(mesh, element_set)
 
-bcs =  [DirichletBC(0.1, [Du(), Dv()], mesh.node_sets["x0"])]
-loads =  [NodeLoad(10e5, [Dv()], mesh.node_sets["y0"])]
+bcs =  [DirichletBC(0.1, [Du, Dv], mesh.node_sets["x0"])]
+loads =  [NodeLoad(10e5, [Dv], mesh.node_sets["y0"])]
 
 
 # Element set

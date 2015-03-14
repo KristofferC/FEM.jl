@@ -1,7 +1,7 @@
 module FEM
 
 using Compat
-#using ImmutableArrays
+using FixedSizeArrays
 #using PyCall
 #@pyimport vtk
 

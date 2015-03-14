@@ -12,10 +12,10 @@ function BilinQuad(vertices::Vector{Int}, n)
     n_dofs = 8
 
     p = 1 / sqrt(3)
-    gps = [GaussPoint([-p; -p], 1.0);
-           GaussPoint([ p; -p], 1.0)
-           GaussPoint([ p;  p], 1.0)
-           GaussPoint([-p;  p], 1.0)]
+    gps = [GaussPoint(Point2(-p, -p), 1.0);
+           GaussPoint(Point2( p, -p), 1.0);
+           GaussPoint(Point2( p,  p), 1.0);
+           GaussPoint(Point2(-p,  p), 1.0)]
 
 
     interp = BilinQuadInterp()
@@ -25,7 +25,7 @@ end
 
 
 function doftypes(elem::BilinQuad, vertex::Int)
-    return [Du(), Dv()]
+    return [Du, Dv]
 end
 
 

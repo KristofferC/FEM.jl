@@ -97,11 +97,11 @@ function assembleK(fp::FEProblem)
             Ke = stiffness(element, fp.mesh.nodes, mat)
             dof1_n = 0
             for vertex1 in element.vertices
-                for (i, dof1) in enumerate(fp.mesh.nodes[vertex1].dofs)
+                for dof1 in fp.mesh.nodes[vertex1].dofs
                     dof1_n += 1
                     dof2_n = 0
                     for vertex2 in element.vertices
-                        for (j, dof2) in enumerate(fp.mesh.nodes[vertex2].dofs)
+                        for dof2 in fp.mesh.nodes[vertex2].dofs
                             dof2_n += 1
                             if dof1.active && dof2.active
                                 push!(dof_rows, dof1.eq_n)

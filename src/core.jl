@@ -3,17 +3,28 @@
 #typealias Mat2 Matrix2x2{Float64}
 #typealias Mat3 Matrix3x3{Float64}
 
+immutable Point2<: FixedVector{Float64, 2}
+    x::Float64
+    y::Float64
+end
+
+immutable Point3 <: FixedVector{Float64, 3}
+    x::Float64
+    y::Float64
+    z::Float64
+end
+
 immutable GaussPoint
-    local_coords::Vector{Float64}
+    local_coords::Point2
     weight::Float64
 end
 
 
-abstract DofType
+@enum DofType Du Dv Dw
 
-type Du <: DofType end
-type Dv <: DofType end
-type Dw <: DofType end
+#type Du <: DofType end
+#type Dv <: DofType end
+#type Dw <: DofType end
 
 type Dof
     eq_n::Int
@@ -25,13 +36,13 @@ end
 
 
 immutable Node
-    coordinates::Vector{Float64}
+    coordinates::Point2
     n::Int
     dofs::Vector{Dof}
 end
 
 function Node(c::Vector{Float64}, n::Int)
-    Node(c, n, Array(Dof, 0))
+    Node(Point2(c[1], c[2]), n, Array(Dof, 0))
 end
 
 Node(c::Vector{Int}, n::Int) = Node(convert(Vector{Float64}, c), n::Int)

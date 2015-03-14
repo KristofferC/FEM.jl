@@ -1,28 +1,36 @@
+immutable LinTrigStorage
+    B::Matrix{Float64}
+end
+
+LinTrigStorage() = LinTrigStorage(zeros(4, 6))
+
 immutable LinTrig <: Element
     vertices::Vector{Int}
     gps::Vector{GaussPoint}
     n_dofs::Int
     n::Int
     interp::LinTrigInterp
+    lts::LinTrigStorage
 end
 
-function LinTrig(vertices::Vector{Int}, n)
+function LinTrig(vertices::Vector{Int}, n, interp::LinTrigInterp, lts, gps)
 
     n_dofs = 6
-    gps = [GaussPoint([1/3; 1/3], 0.5)]
-    interp = LinTrigInterp()
+    #gps = [GaussPoint(Point2(1/3, 1/3), 0.5)]
+    #interp = LinTrigInterp()
 
-    LinTrig(vertices, gps, n_dofs, n, interp)
+    LinTrig(vertices, gps, n_dofs, n, interp, lts)
 end
 
 function doftypes(elem::LinTrig, vertex::Int)
-    return [Du(), Dv()]
+    return [Du, Dv]
 end
 
 
 function Bmatrix(elem::LinTrig, gp::GaussPoint, nodes::Vector{Node})
     dNdx = dNdxmatrix(elem.interp, gp.local_coords, elem.vertices, nodes)
-    B = zeros(4, 6)
+
+    B = elem.lts.B
 
     B[1, 1] = dNdx[1, 1]
     B[1, 3] = dNdx[2, 1]
@@ -40,4 +48,10 @@ function Bmatrix(elem::LinTrig, gp::GaussPoint, nodes::Vector{Node})
     B[4, 6] = dNdx[3, 1]
 
     return B
+end
+
+function weight(elem::LinTrig, gp::GaussPoint, nodes::Vector{Node})
+    dN = dNmatrix(elem.interp, gp.local_coords)
+    J = Jmatrix(elem.interp, gp.local_coords, elem.vertices, nodes, dN)
+    return det2x2(J) * gp.weight
 end
