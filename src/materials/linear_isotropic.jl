@@ -1,5 +1,3 @@
-import FEM.GaussPoint
-
 immutable LinearIsotropic <: Material
     E::Float64
     ν::Float64
@@ -11,7 +9,7 @@ function LinearIsotropic(E, ν)
     LinearIsotropic(E, ν, G)
 end
 
-function stiffness(mat::LinearIsotropic, gp::GaussPoint)
+function stiffness(mat::LinearIsotropic, gp::AbstractGaussPoint)
     ν = mat.ν
     f = mat.E / ((1.0 + ν) * (1.0 - 2.0 * ν))
 
@@ -26,7 +24,7 @@ function stiffness(mat::LinearIsotropic, gp::GaussPoint)
     return k
 end
 
-function stress(mat::LinearIsotropic, ɛ::Vector{Float64}, gp::GaussPoint)
+function stress(mat::LinearIsotropic, ɛ::Vector{Float64}, gp::AbstractGaussPoint)
     D = stiffness(mat, gp)
     σ = D * ɛ
     return σ

@@ -10,7 +10,7 @@ facts("FEM.FEProblem") do
 # Setup a FEProblem
 mesh = Mesh()
 
-nodes = [Node([0, 0], 1), Node([1, 1], 2), Node([1, 2], 3), Node([0, 1], 4)]
+nodes = [Node2([0, 0], 1), Node2([1, 1], 2), Node2([1, 2], 3), Node2([0, 1], 4)]
 addnodes!(mesh, nodes)
 
 addelem!(mesh, LinTrig([1, 2, 3], 1))

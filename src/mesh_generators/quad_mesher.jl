@@ -40,13 +40,13 @@ function meshquad(nx::Int, ny::Int, corners::Matrix{Float64})
             ratio = j / nx
             x = x0 * (1 - ratio) + ratio * x1
             y = y0 * (1 - ratio) + ratio * y1
-            addnode!(mesh, Node([x,y], node_nr(i+1, j+1)))
+            addnode!(mesh, Node2([x,y], node_nr(i+1, j+1)))
         end
     end
 
     interp = LinTrigInterp()
     lts = LinTrigStorage()
-    gps = [GaussPoint(Point2(1/3, 1/3), 0.5)]
+    gps = [GaussPoint2(Point2(1/3, 1/3), 0.5)]
     # Add the elements
     n_elem = 0
     for i in 1:ny

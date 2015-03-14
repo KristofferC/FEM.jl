@@ -8,7 +8,7 @@ using FixedSizeArrays
 macro lintpragma(s) end
 
 
-export Node, NodeSet, gennodeset, ElementSet, GaussPoint, DirichletBC, NodeLoad, Du, Dv, Dw, Dof
+export Node2, Node3, NodeSet, gennodeset, ElementSet, DirichletBC, NodeLoad, Du, Dv, Dw, Dof
 export Element, LinTrig, BilinQuad
 export Interpolator, LinTrigInterp
 export Material, LinearIsotropic
@@ -17,6 +17,7 @@ export FEProblem
 export Solver, NRSolver, solve
 export meshquad, gencook
 
+include("geomesh.jl")
 include("core.jl")
 include("materials/material.jl")
 include("interpolators/interpolator.jl")

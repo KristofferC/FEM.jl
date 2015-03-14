@@ -1,5 +1,5 @@
 immutable Mesh
-    nodes::Vector{Node}
+    nodes::Vector{Node2}
     elements::Vector{Element}
     element_sets::Dict{ASCIIString, ElementSet}
     node_sets::Dict{ASCIIString, NodeSet}
@@ -7,7 +7,7 @@ end
 
 
 function Mesh()
-    nodes = Array(Node, 0)
+    nodes = Array(Node2, 0)
     elements = Array(Element, 0)
     element_sets = Dict{ASCIIString, ElementSet}()
     node_sets =  Dict{ASCIIString, NodeSet}()
@@ -15,8 +15,8 @@ function Mesh()
     Mesh(nodes, elements, element_sets, node_sets)
 end
 
-addnode!(mesh::Mesh, node::Node) = push!(mesh.nodes, node)
-function addnodes!(mesh::Mesh, nodes::Vector{Node})
+addnode!(mesh::Mesh, node::AbstractNode) = push!(mesh.nodes, node)
+function addnodes!(mesh::Mesh, nodes::Vector{AbstractNode})
     for n in nodes
         addnode!(mesh, n)
     end

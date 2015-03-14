@@ -14,8 +14,15 @@ immutable Point3 <: FixedVector{Float64, 3}
     z::Float64
 end
 
-immutable GaussPoint
+abstract AbstractGaussPoint
+
+immutable GaussPoint2 <: AbstractGaussPoint
     local_coords::Point2
+    weight::Float64
+end
+
+immutable GaussPoint3 <: AbstractGaussPoint
+    local_coords::Point3
     weight::Float64
 end
 
@@ -34,18 +41,41 @@ type Dof
     dof_type::DofType # Not here
 end
 
+abstract AbstractNode
 
-immutable Node
+immutable Node2 <: AbstractNode
     coordinates::Point2
     n::Int
     dofs::Vector{Dof}
 end
 
-function Node(c::Vector{Float64}, n::Int)
-    Node(Point2(c[1], c[2]), n, Array(Dof, 0))
+
+immutable Node3 <: AbstractNode
+    coordinates::Point3
+    n::Int
+    dofs::Vector{Dof}
 end
 
-Node(c::Vector{Int}, n::Int) = Node(convert(Vector{Float64}, c), n::Int)
+function Node2(c::Point2, n::Int)
+    Node2(c, n, Array(Dof, 0))
+end
+
+function Node2(c::Vector{Float64}, n::Int)
+    Node2(Point2(c[1], c[2]), n, Array(Dof, 0))
+end
+
+Node2(c::Vector{Int}, n::Int) = Node3(convert(Vector{Float64}, c), n::Int)
+
+function Node3(c::Point3, n::Int)
+    Node3(c, n, Array(Dof, 0))
+end
+
+function Node3(c::Vector{Float64}, n::Int)
+    Node3(Point3(c[1], c[2], c[3]), n, Array(Dof, 0))
+end
+
+Node3(c::Vector{Int}, n::Int) = Node3(convert(Vector{Float64}, c), n::Int)
+
 
 
 immutable NodeSet
@@ -53,7 +83,7 @@ immutable NodeSet
     node_ids::Vector{Int}
 end
 
-function gennodeset(f::Function, name::ASCIIString, nodes::Vector{Node})
+function gennodeset(f::Function, name::ASCIIString, nodes::Vector{Node2})
     node_ids = Int[]
     for node in nodes
         if f(node.coordinates)

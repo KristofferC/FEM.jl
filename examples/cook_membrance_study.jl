@@ -3,7 +3,7 @@ import FEM.extload
 import FEM.assembleK
 import FEM.createdofs
 # Nodes
-n_ele = 64
+n_ele = 128
 mesh = gencook(n_ele, n_ele)
 
 addnodeset!(mesh, gennodeset(x->x[1]>0.0479999, "right", mesh.nodes))

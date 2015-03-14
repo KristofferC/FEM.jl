@@ -1,4 +1,3 @@
-
 immutable LinTrigInterp <: Interpolator
     N::Vector{Float64}
     dN::Matrix{Float64}
@@ -20,7 +19,7 @@ end
 
 
 # Shape functions in local coordinates
-function Nvec(interp::LinTrigInterp, loc_coords::Vector{Float64})
+function Nvec(interp::LinTrigInterp, loc_coords::Point2)
 
     ξ = loc_coords[1]
     η = loc_coords[2]
@@ -38,7 +37,7 @@ function dNmatrix(interp::LinTrigInterp, loc_coords::Point2)
 end
 
 function Jmatrix(interp::LinTrigInterp, local_coords::Point2,
-                 vertices::Vector{Int}, nodes::Vector{Node},
+                 vertices::Vertex3, nodes::Vector{Node2},
                  dN::Matrix{Float64})
 
 
@@ -51,16 +50,17 @@ function Jmatrix(interp::LinTrigInterp, local_coords::Point2,
     y2 =  nodes[vertices[2]].coordinates.y
     y3 =  nodes[vertices[3]].coordinates.y
 
+    # Constant Jacobian
     interp.J[1, 1] = x1 - x3
     interp.J[2, 1] = x2 - x3
-    interp.J[1, 2] = y1-y3
+    interp.J[1, 2] = y1 - y3
     interp.J[2, 2] = y2 - y3
 
     return interp.J
 end
 
 function dNdxmatrix(interp::LinTrigInterp, local_coords::Point2,
-                    vertices::Vector{Int}, nodes::Vector{Node})
+                    vertices::Vertex3, nodes::Vector{Node2})
 
         dN = dNmatrix(interp, local_coords)
         J = Jmatrix(interp, local_coords, vertices, nodes, dN)

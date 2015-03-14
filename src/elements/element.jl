@@ -1,10 +1,9 @@
 abstract Element
 
-
 include("lin_trig_element.jl")
 include("bilin_quad_element.jl")
 
-function stiffness(elem::Element, nodes::Vector{Node}, material::Material)
+function stiffness(elem::Element, nodes::Vector{Node2}, material::Material)
     Ke = zeros(elem.n_dofs, elem.n_dofs)
 
     for gp in elem.gps
@@ -17,7 +16,7 @@ function stiffness(elem::Element, nodes::Vector{Node}, material::Material)
     return Ke
 end
 
-function get_field(elem::Element, nodes::Vector{Node})
+function get_field(elem::Element, nodes::Vector{Node2})
     u = zeros(elem.n_dofs)
     i = 1
     for vert in elem.vertices
@@ -30,7 +29,7 @@ function get_field(elem::Element, nodes::Vector{Node})
 end
 
 
-function intf(elem::Element, nodes::Vector{Node}, mat::Material)
+function intf(elem::Element, nodes::Vector{Node2}, mat::Material)
     f_int = zeros(elem.n_dofs)
     u = get_field(elem, nodes)
     for gp in elem.gps
@@ -44,12 +43,12 @@ function intf(elem::Element, nodes::Vector{Node}, mat::Material)
 end
 
 
-function strain(elem::Element, gp::GaussPoint, nodes::Vector{Node}, u::Vector{Float64})
+function strain(elem::Element, gp::AbstractGaussPoint, nodes::Vector{Node2}, u::Vector{Float64})
     B = Bmatrix(elem, gp, nodes)
     return B * u
 end
 
-function weight(elem::Element, gp::GaussPoint, nodes::Vector{Node})
+function weight(elem::Element, gp::AbstractGaussPoint, nodes::Vector{Node2})
     dN = dNmatrix(elem.interp, gp.local_coords)
     J = Jmatrix(elem.interp, gp.local_coords, elem.vertices, nodes, dN)
     return det(J) * gp.weight

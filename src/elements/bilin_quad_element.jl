@@ -1,21 +1,21 @@
 immutable BilinQuad <: Element
-    vertices::Vector{Int}
-    gps::Vector{GaussPoint}
+    vertices::Vertex4
+    gps::Vector{GaussPoint2}
     n_dofs::Int
     n::Int
     interp::BilinQuadInterp
 end
 
 
-function BilinQuad(vertices::Vector{Int}, n)
+function BilinQuad(vertices::Vertex4, n)
 
     n_dofs = 8
 
     p = 1 / sqrt(3)
-    gps = [GaussPoint(Point2(-p, -p), 1.0);
-           GaussPoint(Point2( p, -p), 1.0);
-           GaussPoint(Point2( p,  p), 1.0);
-           GaussPoint(Point2(-p,  p), 1.0)]
+    gps = [GaussPoint2(Point2(-p, -p), 1.0);
+           GaussPoint2(Point2( p, -p), 1.0);
+           GaussPoint2(Point2( p,  p), 1.0);
+           GaussPoint2(Point2(-p,  p), 1.0)]
 
 
     interp = BilinQuadInterp()
@@ -29,7 +29,7 @@ function doftypes(elem::BilinQuad, vertex::Int)
 end
 
 
-function Bmatrix(elem::BilinQuad, gp::GaussPoint, nodes::Vector{Node})
+function Bmatrix(elem::BilinQuad, gp::GaussPoint2, nodes::Vector{Node2})
     dNdx = dNdxmatrix(elem.interp, gp.local_coords, elem.vertices, nodes)
     B = zeros(4, 8)
 
