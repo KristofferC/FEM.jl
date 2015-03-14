@@ -13,6 +13,10 @@ immutable LinTrig <: Element
     lts::LinTrigStorage
 end
 
+function show(io::IO,o::LinTrig)
+    print(io, string("LinTrig", o.vertices))
+end
+
 function LinTrig(vertices::Vertex3, n, interp::LinTrigInterp,
                  lts::LinTrigStorage, gps::Vector{GaussPoint2})
 

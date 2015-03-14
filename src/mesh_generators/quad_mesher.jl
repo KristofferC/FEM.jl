@@ -11,8 +11,8 @@ function meshquad(nx::Int, ny::Int, corners::Matrix{Float64})
         error("corner argument needs to be a 2x4 matrix")
     end
 
-    if (nx <= 1 || ny <= 1)
-        error("Need at least 2x2 elements")
+    if (nx <= 0 || ny <= 0)
+        error("Need at least 1x1 elements")
     end
 
     mesh = Mesh()
@@ -64,6 +64,6 @@ end
 
 # Generates what is known as the "Cook membrane"
 function gencook(nx, ny)
-    m = [[0.0; 0.0] [0.0; 0.044] [0.048; 0.06] [0.048; 0.044]]
+    m = [[0.0; 0.0] [0.0; 44.0] [48.0; 60.0] [48.0; 44.0]]
     meshquad(nx, ny, m)
 end

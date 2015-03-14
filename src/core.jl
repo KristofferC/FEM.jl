@@ -64,7 +64,7 @@ function Node2(c::Vector{Float64}, n::Int)
     Node2(Point2(c[1], c[2]), n, Array(Dof, 0))
 end
 
-Node2(c::Vector{Int}, n::Int) = Node3(convert(Vector{Float64}, c), n::Int)
+Node2(c::Vector{Int}, n::Int) = Node2(convert(Vector{Float64}, c), n::Int)
 
 function Node3(c::Point3, n::Int)
     Node3(c, n, Array(Dof, 0))

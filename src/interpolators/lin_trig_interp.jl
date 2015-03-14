@@ -1,6 +1,7 @@
 immutable LinTrigInterp <: Interpolator
     N::Vector{Float64}
     dN::Matrix{Float64}
+    dNdx::Matrix{Float64}
     J::Matrix{Float64}
 end
 
@@ -13,8 +14,10 @@ function LinTrigInterp()
           [ 0.0  1.0];
           [-1.0 -1.0]]
 
+    dNdx = Array(Float64, 3, 2)
+
     J = Array(Float64, 2, 2)
-    LinTrigInterp(N, dN, J)
+    LinTrigInterp(N, dN, dNdx, J)
 end
 
 
@@ -65,9 +68,11 @@ function dNdxmatrix(interp::LinTrigInterp, local_coords::Point2,
         dN = dNmatrix(interp, local_coords)
         J = Jmatrix(interp, local_coords, vertices, nodes, dN)
         invJt = inv2x2t!(J)
-        dNdx = dN * invJt
 
-        return dNdx
+        A_mul_B!(interp.dNdx, dN, invJt)
+        #dNdx = dN * invJt
+
+        return interp.dNdx
 end
 
 function inv2x2t!(J::Matrix{Float64})

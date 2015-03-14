@@ -5,6 +5,7 @@ using FixedSizeArrays
 #using PyCall
 #@pyimport vtk
 
+import Base.show
 macro lintpragma(s) end
 
 

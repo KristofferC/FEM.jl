@@ -5,7 +5,7 @@ facts("FEM.Material") do
 
 context("FEM.Material.LinearIsotropic") do
     mat = LinearIsotropic(200e9, 0.3)
-    gp = GaussPoint2([0.0], 0.0)
+    gp = GaussPoint2(Vec2(0.0, 0.0), 0.0)
     context("FEM.Material.LinearIsotropic.stiffness") do
 
         # Stiffness

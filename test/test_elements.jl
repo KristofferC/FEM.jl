@@ -7,7 +7,7 @@ facts("FEM.Element") do
 context("FEM.Element.LinTrig") do
 
 
-    nodes = [Node([0, 0], 1), Node([1, 1], 2), Node([1, 2], 3)]
+    nodes = [Node2([0, 0], 1), Node2([1, 1], 2), Node2([1, 2], 3)]
 
     elem = LinTrig([1, 2, 3], 1)
 
@@ -32,7 +32,7 @@ end # context
 
 context("FEM.Element.BilinQuad") do
 
-    nodes = [Node([0.0, 0.0], 1), Node([1.0, 0.0], 2), Node([1.0, 2.5], 3), Node([0.0, 1.5], 4)]
+    nodes = [Node2([0.0, 0.0], 1), Node2([1.0, 0.0], 2), Node2([1.0, 2.5], 3), Node2([0.0, 1.5], 4)]
 
     elem = BilinQuad([1, 2, 3, 4], 1)
 

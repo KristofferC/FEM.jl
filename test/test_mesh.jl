@@ -4,10 +4,10 @@ mesh = Mesh()
 
 context("FEM.Mesh.Nodes") do
 
-node_1 = Node([0, 0], 1)
-node_2 = Node([1, 1], 2)
-node_3 = Node([1, 2], 3)
-node_4 = Node([0, 1], 4)
+node_1 = Node2([0, 0], 1)
+node_2 = Node2([1, 1], 2)
+node_3 = Node2([1, 2], 3)
+node_4 = Node2([0, 1], 4)
 addnode!(mesh, node_1)
 addnode!(mesh, node_2)
 addnode!(mesh, node_3)
