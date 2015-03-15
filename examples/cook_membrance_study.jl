@@ -15,7 +15,7 @@ addelemset!(mesh, ElementSet("all", collect(1:2*n_ele*n_ele)))
 
 
 bcs =  [DirichletBC(0.0, [Du, Dv], mesh.node_sets["left"])]
-loads =  [NodeLoad(1/(2*n_ele), [Dv], mesh.node_sets["right"])]
+loads =  [NodeLoad(0.0078, [Dv], mesh.node_sets["right"])]
 
 # Element set
 mat = LinearIsotropic(1, 0.3)
@@ -29,6 +29,18 @@ solver = NRSolver(1e-7, 2)
 
 
 solve(solver, fp)
+
+#=
+julia> @time include(".julia/v0.4/FEM/examples/cook_membrance_study.jl")
+Starting Newton-Raphson solver..
+        Iteration 1, relative residual 1.0
+4.718447854656915e-15
+[22.220644996854695]
+        Iteration 2, relative residual 2.6125689174257096e-11
+Converged!
+elapsed time: 0.518623941 seconds (308 MB allocated, 8.98% gc time in 14 pauses with 1 full sweep)
+=#
+
 
 #=
 Starting Newton-Raphson solver..
@@ -54,3 +66,4 @@ elapsed time: 3.132825849 seconds (1192 MB allocated, 4.90% gc time in 54 pauses
 #K = assembleK(fp)
 
 #println(K)
+

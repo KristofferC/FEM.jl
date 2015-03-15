@@ -1,6 +1,6 @@
 immutable Mesh
     nodes::Vector{Node2}
-    elements::Vector{Element}
+    elements::Vector{LinTrig}
     element_sets::Dict{ASCIIString, ElementSet}
     node_sets::Dict{ASCIIString, NodeSet}
 end
@@ -8,7 +8,7 @@ end
 
 function Mesh()
     nodes = Array(Node2, 0)
-    elements = Array(Element, 0)
+    elements = Array(LinTrig, 0)
     element_sets = Dict{ASCIIString, ElementSet}()
     node_sets =  Dict{ASCIIString, NodeSet}()
 

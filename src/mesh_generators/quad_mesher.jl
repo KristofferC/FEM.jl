@@ -24,7 +24,7 @@ function meshquad(nx::Int, ny::Int, corners::Matrix{Float64})
     LR = corners[:,4]
 
     # Node number for column i and row j
-    node_nr(i, j) =  (nx + 1) * (i-1) + j
+    node_nr(i::Int, j::Int) =  (nx + 1) * (i-1) + j
 
     # Add the nodes
     for i in 0:ny

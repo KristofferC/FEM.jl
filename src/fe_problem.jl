@@ -161,3 +161,33 @@ function updatedofs!(fp::FEProblem, du::Vector{Float64})
     end
 end
 
+
+
+function assemble_dry(fp::FEProblem)
+    dof_rows = Array(Int, 0)
+    dof_cols = Array(Int, 0)
+    k_values = Array(Float64, 0)
+    for section in fp.sections
+        mat = section.material
+        for element_id in section.elements
+            element = fp.mesh.elements[element_id]
+            dof1_n = 0
+            for vertex1 in element.vertices
+                for dof1 in fp.mesh.nodes[vertex1].dofs
+                    dof1_n += 1
+                    dof2_n = 0
+                    for vertex2 in element.vertices
+                        for dof2 in fp.mesh.nodes[vertex2].dofs
+                            dof2_n += 1
+                            if dof1.active && dof2.active
+                                push!(dof_rows, dof1.eq_n)
+                                push!(dof_cols, dof2.eq_n)
+                                push!(k_values, 0)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
