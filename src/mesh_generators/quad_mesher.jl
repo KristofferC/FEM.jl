@@ -15,7 +15,7 @@ function meshquad(nx::Int, ny::Int, corners::Matrix{Float64})
         error("Need at least 1x1 elements")
     end
 
-    mesh = Mesh()
+    mesh = GeoMesh()
 
     # The four corners
     LL = corners[:,1]
@@ -40,30 +40,27 @@ function meshquad(nx::Int, ny::Int, corners::Matrix{Float64})
             ratio = j / nx
             x = x0 * (1 - ratio) + ratio * x1
             y = y0 * (1 - ratio) + ratio * y1
-            addnode!(mesh, Node2([x,y], node_nr(i+1, j+1)))
+            push!(mesh, GeoNode2(node_nr(i+1, j+1), [x,y]))
         end
     end
 
-    interp = LinTrigInterp()
-    lts = LinTrigStorage()
-    gps = [GaussPoint2(Point2(1/3, 1/3), 0.5)]
     # Add the elements
     n_elem = 0
     for i in 1:ny
         for j in 1:nx
             n_elem += 1
-            elem1 = LinTrig([node_nr(i, j), node_nr(i+1, j), node_nr(i+1, j+1)], n_elem, interp, lts, gps)
-            addelem!(mesh, elem1)
+            elem1 = GeoTrig(n_elem, Vertex3(node_nr(i, j), node_nr(i+1, j), node_nr(i+1, j+1)))
+            push!(mesh, elem1)
             n_elem += 1
-            elem2 = LinTrig([node_nr(i, j), node_nr(i+1, j+1), node_nr(i, j+1)], n_elem, interp, lts, gps)
-            addelem!(mesh, elem2)
+            elem2 = GeoTrig(n_elem, Vertex3(node_nr(i, j), node_nr(i+1, j+1), node_nr(i, j+1)))
+            push!(mesh, elem2)
         end
     end
     return mesh
 end
 
 # Generates what is known as the "Cook membrane"
-function gencook(nx, ny)
-    m = [[0.0; 0.0] [0.0; 44.0] [48.0; 60.0] [48.0; 44.0]]
+function gencook(nx, ny, scale = 1.0)
+    m = scale * [[0.0; 0.0] [0.0; 44.0] [48.0; 60.0] [48.0; 44.0]]
     meshquad(nx, ny, m)
 end

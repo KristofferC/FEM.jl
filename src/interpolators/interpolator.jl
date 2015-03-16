@@ -4,7 +4,7 @@ include("lin_trig_interp.jl")
 include("bilin_quad_interp.jl")
 
 function dNdxmatrix(interp::Interpolator, local_coords::Point2,
-                    vertices::Vector{Int}, nodes::Vector{Node2})
+                    vertices::Vector{Int}, nodes::Vector{FENode2})
 
         dN = dNmatrix(interp, local_coords)
         J = Jmatrix(interp, local_coords, vertices, nodes, dN)
@@ -15,7 +15,7 @@ end
 
 
 function Jmatrix(interp::Interpolator, local_coords::Point2,
-                 vertices::Vector{Int}, nodes::Vector{Node2},
+                 vertices::Vector{Int}, nodes::Vector{FENode2},
                  dN::Matrix{Float64})
 
     J = zeros(2, 2)

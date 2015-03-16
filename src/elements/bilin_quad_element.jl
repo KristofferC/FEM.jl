@@ -1,4 +1,4 @@
-immutable BilinQuad <: Element
+immutable BilinQuad <: AbstractFElement
     vertices::Vertex4
     gps::Vector{GaussPoint2}
     n_dofs::Int
@@ -29,7 +29,7 @@ function doftypes(elem::BilinQuad, vertex::Int)
 end
 
 
-function Bmatrix(elem::BilinQuad, gp::GaussPoint2, nodes::Vector{Node2})
+function Bmatrix(elem::BilinQuad, gp::GaussPoint2, nodes::Vector{FENode2})
     dNdx = dNdxmatrix(elem.interp, gp.local_coords, elem.vertices, nodes)
     B = zeros(4, 8)
 

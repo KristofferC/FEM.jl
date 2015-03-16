@@ -1,10 +1,12 @@
-immutable LinTrigStorage
+abstract ElemStorage
+
+immutable LinTrigStorage <: ElemStorage
     B::Matrix{Float64}
 end
 
 LinTrigStorage() = LinTrigStorage(zeros(4, 6))
 
-immutable LinTrig <: Element
+immutable LinTrig <: AbstractFElement
     vertices::Vertex3
     gps::Vector{GaussPoint2}
     n_dofs::Int
@@ -13,8 +15,15 @@ immutable LinTrig <: Element
     lts::LinTrigStorage
 end
 
-function show(io::IO,o::LinTrig)
-    print(io, string("LinTrig", o.vertices))
+get_geoelem(::Type(LinTrig)) = GeoTrig(elem.n, vertices)
+get_storage(::Type(LinTrig)) = LinTrigStorage()
+get_interp(::Type(LinTrig)) = LinTrigInterp()
+get_gps(::Type(LinTrig)) = [GaussPoint2(Point2(1/3, 1/3), 0.5)]
+
+
+
+function show(io::IO,elem::LinTrig)
+    print(io, string("LinTrig", elem.vertices))
 end
 
 function LinTrig(vertices::Vertex3, n, interp::LinTrigInterp,
@@ -29,12 +38,14 @@ function LinTrig(v::Vector{Int}, n, interp::LinTrigInterp,
     LinTrig(Vertex3(v[1], v[2], v[3]), n, interp, lts, gps)
 end
 
+
+
 function doftypes(elem::LinTrig, vertex::Int)
     return [Du, Dv]
 end
 
 
-function Bmatrix(elem::LinTrig, gp::GaussPoint2, nodes::Vector{Node2})
+function Bmatrix(elem::LinTrig, gp::GaussPoint2, nodes::Vector{FENode2})
     dNdx = dNdxmatrix(elem.interp, gp.local_coords, elem.vertices, nodes)
 
     B = elem.lts.B
@@ -57,7 +68,7 @@ function Bmatrix(elem::LinTrig, gp::GaussPoint2, nodes::Vector{Node2})
     return B
 end
 
-function weight(elem::LinTrig, gp::GaussPoint2, nodes::Vector{Node2})
+function weight(elem::LinTrig, gp::GaussPoint2, nodes::Vector{FENode2})
     dN = dNmatrix(elem.interp, gp.local_coords)
     J = Jmatrix(elem.interp, gp.local_coords, elem.vertices, nodes, dN)
     return det2x2(J) * gp.weight

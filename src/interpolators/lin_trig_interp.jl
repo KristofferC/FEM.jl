@@ -40,7 +40,7 @@ function dNmatrix(interp::LinTrigInterp, loc_coords::Point2)
 end
 
 function Jmatrix(interp::LinTrigInterp, local_coords::Point2,
-                 vertices::Vertex3, nodes::Vector{Node2},
+                 vertices::Vertex3, nodes::Vector{FENode2},
                  dN::Matrix{Float64})
 
 
@@ -63,7 +63,7 @@ function Jmatrix(interp::LinTrigInterp, local_coords::Point2,
 end
 
 function dNdxmatrix(interp::LinTrigInterp, local_coords::Point2,
-                    vertices::Vertex3, nodes::Vector{Node2})
+                    vertices::Vertex3, nodes::Vector{FENode2})
 
         dN = dNmatrix(interp, local_coords)
         J = Jmatrix(interp, local_coords, vertices, nodes, dN)

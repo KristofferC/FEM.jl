@@ -3,16 +3,7 @@
 #typealias Mat2 Matrix2x2{Float64}
 #typealias Mat3 Matrix3x3{Float64}
 
-immutable Point2<: FixedVector{Float64, 2}
-    x::Float64
-    y::Float64
-end
 
-immutable Point3 <: FixedVector{Float64, 3}
-    x::Float64
-    y::Float64
-    z::Float64
-end
 
 abstract AbstractGaussPoint
 
@@ -29,10 +20,6 @@ end
 
 @enum DofType Du Dv Dw
 
-#type Du <: DofType end
-#type Dv <: DofType end
-#type Dw <: DofType end
-
 type Dof
     eq_n::Int
     id::Int
@@ -41,74 +28,37 @@ type Dof
     dof_type::DofType # Not here
 end
 
-abstract AbstractNode
 
-immutable Node2 <: AbstractNode
+#########
+# Nodes #
+#########
+abstract AbstractFENode
+
+immutable FENode2 <: AbstractFENode
+    n::Int
     coordinates::Point2
-    n::Int
-    dofs::Vector{Dof}
+    Vector{Dof}
 end
 
+FENode2(n::Int, c::Point2) = FENode2(n, c, Array(Dof, 0))
+# Check size here?
+FENode2(n::Int, c::Vector{Float64}) = FENode2(n, Point2(c[1], c[2]), Array(Dof, 0))
+FENode2(n::Int, c::Vector{Int}) = FENode2(n, convert(Vector{Float64}, c), Array(Dof, 0))
 
-immutable Node3 <: AbstractNode
+
+immutable FENode3 <: AbstractFENode
+    n::Int
     coordinates::Point3
-    n::Int
-    dofs::Vector{Dof}
+    Vector{Dof}
 end
 
-function Node2(c::Point2, n::Int)
-    Node2(c, n, Array(Dof, 0))
-end
-
-function Node2(c::Vector{Float64}, n::Int)
-    Node2(Point2(c[1], c[2]), n, Array(Dof, 0))
-end
-
-Node2(c::Vector{Int}, n::Int) = Node2(convert(Vector{Float64}, c), n::Int)
-
-function Node3(c::Point3, n::Int)
-    Node3(c, n, Array(Dof, 0))
-end
-
-function Node3(c::Vector{Float64}, n::Int)
-    Node3(Point3(c[1], c[2], c[3]), n, Array(Dof, 0))
-end
-
-Node3(c::Vector{Int}, n::Int) = Node3(convert(Vector{Float64}, c), n::Int)
+FENode3(n::Int, c::Point3) = FENode2(n, c, Array(Dof, 0))
+# Check size here?
+FENode3(n::Int, c::Vector{Float64}) = FENode2(n, Point3(c[1], c[2], c[3]), Array(Dof, 0))
+FENode3(n::Int, c::Vector{Int}) = FENode2(n, convert(Vector{Float64}, c), Array(Dof, 0))
 
 
 
-immutable NodeSet
-    name::String
-    node_ids::Vector{Int}
-end
-
-function gennodeset(f::Function, name::ASCIIString, nodes::Vector{Node2})
-    node_ids = Int[]
-    for node in nodes
-        if f(node.coordinates)
-            push!(node_ids, node.n)
-        end
-    end
-    return NodeSet(name, node_ids)
-end
-
-immutable ElementSet
-    name::String
-    element_ids::Vector{Int}
-end
-
-immutable EdgeSet
-    name::String
-    # (Element_id, edge_id) tuple
-    edges::Vector{(Int, Int)}
-end
-
-immutable SurfaceSet
-    name::String
-    # (Element_id, surface_id) tuple
-    surfaces::Vector{(Int, Int)}
-end
 
 
 # TODO: Add more sets
