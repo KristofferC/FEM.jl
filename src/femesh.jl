@@ -14,20 +14,25 @@ end
 function FEMesh(geomesh::GeoMesh)
 
     elements = Dict{DataType, Vector} ()
-    gps = Dict{DataType, Vector{GaussPoint}} ()
+    gps = Dict{DataType, Vector{GaussPoint2}} ()
     interps = Dict{DataType, Interpolator} ()
     storage = Dict{DataType, ElemStorage} ()
 
+    #geo_to_fe = Dict{Int, Int} ()
 
-    for elem in geomesh.elements
-        elem_type = typeof(elem)
+
+
+    for (i, elem2) in enumerate(geomesh.elements)
+        elem = LinTrig
+        elem_type = Type{elem}
         if !(elem_type in keys(elements))
-            elements[elem_type] = Array(elem_type, 0)
+            elements[elem_type] = Array(elem, 0)
             interps[elem_type] = get_interp(elem)
             gps[elem_type] = get_gps(elem)
             storage[elem_type] = get_storage(elem)
         end
-        push!(elements[elem_type], elem)
+        push!(elements[elem_type], elem(elem2.vertices, i, interps[elem_type],
+                                        storage[elem_type],gps[elem_type]))
     end
 
     nodes = Array(FENode2, 0)
@@ -36,6 +41,9 @@ function FEMesh(geomesh::GeoMesh)
     FEMesh(nodes, elements, element_sets, node_sets)
 end
 
+function show(io::IO,mesh::FEMesh)
+    print(io, string("FEMesh, ", length(mesh.elements)))
+end
 
 immutable Section
     material::Material

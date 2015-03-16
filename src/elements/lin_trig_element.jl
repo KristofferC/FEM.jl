@@ -15,10 +15,10 @@ immutable LinTrig <: AbstractFElement
     lts::LinTrigStorage
 end
 
-get_geoelem(::Type(LinTrig)) = GeoTrig(elem.n, vertices)
-get_storage(::Type(LinTrig)) = LinTrigStorage()
-get_interp(::Type(LinTrig)) = LinTrigInterp()
-get_gps(::Type(LinTrig)) = [GaussPoint2(Point2(1/3, 1/3), 0.5)]
+get_geoelem(::Type{LinTrig}) = GeoTrig(elem.n, vertices)
+get_storage(::Type{LinTrig}) = LinTrigStorage()
+get_interp(::Type{LinTrig}) = LinTrigInterp()
+get_gps(::Type{LinTrig}) = [GaussPoint2(Point2(1/3, 1/3), 0.5)]
 
 
 
