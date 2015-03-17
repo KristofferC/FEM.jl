@@ -37,7 +37,7 @@ abstract AbstractFENode
 immutable FENode2 <: AbstractFENode
     n::Int
     coordinates::Point2
-    Vector{Dof}
+    dofs::Vector{Dof}
 end
 
 FENode2(n::Int, c::Point2) = FENode2(n, c, Array(Dof, 0))
@@ -45,17 +45,23 @@ FENode2(n::Int, c::Point2) = FENode2(n, c, Array(Dof, 0))
 FENode2(n::Int, c::Vector{Float64}) = FENode2(n, Point2(c[1], c[2]), Array(Dof, 0))
 FENode2(n::Int, c::Vector{Int}) = FENode2(n, convert(Vector{Float64}, c), Array(Dof, 0))
 
+# TODO: Fix hard coded
+function get_displacement(node::FENode2)
+    return Point3(node.dofs[1].value, node.dofs[2].value, 0.0)
+end
+
 
 immutable FENode3 <: AbstractFENode
     n::Int
     coordinates::Point3
-    Vector{Dof}
+    dofs::Vector{Dof}
 end
 
 FENode3(n::Int, c::Point3) = FENode2(n, c, Array(Dof, 0))
 # Check size here?
 FENode3(n::Int, c::Vector{Float64}) = FENode2(n, Point3(c[1], c[2], c[3]), Array(Dof, 0))
 FENode3(n::Int, c::Vector{Int}) = FENode2(n, convert(Vector{Float64}, c), Array(Dof, 0))
+
 
 
 

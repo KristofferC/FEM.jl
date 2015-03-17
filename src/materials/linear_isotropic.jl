@@ -1,4 +1,4 @@
-immutable LinearIsotropic <: Material
+immutable LinearIsotropic <: AbstractMaterial
     E::Float64
     ν::Float64
     G::Float64
@@ -28,4 +28,9 @@ function stress(mat::LinearIsotropic, ɛ::Vector{Float64}, gp::AbstractGaussPoin
     D = stiffness(mat, gp)
     σ = D * ɛ
     return σ
+end
+
+immutable LinearIsotropicMS <:AbstractMaterialStatus
+    strain::Vector{Float64}
+    stress::Vector{Float64}
 end

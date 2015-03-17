@@ -1,10 +1,9 @@
 import FEM.doftypes
 
 type FEProblem
-    mesh::Mesh
+    mesh::FEMesh
     bcs::Vector{DirichletBC}
     loads::Vector{NodeLoad}
-    dofs::Vector{Dof}
     sections::Vector{Section}
     node_doftypes::Dict{Int, Vector{DofType}}
     node_doftype_bc::Dict{(Int, DofType), DirichletBC}
@@ -12,13 +11,16 @@ type FEProblem
     n_fixed::Int
 end
 
-function FEProblem(mesh::Mesh=Mesh(), bcs::Vector{DirichletBC}=Array(DirichletBC, 0),
+function FEProblem(mesh::FEMesh, bcs::Vector{DirichletBC}=Array(DirichletBC, 0),
                     loads::Vector{NodeLoad}=Array(NodeLoad, 0), sections=Array(Section, 0))
     node_doftype_bc = Dict{Int, Vector{DofType}}()
     node_doftypes = Dict{Int, Vector{DofType}}()
-    FEProblem(mesh, bcs, loads, Array(Dof, 0), sections, node_doftypes, node_doftype_bc, 0, 0)
+    FEProblem(mesh, bcs, loads, sections, node_doftypes, node_doftype_bc, 0, 0)
 end
 
+push!(fp::FEProblem, bc::DirichletBC) = push!(fp.bcs, bc)
+push!(fp::FEProblem, load::NodeLoad) = push!(fp.loads, load)
+push!(fp::FEProblem, sec::Section) = push!(fp.sections, section)
 
 
 function createdofs(fp::FEProblem)
@@ -26,7 +28,7 @@ function createdofs(fp::FEProblem)
     # Create a dictionary between a node_id to
     # what dof types are in that node.
     eq_n = 1
-    for element in fp.mesh.elements
+    for (el_id, element) in fp.mesh.elements
         for vertex in element.vertices
             dof_types = doftypes(element, vertex)
             fp.node_doftypes[vertex] = dof_types

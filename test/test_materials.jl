@@ -1,11 +1,12 @@
 import FEM.stiffness
 import FEM.GaussPoint2
+import FEM.Point2
 
-facts("FEM.Material") do
+facts("FEM.AbstractMaterial") do
 
 context("FEM.Material.LinearIsotropic") do
     mat = LinearIsotropic(200e9, 0.3)
-    gp = GaussPoint2(Vec2(0.0, 0.0), 0.0)
+    gp = GaussPoint2(Point2(0.0, 0.0), 0.0)
     context("FEM.Material.LinearIsotropic.stiffness") do
 
         # Stiffness

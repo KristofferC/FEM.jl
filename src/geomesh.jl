@@ -77,7 +77,7 @@ immutable GeoTrig <: AbstractGeoElem2
 end
 
 
-GeoTrig(n::Int, v::Vector{Int}) = GeoTrig(n, Vertex3([v[1], v[2], v[3]]))
+GeoTrig(n::Int, v::Vector{Int}) = GeoTrig(n, Vertex3(v[1], v[2], v[3]))
 
 
 immutable GeoQuad <: AbstractGeoElem2
@@ -85,14 +85,14 @@ immutable GeoQuad <: AbstractGeoElem2
     vertices::Vertex4
 end
 
-GeoQuad(n::Int, v::Vector{Int}) = GeoQuad(n, Vertex4([v[1], v[2], v[3], v[4]]))
+GeoQuad(n::Int, v::Vector{Int}) = GeoQuad(n, Vertex4(v[1], v[2], v[3], v[4]))
 
 immutable GeoTetra <: AbstractGeoElem3
     n::Int
     vertices::Vertex4
 end
 
-GeoTetra(n::Int, v::Vector{Int}) = GeoTetra(n, Vertex3([v[1], v[2], v[3], v[4]]))
+GeoTetra(n::Int, v::Vector{Int}) = GeoTetra(n, Vertex3(v[1], v[2], v[3], v[4]))
 
 ########
 # Sets #

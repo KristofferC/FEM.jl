@@ -6,7 +6,8 @@ include("bilin_quad_element.jl")
 
 getindex(elem::AbstractFElement, i0::Real) = getindex(elem.vertices, i0)
 
-function stiffness(elem::AbstractFElement, nodes::Vector{FENode2}, material::Material)
+function stiffness(elem::AbstractFElement, nodes::Vector{FENode2},
+                   material::AbstractMaterial)
     Ke = zeros(elem.n_dofs, elem.n_dofs)
 
     for gp in elem.gps
@@ -32,7 +33,7 @@ function get_field(elem::AbstractFElement, nodes::Vector{FENode2})
 end
 
 
-function intf(elem::AbstractFElement, nodes::Vector{FENode2}, mat::Material)
+function intf(elem::AbstractFElement, nodes::Vector{FENode2}, mat::AbstractMaterial)
     f_int = zeros(elem.n_dofs)
     u = get_field(elem, nodes)
     for gp in elem.gps
@@ -46,7 +47,8 @@ function intf(elem::AbstractFElement, nodes::Vector{FENode2}, mat::Material)
 end
 
 
-function strain(elem::AbstractFElement, gp::AbstractGaussPoint, nodes::Vector{FENode2}, u::Vector{Float64})
+function strain(elem::AbstractFElement, gp::AbstractGaussPoint,
+                nodes::Vector{FENode2}, u::Vector{Float64})
     B = Bmatrix(elem, gp, nodes)
     return B * u
 end

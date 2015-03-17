@@ -24,21 +24,38 @@ function create_vtk_object(mesh::Mesh)
         elems_vtk[:InsertNextCell](elem_vtk)
     end
 
+   # Add displacements
+    disp_array = pycall(vtk.vtkDoubleArray, PyAny)
+    disp_array[:SetNumberOfComponents](3)
+    disp_array[:SetName]("Displacement")
+    disp_array[:SetNumberOfTuples](n_nodes)
+    for node in mesh.nodes:
+        # TODO: Remove hardcoding, should make like a
+        # get displacements in node class
+        disp = get_displacements(node)
+        disp_array[:SetTuple3](node.n, disp[1], disp[2], disp[3])
+    end
+
+
 
     # Create a polydata to store everything in
     polydata = pycall(vtk.vtkPolyData, PyAny)
 
+    point_data = polydata[:GetPointData]()
     # Add the points to the polydata object
-    polydata[:SetPoints](points)
+    point_data[:SetPoints](points)
 
     # Add the elements to the polydata object
-    polydata[:SetPolys](elems_vtk)
+    point_data[:SetPolys](elems_vtk)
+
+    # Add displacements
+    point_data[:AddArray](disp_array)
 
     return polydata
 end
 
 
-function write_vtk_file(mesh::Mesh, name::ASCIIString, write_ascii::Bool = false)
+function write_vtk_file(mesh::FEMesh, name::ASCIIString, write_ascii::Bool = false)
     polydata = create_vtk_object(mesh)
 
     writer = pycall(vtk.vtkXMLPolyDataWriter, PyAny)

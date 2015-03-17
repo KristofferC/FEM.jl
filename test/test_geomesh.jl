@@ -1,44 +1,44 @@
 facts("FEM.Mesh") do
 
-mesh = Mesh()
+mesh = GeoMesh()
 
 context("FEM.Mesh.Nodes") do
 
-node_1 = Node2([0, 0], 1)
-node_2 = Node2([1, 1], 2)
-node_3 = Node2([1, 2], 3)
-node_4 = Node2([0, 1], 4)
-addnode!(mesh, node_1)
-addnode!(mesh, node_2)
-addnode!(mesh, node_3)
-addnode!(mesh, node_4)
+node_1 = GeoNode2(1, [0, 0])
+node_2 = GeoNode2(2, [1, 1])
+node_3 = GeoNode2(3, [1, 2])
+node_4 = GeoNode2(4, [0, 1])
+push!(mesh, node_1)
+push!(mesh, node_2)
+push!(mesh, node_3)
+push!(mesh, node_4)
 
 @fact is(node_2, mesh.nodes[2]) => true
 @fact length(mesh.nodes) => 4
 
 end # context
 
-context("FEM.Mesh.Elements") do
+context("FEM.GeoMesh.Elements") do
 
 # Elements
-element_1 = LinTrig([1, 2, 3], 1)
-element_2 = LinTrig([1, 2, 4], 2)
-addelem!(mesh, element_1)
-addelem!(mesh, element_2)
+element_1 = GeoTrig(1, [1, 2, 3])
+element_2 = GeoTrig(2, [1, 2, 4])
+push!(mesh, element_1)
+push!(mesh, element_2)
 
 @fact length(mesh.elements) => 2
 @fact is(element_2, mesh.elements[2]) => true
 
 end # context
 
-context("FEM.Mesh.NodeSet") do
+context("FEM.GeoMesh.NodeSet") do
 
 # Sets
 bottom_set = NodeSet("y0", [1])
 top_set = NodeSet("x0", [2, 3])
 
-addnodeset!(mesh, bottom_set)
-addnodeset!(mesh, top_set)
+push!(mesh, bottom_set)
+push!(mesh, top_set)
 
 @fact length(mesh.node_sets) => 2
 @fact is(bottom_set, mesh.node_sets["y0"]) => true
@@ -49,11 +49,11 @@ node_s = gennodeset(x->x[1] > 0.5, "test", mesh.nodes)
 
 end # context
 
-context("FEM.Mesh.ElementSet") do
+context("FEM.GeoMesh.ElementSet") do
 
 # Element set
 element_set = ElementSet("all", [1, 2])
-addelemset!(mesh, element_set)
+push!(mesh, element_set)
 
 @fact length(mesh.node_sets) => 2
 @fact is(element_set, mesh.element_sets["all"]) => true

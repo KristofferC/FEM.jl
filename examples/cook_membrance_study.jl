@@ -3,15 +3,13 @@ import FEM.extload
 import FEM.assembleK
 import FEM.createdofs
 # Nodes
-n_ele = 128
+n_ele = 200
 mesh = gencook(n_ele, n_ele)
 
-addnodeset!(mesh, gennodeset(x->x[1]>47.9999, "right", mesh.nodes))
-addnodeset!(mesh, gennodeset(x->x[1]<0.000001, "left", mesh.nodes))
+push!(mesh, gennodeset(x->x[1]>47.9999, "right", mesh.nodes))
+push!(mesh, gennodeset(x->x[1]<0.000001, "left", mesh.nodes))
 
-
-
-addelemset!(mesh, ElementSet("all", collect(1:2*n_ele*n_ele)))
+push!(mesh, ElementSet("all", collect(1:2*n_ele*n_ele)))
 
 
 bcs =  [DirichletBC(0.0, [Du, Dv], mesh.node_sets["left"])]
@@ -20,15 +18,17 @@ loads =  [NodeLoad(0.0078, [Dv], mesh.node_sets["right"])]
 # Element set
 mat = LinearIsotropic(1, 0.3)
 section = Section(mat)
-addelemset!(section, mesh.element_sets["all"])
+push!(section, mesh.element_sets["all"])
 
-fp = FEProblem(mesh, bcs, loads, [section])
+fp = FEProblem(FEMesh(mesh), bcs, loads, [section])
 
 solver = NRSolver(1e-7, 2)
 
 
 
 solve(solver, fp)
+
+write_vtk_file(fp.FEMesh, "cook.jl", false)
 
 #=
 julia> @time include(".julia/v0.4/FEM/examples/cook_membrance_study.jl")
