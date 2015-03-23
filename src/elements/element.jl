@@ -28,11 +28,11 @@ function stiffness{T <: AbstractFElement,  P <: AbstractMaterial}(elem::T,
     n_dofs = get_ndofs(elem)
 
     for gp in elem.gps
-        #Be = Bmatrix(elem, gp, nodes)
+        Be = Bmatrix(elem, gp, nodes)
         De = stiffness(material, gp)
         dV = weight(elem, gp, nodes)
         A_mul_B!(elem.lts.DeBe, De, elem.lts.B)
-        #transpose!(elem.lts.Bet, Be)
+        transpose!(elem.lts.Bet, Be)
         A_mul_B!(elem.lts.Ke, elem.lts.Bet, elem.lts.DeBe)
         for i in 1:n_dofs
             for j in 1:n_dofs
