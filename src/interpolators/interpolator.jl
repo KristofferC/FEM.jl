@@ -1,9 +1,9 @@
-abstract Interpolator
+abstract AbstractInterpolator
 
 include("lin_trig_interp.jl")
 include("bilin_quad_interp.jl")
 
-function dNdxmatrix(interp::Interpolator, local_coords::Point2,
+function dNdxmatrix{T <: AbstractInterpolator}(interp::T, local_coords::Point2,
                     vertices::Vector{Int}, nodes::Vector{FENode2})
 
         dN = dNmatrix(interp, local_coords)
@@ -14,7 +14,8 @@ function dNdxmatrix(interp::Interpolator, local_coords::Point2,
 end
 
 
-function Jmatrix(interp::Interpolator, local_coords::Point2,
+#=
+function Jmatrix{T <: AbstractInterpolator}(::T, local_coords::Point2,
                  vertices::Vector{Int}, nodes::Vector{FENode2},
                  dN::Matrix{Float64})
 
@@ -22,8 +23,8 @@ function Jmatrix(interp::Interpolator, local_coords::Point2,
 
 
     for row in 1:size(dN, 1)
-        x = nodes[vertices[row]].coordinates[1]
-        y = nodes[vertices[row]].coordinates[2]
+        x = nodes[vertices[row]].coords[1]
+        y = nodes[vertices[row]].coords[2]
 
 
         J[1, 1] += dN[row, 1] * x
@@ -34,3 +35,4 @@ function Jmatrix(interp::Interpolator, local_coords::Point2,
 
     return J
 end
+=#

@@ -1,5 +1,3 @@
-import FEM.LinTrigStorage
-
 # Meshes a quadraterial area given by four corners with nx * xy * 2 triangles.
 
 # TODO: Add quadraterial option

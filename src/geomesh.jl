@@ -21,7 +21,7 @@ abstract AbstractGeoNode
 
 immutable GeoNode2 <: AbstractGeoNode
     n::Int
-    coordinates::Point2
+    coords::Point2
 end
 # Check size here?
 GeoNode2(n::Int, c::Vector{Float64}) = GeoNode2(n, Point2(c[1], c[2]))
@@ -29,7 +29,7 @@ GeoNode2(n::Int, c::Vector{Int}) = GeoNode2(n, convert(Vector{Float64}, c))
 
 immutable GeoNode3 <: AbstractGeoNode
     n::Int
-    coordinates::Point3
+    coords::Point3
 end
 
 # Check size here?
@@ -166,7 +166,7 @@ end
 function gennodeset(f::Function, name::ASCIIString, nodes::Vector{GeoNode2})
     node_ids = Int[]
     for node in nodes
-        if f(node.coordinates)
+        if f(node)
             push!(node_ids, node.n)
         end
     end

@@ -10,31 +10,30 @@ using FixedSizeArrays
 import Base.show
 macro lintpragma(s) end
 
-
-
-
 include("geomesh.jl")
-export GeoMesh, GeoTrig, GeoQuad, GeoTetra, GeoNode2, GeoNode3
+
 
 include("core.jl")
 
-export Node2, Node3, NodeSet, gennodeset, ElementSet, DirichletBC, NodeLoad, Du, Dv, Dw, Dof
-export Element, LinTrig, BilinQuad
-export Interpolator, LinTrigInterp
+export NodeSet, gennodeset, ElementSet, DirichletBC, NodeLoad, Du, Dv, Dw, Dof
+export FEMesh, FENode2, FENode3
+export GeoMesh, GeoTrig, GeoQuad, GeoNode3, GeoNode2
+export AbstractFElement, LinTrig #, BilinQuad
+export AbstractInterpolator, LinTrigInterp
 export AbstractMaterial, LinearIsotropic
-export  addnode!, addelem!, addelemset!, addnodeset!, addnodes!, Section
+export AbstractMaterialStatus, LinearIsotropicMS
+export FESection, MaterialSection, ElementSection
 export FEProblem
 export Solver, NRSolver, solve
 export meshquad, gencook
+export create_feproblem
 
 
 include("materials/material.jl")
 include("interpolators/interpolator.jl")
 include("elements/element.jl")
 
-
 include("femesh.jl")
-export FEMesh, FENode2, FENode3
 
 include("fe_problem.jl")
 include("solver.jl")

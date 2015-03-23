@@ -1,7 +1,7 @@
-immutable BilinQuadInterp <: Interpolator end
+immutable BilinQuadInterp <: AbstractInterpolator end
 
-# Shape functions in local coordinates
-function Nvec(interp::BilinQuadInterp, loc_coords::Vector{Float64})
+# Shape functions in local coords
+function Nvec(::BilinQuadInterp, loc_coords::Vector{Float64})
 
     ξ = loc_coords[1]
     η = loc_coords[2]
@@ -15,7 +15,7 @@ function Nvec(interp::BilinQuadInterp, loc_coords::Vector{Float64})
 end
 
 
-function dNmatrix(interp::BilinQuadInterp, loc_coords::Vector{Float64})
+function dNmatrix(::BilinQuadInterp, loc_coords::Vector{Float64})
     ξ = loc_coords[1]
     η = loc_coords[2]
 

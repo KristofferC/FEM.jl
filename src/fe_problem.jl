@@ -1,27 +1,66 @@
-import FEM.doftypes
-
 type FEProblem
-    mesh::FEMesh
     bcs::Vector{DirichletBC}
     loads::Vector{NodeLoad}
-    sections::Vector{Section}
+    sections::Vector{FESection}
     node_doftypes::Dict{Int, Vector{DofType}}
     node_doftype_bc::Dict{(Int, DofType), DirichletBC}
     n_eqs::Int
     n_fixed::Int
 end
 
-function FEProblem(mesh::FEMesh, bcs::Vector{DirichletBC}=Array(DirichletBC, 0),
-                    loads::Vector{NodeLoad}=Array(NodeLoad, 0), sections=Array(Section, 0))
+function FEProblem(bcs::Vector{DirichletBC}=Array(DirichletBC, 0),
+                    loads::Vector{NodeLoad}=Array(NodeLoad, 0), sections=Array(FESection, 0))
     node_doftype_bc = Dict{Int, Vector{DofType}}()
     node_doftypes = Dict{Int, Vector{DofType}}()
-    FEProblem(mesh, bcs, loads, sections, node_doftypes, node_doftype_bc, 0, 0)
+    FEProblem(bcs, loads, sections, node_doftypes, node_doftype_bc, 0, 0)
 end
 
 push!(fp::FEProblem, bc::DirichletBC) = push!(fp.bcs, bc)
 push!(fp::FEProblem, load::NodeLoad) = push!(fp.loads, load)
-push!(fp::FEProblem, sec::Section) = push!(fp.sections, section)
+push!(fp::FEProblem, section::FESection) = push!(fp.sections, section)
 
+
+function create_feproblem(geomesh, element_regions, material_regions, bcs, loads)
+
+    gps = Dict{DataType, Vector{GaussPoint2}} ()
+    interps = Dict{DataType, AbstractInterpolator} ()
+    storage = Dict{DataType, ElemStorage} ()
+    elem_types = Array(DataType, 0)
+
+    for element_region in element_regions
+        elem_type = element_region.element_type
+        interps[elem_type] = get_interp(elem_type)
+        gps[elem_type] = get_gps(elem_type)
+        storage[elem_type] = get_storage(elem_type)
+    end
+
+    nodes = Array(FENode2, 0)
+    for node in geomesh.nodes
+        push!(nodes, FENode2(node.n, node.coords))
+    end
+
+    sections = Array(FESection, 0)
+    for matregion in material_regions
+        material = matregion.material
+        for eleregion in element_regions
+            ele_type = eleregion.element_type
+            common = intersect(matregion.elements, eleregion.elements)
+            gps_ele = gps[ele_type]
+            elem_storage = storage[ele_type]
+            interp = interps[ele_type]
+            section = FESection(material, ele_type)
+            for ele_id in common
+                vertices = geomesh.elements[ele_id]
+               # mat_stat = create_matstat(typeof(material))
+                element = ele_type(vertices, gps_ele, ele_id, interp,
+                                   storage)
+                push!(section, element)
+            end
+            push!(sections, section)
+        end
+    end
+    fe = FEProblem(bcs, loads, sections)
+end
 
 function createdofs(fp::FEProblem)
 

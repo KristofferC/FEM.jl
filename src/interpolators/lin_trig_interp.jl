@@ -1,4 +1,4 @@
-immutable LinTrigInterp <: Interpolator
+immutable LinTrigInterp <: AbstractInterpolator
     N::Vector{Float64}
     dN::Matrix{Float64}
     dNdx::Matrix{Float64}
@@ -21,7 +21,7 @@ function LinTrigInterp()
 end
 
 
-# Shape functions in local coordinates
+# Shape functions in local coords
 function Nvec(interp::LinTrigInterp, loc_coords::Point2)
 
     ξ = loc_coords[1]
@@ -35,23 +35,23 @@ function Nvec(interp::LinTrigInterp, loc_coords::Point2)
 end
 
 
-function dNmatrix(interp::LinTrigInterp, loc_coords::Point2)
+function dNmatrix(interp::LinTrigInterp, ::Point2)
     return interp.dN
 end
 
-function Jmatrix(interp::LinTrigInterp, local_coords::Point2,
+function Jmatrix(interp::LinTrigInterp, ::Point2,
                  vertices::Vertex3, nodes::Vector{FENode2},
-                 dN::Matrix{Float64})
+                 ::Matrix{Float64})
 
 
 
-    x1 =  nodes[vertices[1]].coordinates.x
-    x2 =  nodes[vertices[2]].coordinates.x
-    x3 =  nodes[vertices[3]].coordinates.x
+    x1 =  nodes[vertices[1]].coords.x
+    x2 =  nodes[vertices[2]].coords.x
+    x3 =  nodes[vertices[3]].coords.x
 
-    y1 =  nodes[vertices[1]].coordinates.y
-    y2 =  nodes[vertices[2]].coordinates.y
-    y3 =  nodes[vertices[3]].coordinates.y
+    y1 =  nodes[vertices[1]].coords.y
+    y2 =  nodes[vertices[2]].coords.y
+    y3 =  nodes[vertices[3]].coords.y
 
     # Constant Jacobian
     interp.J[1, 1] = x1 - x3
@@ -67,27 +67,14 @@ function dNdxmatrix(interp::LinTrigInterp, local_coords::Point2,
 
         dN = dNmatrix(interp, local_coords)
         J = Jmatrix(interp, local_coords, vertices, nodes, dN)
-        invJt = inv2x2t!(J)
-
-        A_mul_B!(interp.dNdx, dN, invJt)
-        #dNdx = dN * invJt
-
+        A_mul_B!(interp.dNdx, dN, inv2x2t!(J))
         return interp.dNdx
 end
 
-function inv2x2t!(J::Matrix{Float64})
+@inline function inv2x2t!(J::Matrix{Float64})
     d = det2x2(J)
-    tmp = J[1,1]
-    J[1,1] = 1.0 / d * J[2,2]
-    J[2,2] = tmp / d
-
-    tmp = J[1,2]
-    J[1,2] = -J[2,1]/ d
-    J[2,1] = -tmp / d
-    return J
+    J[1,1], J[2,2] = J[2,2]/d, J[1,1]/d
+    J[1,2], J[2,1] = -J[2,1]/d, -J[1,2]/d
 end
 
-
-det2x2(J::Matrix{Float64}) = J[1,1]*J[2,2] - J[1,2]*J[2,1]
-
-
+@inline det2x2(J::Matrix{Float64}) = J[1,1]*J[2,2] - J[1,2]*J[2,1]

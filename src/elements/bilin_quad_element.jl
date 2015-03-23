@@ -1,4 +1,4 @@
-immutable BilinQuad <: AbstractFElement
+immutable BilinQuad{T <: AbstractMaterialStatus} <: AbstractFElement{T}
     vertices::Vertex4
     gps::Vector{GaussPoint2}
     n_dofs::Int
@@ -24,7 +24,7 @@ function BilinQuad(vertices::Vertex4, n)
 end
 
 
-function doftypes(elem::BilinQuad, vertex::Int)
+function doftypes(::BilinQuad, ::Int)
     return [Du, Dv]
 end
 

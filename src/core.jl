@@ -36,7 +36,7 @@ abstract AbstractFENode
 
 immutable FENode2 <: AbstractFENode
     n::Int
-    coordinates::Point2
+    coords::Point2
     dofs::Vector{Dof}
 end
 
@@ -53,7 +53,7 @@ end
 
 immutable FENode3 <: AbstractFENode
     n::Int
-    coordinates::Point3
+    coords::Point3
     dofs::Vector{Dof}
 end
 
@@ -61,9 +61,6 @@ FENode3(n::Int, c::Point3) = FENode2(n, c, Array(Dof, 0))
 # Check size here?
 FENode3(n::Int, c::Vector{Float64}) = FENode2(n, Point3(c[1], c[2], c[3]), Array(Dof, 0))
 FENode3(n::Int, c::Vector{Int}) = FENode2(n, convert(Vector{Float64}, c), Array(Dof, 0))
-
-
-
 
 
 

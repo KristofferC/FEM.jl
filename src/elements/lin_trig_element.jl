@@ -1,26 +1,31 @@
 abstract ElemStorage
 
-immutable LinTrigStorage <: ElemStorage
+type LinTrigStorage <: ElemStorage
     B::Matrix{Float64}
+    DeBe::Matrix{Float64}
+    Bet::Matrix{Float64}
+    Ke::Matrix{Float64}
 end
 
-LinTrigStorage() = LinTrigStorage(zeros(4, 6))
+LinTrigStorage() = LinTrigStorage(zeros(4, 6), zeros(4,6), zeros(6,4), zeros(6,6))
 
 immutable LinTrig <: AbstractFElement
     vertices::Vertex3
     gps::Vector{GaussPoint2}
-    n_dofs::Int
     n::Int
     interp::LinTrigInterp
     lts::LinTrigStorage
 end
 
-get_geoelem(::Type{LinTrig}) = GeoTrig(elem.n, vertices)
+get_geoelem(ele::LinTrig) = GeoTrig(ele.n, ele.vertices)
 get_storage(::Type{LinTrig}) = LinTrigStorage()
 get_interp(::Type{LinTrig}) = LinTrigInterp()
 get_gps(::Type{LinTrig}) = [GaussPoint2(Point2(1/3, 1/3), 0.5)]
 
 
+@inline function get_ndofs(::LinTrig)
+    return 6
+end
 
 function show(io::IO,elem::LinTrig)
     print(io, string("LinTrig", elem.vertices))
@@ -38,9 +43,7 @@ function LinTrig(v::Vector{Int}, n, interp::LinTrigInterp,
     LinTrig(Vertex3(v[1], v[2], v[3]), n, interp, lts, gps)
 end
 
-
-
-function doftypes(elem::LinTrig, vertex::Int)
+function doftypes(::LinTrig, ::Int)
     return [Du, Dv]
 end
 
