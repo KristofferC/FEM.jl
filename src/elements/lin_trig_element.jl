@@ -5,9 +5,11 @@ type LinTrigStorage <: ElemStorage
     DeBe::Matrix{Float64}
     Bet::Matrix{Float64}
     Ke::Matrix{Float64}
+    ɛ::Vector{Float64}
+    f_int::Vector{Float64}
 end
 
-LinTrigStorage() = LinTrigStorage(zeros(4, 6), zeros(4,6), zeros(6,4), zeros(6,6))
+LinTrigStorage() = LinTrigStorage(zeros(4, 6), zeros(4,6), zeros(6,4), zeros(6,6), zeros(4), zeros(6))
 
 immutable LinTrig <: AbstractFElement
     vertices::Vertex3

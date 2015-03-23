@@ -3,6 +3,10 @@
 # TODO: Add quadraterial option
 # TODO: Add test
 # TODO: Check if the corners does not represent a convex set.
+
+   # Node number for column i and row j
+
+
 function meshquad(nx::Int, ny::Int, corners::Matrix{Float64})
 
     if size(corners) != (2,4)
@@ -21,8 +25,8 @@ function meshquad(nx::Int, ny::Int, corners::Matrix{Float64})
     UR = corners[:,3]
     LR = corners[:,4]
 
-    # Node number for column i and row j
-    node_nr(i::Int, j::Int) =  (nx + 1) * (i-1) + j
+
+    @inline node_nr(i::Int, j::Int) = (nx + 1) * (i-1) + j
 
     # Add the nodes
     for i in 0:ny

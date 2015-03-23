@@ -140,8 +140,7 @@ function assembleK(fp::FEProblem)
     for section in fp.sections
         assemble_K_section(section, fp.nodes, dof_rows, dof_cols, k_values)
     end
-    K = Base.sparse(dof_rows, dof_cols, k_values, fp.n_eqs, fp.n_eqs)
-    return K
+    return Base.sparse(dof_rows, dof_cols, k_values, fp.n_eqs, fp.n_eqs)
 end
 
 function assemble_K_section{T<:AbstractFElement, P <: AbstractMaterial}(section::FESection{T,P}, nodes::Vector{FENode2},

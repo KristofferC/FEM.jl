@@ -26,22 +26,21 @@ function stiffness{T <: AbstractFElement,  P <: AbstractMaterial}(elem::T,
                                                                   nodes::Vector{FENode2},
                                                                   material::P)
     n_dofs = get_ndofs(elem)
-    Ke = zeros(n_dofs, n_dofs)
 
     for gp in elem.gps
-        Be = Bmatrix(elem, gp, nodes)
+        #Be = Bmatrix(elem, gp, nodes)
         De = stiffness(material, gp)
         dV = weight(elem, gp, nodes)
-        A_mul_B!(elem.lts.DeBe, De, Be)
-        transpose!(elem.lts.Bet, Be)
+        A_mul_B!(elem.lts.DeBe, De, elem.lts.B)
+        #transpose!(elem.lts.Bet, Be)
         A_mul_B!(elem.lts.Ke, elem.lts.Bet, elem.lts.DeBe)
         for i in 1:n_dofs
             for j in 1:n_dofs
-                Ke[i,j] += elem.lts.Ke[i,j] * dV
+                elem.lts.Ke[i,j] *= dV
             end
         end
     end
-    return Ke
+    return elem.lts.Ke
 end
 
 function get_field{T <: AbstractFElement}(elem::T, nodes::Vector{FENode2})
@@ -56,26 +55,29 @@ function get_field{T <: AbstractFElement}(elem::T, nodes::Vector{FENode2})
     return u
 end
 
-
 function intf{T <: AbstractFElement, P <: AbstractMaterial}(elem::T, mat::P, nodes::Vector{FENode2})
-    f_int = zeros(get_ndofs(elem))
     u = get_field(elem, nodes)
     for gp in elem.gps
         B = Bmatrix(elem, gp, nodes)
-        ɛ = B * u
-        σ = stress(mat, ɛ, gp)
+        transpose!(elem.lts.Bet, B)
+        A_mul_B!(elem.lts.ɛ, B, u)
+        #ɛ = B * u
+        σ = stress(mat, elem.lts.ɛ, gp)
         dV = weight(elem, gp, nodes)
-        f_int += B.' * σ * dV
+        A_mul_B!(elem.lts.f_int, elem.lts.Bet, σ)
+        for i in 1:get_ndofs(elem)
+            elem.lts.f_int[i] *= dV
+        end
     end
-    return f_int
+    return elem.lts.f_int
 end
 
 
-function strain{T <: AbstractFElement}(elem::T, gp::GaussPoint2,
-                nodes::Vector{FENode2}, u::Vector{Float64})
-    B = Bmatrix(elem, gp, nodes)
-    return B * u
-end
+#function strain{T <: AbstractFElement}(elem::T, gp::GaussPoint2,
+#                nodes::Vector{FENode2}, u::Vector{Float64})
+#    B = Bmatrix(elem, gp, nodes)
+#    return B * u
+#end
 
 function weight{T <: AbstractFElement}(elem::T, gp::GaussPoint2, nodes::Vector{FENode2})
     dN = dNmatrix(elem.interp, gp.local_coords)

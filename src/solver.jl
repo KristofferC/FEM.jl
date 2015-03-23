@@ -11,8 +11,6 @@ function solve(solver::NRSolver, fp::FEProblem)
     load = extload(fp)
     iteration = 0
 
-
-
     while true
         iteration += 1
         if iteration > solver.max_iters
@@ -21,15 +19,13 @@ function solve(solver::NRSolver, fp::FEProblem)
         end
 
         # TODO: Check signs and stuff here
-        #int_f = assemble_intf(fp)
-        force_unbalance = load  #- int_f
-        residual = norm(load ) / norm(load)
+        int_f = assemble_intf(fp)
+        force_unbalance = load - int_f
+        residual = norm(load + int_f) / norm(load)
 
 
         println("\t\tIteration $iteration, relative residual $residual")
 
-        #println(load)
-        #println(int_f)
         if residual < solver.tol
             println("Converged!")
             break
@@ -37,7 +33,6 @@ function solve(solver::NRSolver, fp::FEProblem)
 
         K = assembleK(fp)
 
-        println(norm(K - K', 1))
 
         #print(K)
         #println(force_unbalance)
@@ -46,6 +41,5 @@ function solve(solver::NRSolver, fp::FEProblem)
         println(force_unbalance' * du)
 
         updatedofs!(fp, du)
-        break
     end
 end

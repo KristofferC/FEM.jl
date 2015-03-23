@@ -3,6 +3,7 @@ abstract AbstractInterpolator
 include("lin_trig_interp.jl")
 include("bilin_quad_interp.jl")
 
+
 function dNdxmatrix{T <: AbstractInterpolator}(interp::T, local_coords::Point2,
                     vertices::Vector{Int}, nodes::Vector{FENode2})
 
