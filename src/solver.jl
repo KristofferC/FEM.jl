@@ -22,7 +22,7 @@ function solve(solver::NRSolver, fp::FEProblem)
 
         # TODO: Check signs and stuff here
         #int_f = assemble_intf(fp)
-        force_unbalance = load # - int_f
+        force_unbalance = load  #- int_f
         residual = norm(load ) / norm(load)
 
 

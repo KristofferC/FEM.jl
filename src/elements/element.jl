@@ -25,7 +25,8 @@ end
 function stiffness{T <: AbstractFElement,  P <: AbstractMaterial}(elem::T,
                                                                   nodes::Vector{FENode2},
                                                                   material::P)
-    Ke = zeros(elem.n_dofs, elem.n_dofs)
+    n_dofs = get_ndofs(elem)
+    Ke = zeros(n_dofs, n_dofs)
 
     for gp in elem.gps
         Be = Bmatrix(elem, gp, nodes)
@@ -34,8 +35,8 @@ function stiffness{T <: AbstractFElement,  P <: AbstractMaterial}(elem::T,
         A_mul_B!(elem.lts.DeBe, De, Be)
         transpose!(elem.lts.Bet, Be)
         A_mul_B!(elem.lts.Ke, elem.lts.Bet, elem.lts.DeBe)
-        for i in 1:elem.n_dofs
-            for j in 1:elem.n_dofs
+        for i in 1:n_dofs
+            for j in 1:n_dofs
                 Ke[i,j] += elem.lts.Ke[i,j] * dV
             end
         end
@@ -44,7 +45,7 @@ function stiffness{T <: AbstractFElement,  P <: AbstractMaterial}(elem::T,
 end
 
 function get_field{T <: AbstractFElement}(elem::T, nodes::Vector{FENode2})
-    u = zeros(elem.n_dofs)
+    u = zeros(get_ndofs(elem))
     i = 1
     for vert in elem.vertices
         for dof in nodes[vert].dofs
@@ -57,7 +58,7 @@ end
 
 
 function intf{T <: AbstractFElement, P <: AbstractMaterial}(elem::T, mat::P, nodes::Vector{FENode2})
-    f_int = zeros(elem.n_dofs)
+    f_int = zeros(get_ndofs(elem))
     u = get_field(elem, nodes)
     for gp in elem.gps
         B = Bmatrix(elem, gp, nodes)

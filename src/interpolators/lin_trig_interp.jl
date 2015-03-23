@@ -75,6 +75,7 @@ end
     d = det2x2(J)
     J[1,1], J[2,2] = J[2,2]/d, J[1,1]/d
     J[1,2], J[2,1] = -J[2,1]/d, -J[1,2]/d
+    return J
 end
 
 @inline det2x2(J::Matrix{Float64}) = J[1,1]*J[2,2] - J[1,2]*J[2,1]
