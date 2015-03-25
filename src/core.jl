@@ -40,12 +40,16 @@ immutable FENode2 <: AbstractFENode
     dofs::Vector{Dof}
 end
 
+#TODO: Dispatch on dimension
 FENode2(n::Int, c::Point2) = FENode2(n, c, Array(Dof, 0))
 # Check size here?
-FENode2(n::Int, c::Vector{Float64}) = FENode2(n, Point2(c[1], c[2]), Array(Dof, 0))
-FENode2(n::Int, c::Vector{Int}) = FENode2(n, convert(Vector{Float64}, c), Array(Dof, 0))
+#FENode2(n::Int, c::Vector{Float64}) = FENode2(n, Point2(c[1], c[2]), Array(Dof, 0))
+function FENode2{T <: Number}(n::Int, c::Vector{T})
+    c_v = convert(Vector{Float64}, c)
+    FENode2(n, Point2(c[1], c[2]), Array(Dof, 0))
+end
 
-# TODO: Fix hard coded
+# TODO: Move
 function get_displacement(node::FENode2)
     return Point3(node.dofs[1].value, node.dofs[2].value, 0.0)
 end
@@ -59,9 +63,12 @@ end
 
 FENode3(n::Int, c::Point3) = FENode2(n, c, Array(Dof, 0))
 # Check size here?
-FENode3(n::Int, c::Vector{Float64}) = FENode2(n, Point3(c[1], c[2], c[3]), Array(Dof, 0))
-FENode3(n::Int, c::Vector{Int}) = FENode2(n, convert(Vector{Float64}, c), Array(Dof, 0))
-
+#FENode3(n::Int, c::Vector{Float64}) = FENode2(n, Point3(c[1], c[2], c[3]), Array(Dof, 0))
+#FENode3(n::Int, c::Vector{Int}) = FENode2(n, convert(Vector{Float64}, c), Array(Dof, 0))
+function FENode3{T <: Number}(n::Int, c::Vector{T})
+    c_v = convert(Vector{Float64}, c)
+    FENode2(n, Point3(c[1], c[2], c[3]), Array(Dof, 0))
+end
 
 
 # TODO: Add more sets

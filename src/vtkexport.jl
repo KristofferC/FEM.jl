@@ -8,7 +8,7 @@ function create_vtk_object(mesh::Mesh)
     # Add points to vtkPoints
     points = pycall(vtk.vtkPoints, PyAny)
     for node in mesh.nodes
-        d_coords = node.coordinates
+        d_coords = node.coords
         push!(d_coords, 0)
         points[:InsertNextPoint](d_coords[1], d_coords[2], d_coords[3])
     end

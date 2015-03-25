@@ -41,7 +41,7 @@ context("FEM.FEProblem.") do
 
     solver = NRSolver(1e-7, 5)
     solve(solver, fp)
-    #=
+
     load = extload(fp)
 
     int_f = assemble_intf(fp)
@@ -54,7 +54,7 @@ context("FEM.FEProblem.") do
     load = extload(fp)
     int_f = assemble_intf(fp)
     @fact norm(load - int_f) / norm(load) => roughly(0.0, 10.0^(-10))
-    =#
+
 
 end # context
 

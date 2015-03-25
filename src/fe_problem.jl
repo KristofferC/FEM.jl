@@ -59,6 +59,8 @@ function create_feproblem(geomesh, element_regions, material_regions, bcs, loads
                 element = ele_type(vertices, gps_ele, ele_id, interp,
                                    elem_storage)
                 push!(section, element)
+
+                addmatstat!(material, element)
             end
             push!(sections, section)
         end
@@ -66,18 +68,24 @@ function create_feproblem(geomesh, element_regions, material_regions, bcs, loads
     fe = FEProblem(nodes, bcs, loads, sections)
 end
 
+function set_dof_types_section!{T<:AbstractFElement, P <: AbstractMaterial}(section::FESection{T,P},
+                                       node_doftypes::Dict{Int, Vector{DofType}})
+    for element in values(section.elements)
+        for vertex in element.vertices
+            dof_types = doftypes(element, vertex)
+            node_doftypes[vertex] = dof_types
+        end
+    end
+end
+
+
 function createdofs(fp::FEProblem)
 
     # Create a dictionary between a node_id to
     # what dof types are in that node.
     eq_n = 1
     for section in fp.sections
-        for element in values(section.elements)
-            for vertex in element.vertices
-                dof_types = doftypes(element, vertex)
-                fp.node_doftypes[vertex] = dof_types
-            end
-        end
+        set_dof_types_section!(section, fp.node_doftypes)
     end
 
     # Create a dictionary between a tuple of node_id

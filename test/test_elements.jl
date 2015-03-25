@@ -1,20 +1,26 @@
 import FEM.stiffness
 import FEM.Bmatrix
-
+import FEM.get_gps
+import FEM.get_interp
+import FEM.get_storage
+import FEM.Vertex3
 facts("FEM.Element") do
 
 
 context("FEM.Element.LinTrig") do
 
 
-    nodes = [Node2([0, 0], 1), Node2([1, 1], 2), Node2([1, 2], 3)]
+    nodes = [FENode2(1, [0, 0]), FENode2(2, [1, 1]), FENode2(3, [1, 2])]
 
-    elem = LinTrig([1, 2, 3], 1)
+    # Create the gps, interpolator, storage...
 
+    gps = get_gps(LinTrig)
+    interp = get_interp(LinTrig)
+    storage = get_storage(LinTrig)
+    elem = LinTrig(Vertex3(1, 2, 3), gps, 1, interp, storage)
     mat = LinearIsotropic(200e9, 0.3)
 
     Ke = stiffness(elem, nodes, mat)
-
 
     # Calculated with plante([0.0, 1.0, 1.0], [0.0, 1.0, 2.0], [2, 1], hooke(2, 200e9, 0.3))
     Ke_calfem =  1.0e+11 * [
@@ -29,12 +35,12 @@ context("FEM.Element.LinTrig") do
 
 end # context
 
-
+#=
 context("FEM.Element.BilinQuad") do
 
-    nodes = [Node2([0.0, 0.0], 1), Node2([1.0, 0.0], 2), Node2([1.0, 2.5], 3), Node2([0.0, 1.5], 4)]
+    nodes = [Node2(1, [0.0, 0.0]), Node2(2, [1.0, 0.0]), Node2(3, [1.0, 2.5]), Node2(4, [0.0, 1.5])]
 
-    elem = BilinQuad([1, 2, 3, 4], 1)
+    elem = BilinQuad(Vertex4(1, 2, 3, 4), 1)
 
     mat = LinearIsotropic(200e9, 0.3)
 
@@ -56,5 +62,6 @@ context("FEM.Element.BilinQuad") do
 
 
 end # context
+=#
 
 end # facts

@@ -31,14 +31,9 @@ function stiffness{T <: AbstractFElement,  P <: AbstractMaterial}(elem::T,
         Be = Bmatrix(elem, gp, nodes)
         De = stiffness(material, gp)
         dV = weight(elem, gp, nodes)
-        A_mul_B!(elem.lts.DeBe, De, elem.lts.B)
-        transpose!(elem.lts.Bet, Be)
-        A_mul_B!(elem.lts.Ke, elem.lts.Bet, elem.lts.DeBe)
-        for i in 1:n_dofs
-            for j in 1:n_dofs
-                elem.lts.Ke[i,j] *= dV
-            end
-        end
+        A_mul_B!(elem.lts.DeBe, De, Be)
+        At_mul_B!(elem.lts.Ke, Be, elem.lts.DeBe)
+        scale!(elem.lts.Ke, dV)
     end
     return elem.lts.Ke
 end
@@ -59,25 +54,16 @@ function intf{T <: AbstractFElement, P <: AbstractMaterial}(elem::T, mat::P, nod
     u = get_field(elem, nodes)
     for gp in elem.gps
         B = Bmatrix(elem, gp, nodes)
-        transpose!(elem.lts.Bet, B)
         A_mul_B!(elem.lts.ɛ, B, u)
-        #ɛ = B * u
+
         σ = stress(mat, elem.lts.ɛ, gp)
         dV = weight(elem, gp, nodes)
-        A_mul_B!(elem.lts.f_int, elem.lts.Bet, σ)
-        for i in 1:get_ndofs(elem)
-            elem.lts.f_int[i] *= dV
-        end
+        At_mul_B!(elem.lts.f_int, B, σ)
+        scale!(elem.lts.f_int, dV)
     end
     return elem.lts.f_int
 end
 
-
-#function strain{T <: AbstractFElement}(elem::T, gp::GaussPoint2,
-#                nodes::Vector{FENode2}, u::Vector{Float64})
-#    B = Bmatrix(elem, gp, nodes)
-#    return B * u
-#end
 
 function weight{T <: AbstractFElement}(elem::T, gp::GaussPoint2, nodes::Vector{FENode2})
     dN = dNmatrix(elem.interp, gp.local_coords)

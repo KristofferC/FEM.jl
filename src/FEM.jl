@@ -2,12 +2,13 @@ module FEM
 
 import Base.push!
 
+import Base.show
+
 using Compat
 using FixedSizeArrays
 #using PyCall
 #@pyimport vtk
 
-import Base.show
 macro lintpragma(s) end
 
 include("geomesh.jl")
@@ -28,6 +29,13 @@ export FEProblem
 export Solver, NRSolver, solve
 export meshquad, gencook
 export create_feproblem
+export exportVTK
+
+#using Logging
+
+#@Logging.configure(level=DEBUG, filename="log.log")
+
+
 
 
 include("materials/material.jl")
@@ -37,7 +45,7 @@ include("femesh.jl")
 include("fe_problem.jl")
 include("solver.jl")
 include("mesh_generators/quad_mesher.jl")
-#include("vtkexport.jl")
+include("vtkexport_jul.jl")
 
 
 end
