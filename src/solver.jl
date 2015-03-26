@@ -35,5 +35,6 @@ function solve(solver::NRSolver, fp::FEProblem)
 
         updatedofs!(fp, du)
     end
+    update_feproblem(fp)
 end
 

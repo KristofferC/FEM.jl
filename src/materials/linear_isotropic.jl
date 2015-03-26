@@ -1,4 +1,10 @@
-immutable LinearIsotropic <: AbstractMaterial
+immutable LinearIsotropicMS <:AbstractMaterialStatus
+    strain::Vector{Float64}
+    stress::Vector{Float64}
+end
+
+
+type LinearIsotropic <: AbstractMaterial
     E::Float64
     ν::Float64
     G::Float64
@@ -10,13 +16,9 @@ end
 
 
 
-function addmatstat!{T <: AbstractFElement}(mat::LinearIsotropic, ele::T)
-    mat_stats = Array(LinearIsotropicMS, 0)
-    # One material status per Gauss Point
-    for i in 1:length(elem.gps)
-        mat_stats[i] = create_matstat(mat)
-    end
-    mat.matstats[ele.n] = mat_stats
+function addmatstat!(mat::LinearIsotropic, i::Int)
+    push!(mat.matstats[i], create_matstat(typeof(mat)))
+    push!(mat.temp_matstats[i], create_matstat(typeof(mat)))
 end
 
 
@@ -31,22 +33,22 @@ function LinearIsotropic(E, ν)
 
     # Off diagonals
     k[1, 2] = k[1, 3] = k[2, 1] = k[2, 3] = k[3, 1] = k[3, 2] = f * ν
-    LinearIsotropic(E, ν, G, k, zeros(4))
+
+    matstats = Dict{Int, Vector{LinearIsotropicMS}}()
+    temp_matstats = Dict{Int, Vector{LinearIsotropicMS}}()
+    LinearIsotropic(E, ν, G, k, zeros(4), matstats, temp_matstats)
 end
 stiffness(mat::LinearIsotropic, ::GaussPoint2) = mat.k
 
-function stress(mat::LinearIsotropic, ɛ::Vector{Float64}, gp::GaussPoint2)
+function stress(mat::LinearIsotropic, ɛ::Vector{Float64}, gp::GaussPoint2, j::Int)
     D = stiffness(mat, gp)
     A_mul_B!(mat.σ, D, ɛ)
+
     return mat.σ
 end
 
-create_matstat(::Type{LinearIsotropic}) = LinearIsotropicMS()
 
-immutable LinearIsotropicMS <:AbstractMaterialStatus
-    strain::Vector{Float64}
-    stress::Vector{Float64}
-end
 LinearIsotropicMS() = LinearIsotropicMS(zeros(9), zeros(9))
 
-update(mat::LinearIsotropic) = mat.matstat = mat.temp_matstat
+create_matstat(::Type{LinearIsotropic}) = LinearIsotropicMS()
+update(mat::LinearIsotropic) = mat.matstats = mat.temp_matstats

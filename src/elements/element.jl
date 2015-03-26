@@ -52,14 +52,18 @@ end
 
 function intf{T <: AbstractFElement, P <: AbstractMaterial}(elem::T, mat::P, nodes::Vector{FENode2})
     u = get_field(elem, nodes)
-    for gp in elem.gps
+    for (i, gp) in enumerate(elem.gps)
         B = Bmatrix(elem, gp, nodes)
         A_mul_B!(elem.lts.ɛ, B, u)
 
-        σ = stress(mat, elem.lts.ɛ, gp)
+        σ = stress(mat, elem.lts.ɛ, gp, elem.n)
         dV = weight(elem, gp, nodes)
         At_mul_B!(elem.lts.f_int, B, σ)
         scale!(elem.lts.f_int, dV)
+            # Store in matstat
+
+        copy!(mat.temp_matstats[elem.n][i].strain, elem.lts.ɛ)
+        copy!(mat.temp_matstats[elem.n][i].stress, σ)
     end
     return elem.lts.f_int
 end

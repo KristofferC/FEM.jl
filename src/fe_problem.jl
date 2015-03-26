@@ -59,8 +59,11 @@ function create_feproblem(geomesh, element_regions, material_regions, bcs, loads
                 element = ele_type(vertices, gps_ele, ele_id, interp,
                                    elem_storage)
                 push!(section, element)
-
-                addmatstat!(material, element)
+                material.matstats[element.n] = Array(LinearIsotropicMS, 0)
+                material.temp_matstats[element.n] = Array(LinearIsotropicMS, 0)
+                for i in 1:length(gps_ele)
+                    addmatstat!(material, element.n)
+                end
             end
             push!(sections, section)
         end
@@ -202,40 +205,6 @@ function assemble_intf_section{T<:AbstractFElement, P <: AbstractMaterial}(secti
     end
 end
 
-#=
-function assemble_intf(fp::FEProblem)
-    int_forces = intf(fp)
-    int_forces_assem = zeros(fp.n_eqs)
-    for node in fp.nodes
-        for dof in node.dofs
-            if dof.active
-                int_forces_assem[dof.eq_n] += int_forces[dof.id]
-            end
-        end
-    end
-    return int_forces_assem
-end
-
-function intf(fp::FEProblem)
-    fint = zeros(fp.n_eqs + fp.n_fixed)
-    for section in fp.sections
-        assemble
-        mat = section.material
-        for element in values(section.elements)
-            finte = intf(element, mat, fp.nodes)
-            i = 1
-            for vertex in element.vertices
-                for dof in fp.nodes[vertex].dofs
-                    fint[dof.id] += finte[i]
-                    i+=1
-                end
-            end
-        end
-    end
-    return fint
-end
-=#
-
 function updatedofs!(fp::FEProblem, du::Vector{Float64})
     for node in fp.nodes
         for dof in node.dofs
@@ -246,9 +215,15 @@ function updatedofs!(fp::FEProblem, du::Vector{Float64})
     end
 end
 
+function update_feproblem(fp::FEProblem)
+    for section in fp.sections
+        update_section(section)
+    end
+end
 
-
-
+function update_section{T<:AbstractFElement, P <: AbstractMaterial}(section::FESection{T, P})
+    update(section.material)
+end
 
 function assemble_dry(fp::FEProblem)
     dof_rows = Array(Int, 0)

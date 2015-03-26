@@ -15,7 +15,7 @@ function exportVTK(fp::FEProblem, filename)
     println(fid, "# vtk DataFile Version 3.0");
     println(fid, "FEM.jl export");
     println(fid, "ASCII\n");
-    println(fid, "DATASET POLYDATA");
+    println(fid, "DATASET UNSTRUCTURED_GRID");
 
     println(fid, "POINTS $(length(fp.nodes)) double");
     for node in fp.nodes
@@ -52,14 +52,51 @@ function exportVTK(fp::FEProblem, filename)
         print(fid, u.z, "\n")
     end
 
-    print(fid,"CELL_DATA ",length(scalars),"\n");
-    print(fid,"TENSORS ", strain," double\n");
-    for section in fp.sections
-        for element in values(section.elements)
-            element.ms.get_strain()
+    print(fid, "\nCELL_DATA $(nr_of_elements)\n");
 
+    println(fid, "\nTENSORS Strain double");
+    strain_buf = zeros(3,3)
+     for section in fp.sections
+        mat = section.material
+        for element in values(section.elements)
+            mat_stats = mat.matstats[element.n]
+            strain = mat.matstats[element.n][1].strain
+            strain_buf[1,1] = strain[1]
+            strain_buf[2,2] = strain[2]
+            strain_buf[3,3] = strain[3]
+            strain_buf[1,3] = strain[3,1] = strain[4]
+
+            print(fid, "$(strain_buf)"[2:end-2]);
+            print(fid, "\n");
         end
     end
+
+
+    println(fid, "\nTENSORS Stress double");
+    stress_buf = zeros(3,3)
+     for section in fp.sections
+        mat = section.material
+        for element in values(section.elements)
+            mat_stats = mat.matstats[element.n]
+            stress = mat.matstats[element.n][1].stress
+            stress_buf[1,1] = stress[1]
+            stress_buf[2,2] = stress[2]
+            stress_buf[3,3] = stress[3]
+            stress_buf[1,3] = stress[3,1] = stress[4]
+
+            print(fid, "$(stress_buf)"[2:end-2]);
+            print(fid, "\n");
+        end
+    end
+
+
+    #print(fid, "\nCELL_DATA $(nr_of_elements)\n");
+
+    #print(fid,"TENSORS ", strain," double\n");
+    #for section in fp.sections
+    #    matstats = section.material.matstats
+    #    end
+    #end
 
     close(fid);
 end

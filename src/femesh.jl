@@ -2,6 +2,7 @@
 ##########
 # FEMesh #
 ##########
+#=
 abstract AbstractFEMesh
 
 immutable FEMesh <: AbstractFEMesh
@@ -28,7 +29,6 @@ function FEMesh(geomesh::GeoMesh)
         elem_type = Type{elem}
         if !(elem_type in elem_types)
             push!(elem_types, elem_type)
-            #elements[elem_type] = Array(elem, 0)
             interps[elem_type] = get_interp(elem)
             gps[elem_type] = get_gps(elem)
             storage[elem_type] = get_storage(elem)
@@ -50,6 +50,7 @@ end
 function show(io::IO,mesh::FEMesh)
     print(io, string("FEMesh, ", length(mesh.elements)))
 end
+=#
 
 immutable FESection{P <: AbstractFElement, T <: AbstractMaterial}
     elements::Dict{Int, P}
@@ -83,13 +84,14 @@ function push!(section::FESection, elem::AbstractFElement)
     section.elements[elem.n] = elem
 end
 
-function push!(section::MaterialSection, elemset::ElementSet)
+
+function push!{P <: AbstractMaterial}(section::MaterialSection{P}, elemset::ElementSet)
     for i in elemset.element_ids
         push!(section.elements, i)
     end
 end
 
-function push!(section::ElementSection, elemset::ElementSet)
+function push!{P <: AbstractFElement}(section::ElementSection{P}, elemset::ElementSet)
     for i in elemset.element_ids
         push!(section.elements, i)
     end
