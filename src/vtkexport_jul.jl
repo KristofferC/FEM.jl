@@ -66,7 +66,7 @@ function exportVTK(fp::FEProblem, filename)
             strain_buf[3,3] = strain[3]
             strain_buf[1,3] = strain[3,1] = strain[4]
 
-            print(fid, "$(strain_buf)"[2:end-2]);
+            print(fid, "$(strain_buf)"[2:end-1]);
             print(fid, "\n");
         end
     end
@@ -84,7 +84,7 @@ function exportVTK(fp::FEProblem, filename)
             stress_buf[3,3] = stress[3]
             stress_buf[1,3] = stress[3,1] = stress[4]
 
-            print(fid, "$(stress_buf)"[2:end-2]);
+            print(fid, "$(stress_buf)"[2:end-1]);
             print(fid, "\n");
         end
     end

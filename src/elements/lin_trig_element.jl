@@ -76,5 +76,5 @@ end
 function weight(elem::LinTrig, gp::GaussPoint2, nodes::Vector{FENode2})
     dN = dNmatrix(elem.interp, gp.local_coords)
     J = Jmatrix(elem.interp, gp.local_coords, elem.vertices, nodes, dN)
-    return det2x2(J) * gp.weight
+    return abs(det2x2(J)) * gp.weight
 end

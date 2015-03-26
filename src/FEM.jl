@@ -6,6 +6,7 @@ import Base.show
 
 using Compat
 using FixedSizeArrays
+using GeometryTypes
 #using Devectorize
 #using PyCall
 #@pyimport vtk

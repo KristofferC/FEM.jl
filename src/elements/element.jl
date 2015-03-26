@@ -56,7 +56,7 @@ function intf{T <: AbstractFElement, P <: AbstractMaterial}(elem::T, mat::P, nod
         B = Bmatrix(elem, gp, nodes)
         A_mul_B!(elem.lts.ɛ, B, u)
 
-        σ = stress(mat, elem.lts.ɛ, gp, elem.n)
+        σ = stress(mat, elem.lts.ɛ, gp)
         dV = weight(elem, gp, nodes)
         At_mul_B!(elem.lts.f_int, B, σ)
         scale!(elem.lts.f_int, dV)

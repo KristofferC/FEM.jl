@@ -40,10 +40,9 @@ function LinearIsotropic(E, ν)
 end
 stiffness(mat::LinearIsotropic, ::GaussPoint2) = mat.k
 
-function stress(mat::LinearIsotropic, ɛ::Vector{Float64}, gp::GaussPoint2, j::Int)
+function stress(mat::LinearIsotropic, ɛ::Vector{Float64}, gp::GaussPoint2)
     D = stiffness(mat, gp)
     A_mul_B!(mat.σ, D, ɛ)
-
     return mat.σ
 end
 
