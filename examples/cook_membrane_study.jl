@@ -4,7 +4,7 @@ using FEM
 # Nodes
 
 # Generate geomesh and node / elementsets
-n_ele = 80
+n_ele = 10
 
 geomesh = gencook(n_ele, n_ele)
 push!(geomesh, gennodeset(n->n.coords[1]>=48.0, "right", geomesh.nodes))

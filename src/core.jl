@@ -50,9 +50,10 @@ function FENode2{T <: Number}(n::Int, c::Vector{T})
 end
 
 # TODO: Move
-function get_displacement(node::FENode2)
-    return Point3(node.dofs[1].value, node.dofs[2].value, 0.0)
-end
+
+
+get_coord(node::FENode2) = Point3(node.coords[1], node.coords[2], 0.0)
+get_displacement(node::FENode2) = Point3(node.dofs[1].value, node.dofs[2].value, 0.0)
 
 
 immutable FENode3 <: AbstractFENode

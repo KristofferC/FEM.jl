@@ -2,7 +2,7 @@
 # https://groups.google.com/forum/#!topic/julia-users/d6CEi2VFV94
 
 ##### exportVTK
-function exportVTK(fp::FEProblem, filename)
+function exportVTK(fp::FEProblem, filename, ascii::Bool=false)
 
     nr_of_elements = 0
     for section in fp.sections
@@ -14,43 +14,73 @@ function exportVTK(fp::FEProblem, filename)
     #ASCII file header
     println(fid, "# vtk DataFile Version 3.0");
     println(fid, "FEM.jl export");
-    println(fid, "ASCII\n");
+    if ascii
+        println(fid, "ASCII\n");
+    else
+        println(fid, "BINARY\n");
+    end
     println(fid, "DATASET UNSTRUCTURED_GRID");
 
     println(fid, "POINTS $(length(fp.nodes)) double");
     for node in fp.nodes
-        print(fid, node.coords.x, " ");
-        print(fid, node.coords.y, " ");
-        print(fid, 0.0, "\n");
+        c = get_coord(node)
+        if ascii
+            print(fid, c.x, " ");
+            print(fid, c.y, " ");
+            print(fid, c.z, "\n");
+        else
+           write(fid, bswap(c.x))
+           write(fid, bswap(c.y))
+           write(fid, bswap(c.z))
+       end
     end
 
-    print(fid,"\nCELLS ",nr_of_elements," " ,nr_of_elements * (3+1),"\n");
 
+    println(fid,"CELLS ",nr_of_elements," " ,nr_of_elements * (3+1));
     for section in fp.sections
         for element in values(section.elements)
-            print(fid, 3, " ");
-            print(fid, element.vertices.v1-1, " ");
-            print(fid, element.vertices.v2-1, " ");
-            print(fid, element.vertices.v3-1, "\n");
+            if ascii
+                print(fid, 3, " ");
+                print(fid, element.vertices.v1-1, " ");
+                print(fid, element.vertices.v2-1, " ");
+                print(fid, element.vertices.v3-1, "\n");
+            else
+                write(fid, bswap(3))
+                write(fid, bswap(element.vertices.v1-1))
+                write(fid, bswap(element.vertices.v2-1))
+                write(fid, bswap(element.vertices.v3-1))
+            end
         end
     end
 
-    print(fid,"\nCELL_TYPES ",nr_of_elements,"\n");
+    println(fid,"CELL_TYPES ",nr_of_elements);
     for section in fp.sections
         for element in values(section.elements)
-            print(fid, 5, "\n")
+            if ascii
+                print(fid, 5, "\n")
+            else
+                write(fid, bswap(5))
+            end
         end
     end
 
+#=
     print(fid, "\nPOINT_DATA $(length(fp.nodes))\n");
 
     println(fid, "\nVECTORS Displacement double");
     for node in fp.nodes
         u = get_displacement(node)
-        print(fid, u.x, " ")
-        print(fid, u.y, " ")
-        print(fid, u.z, "\n")
+        if ascii
+            print(fid, u.x, " ")
+            print(fid, u.y, " ")
+            print(fid, u.z, "\n")
+        else
+            write(fid, bswap(u.x))
+            write(fid, bswap(u.y))
+            write(fid, bswap(u.z))
+        end
     end
+
 
     print(fid, "\nCELL_DATA $(nr_of_elements)\n");
 
@@ -66,7 +96,7 @@ function exportVTK(fp::FEProblem, filename)
             strain_buf[3,3] = strain[3]
             strain_buf[1,3] = strain[3,1] = strain[4]
 
-            print(fid, "$(strain_buf)"[2:end-2]);
+            print(fid, "$(strain_buf)"[2:end-1]);
             print(fid, "\n");
         end
     end
@@ -84,7 +114,7 @@ function exportVTK(fp::FEProblem, filename)
             stress_buf[3,3] = stress[3]
             stress_buf[1,3] = stress[3,1] = stress[4]
 
-            print(fid, "$(stress_buf)"[2:end-2]);
+            print(fid, "$(stress_buf)"[2:end-1]);
             print(fid, "\n");
         end
     end
@@ -97,6 +127,7 @@ function exportVTK(fp::FEProblem, filename)
     #    matstats = section.material.matstats
     #    end
     #end
+    =#
 
     close(fid);
 end
