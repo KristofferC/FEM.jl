@@ -19,8 +19,8 @@ function solve(solver::NRSolver, fp::FEProblem)
         end
 
         int_f = assemble_intf(fp)
-        force_imbalance = int_f - load
-        residual = norm(int_f + load) / norm(load)
+        force_imbalance = load - int_f
+        residual = norm(force_imbalance) / norm(load)
 
         println("\t\tIteration $iteration, relative residual $residual")
 
@@ -30,8 +30,7 @@ function solve(solver::NRSolver, fp::FEProblem)
         end
 
         K = assembleK(fp)
-        du = K \ force_imbalance
-        #du = cholfact(Symmetric(-K, :L)) \ force_imbalance
+        du = cholfact(Symmetric(K, :L)) \ force_imbalance
 
         updatedofs!(fp, du)
     end

@@ -4,6 +4,7 @@ using FEM
 # Nodes
 
 # Generate geomesh and node / elementsets
+
 n_ele = 10
 
 geomesh = gencook(n_ele, n_ele)
@@ -26,7 +27,7 @@ push!(ele_section, geomesh.element_sets["all"])
 bcs = [DirichletBC(0.0, [Du, Dv], geomesh.node_sets["left"])]
 
 # Loads
-loads = [NodeLoad(0.0078, [Dv], geomesh.node_sets["right"])]
+loads = [NodeLoad(1/n_ele, [Dv], geomesh.node_sets["right"])]
 
 fp = create_feproblem(geomesh, [ele_section], [mat_section], bcs, loads)
 
@@ -34,7 +35,7 @@ solver = NRSolver(1e-7, 2)
 
 solve(solver, fp)
 
-exportVTK(fp, "test.vtk")
+#exportVTK(fp, "test.vtk")
 
 #write_vtk_file(fp.FEMesh, "cook.jl", false)
 
