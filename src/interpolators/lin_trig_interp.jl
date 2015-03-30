@@ -67,8 +67,7 @@ function dNdxmatrix(interp::LinTrigInterp, local_coords::Point2,
 
         dN = dNmatrix(interp, local_coords)
         J = Jmatrix(interp, local_coords, vertices, nodes, dN)
-        inv2x2t!(J)
-        A_mul_B!(interp.dNdx, dN, J)
+        A_mul_B!(interp.dNdx, dN, inv2x2t!(J))
         return interp.dNdx
 end
 

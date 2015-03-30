@@ -1,7 +1,7 @@
 # Modified from Christian Denglers post at
 # https://groups.google.com/forum/#!topic/julia-users/d6CEi2VFV94
 
-##### exportVTK
+#TODO, ASCII export is currently slow
 function exportVTK(fp::FEProblem, filename, ascii::Bool=false)
 
     nr_of_elements = 0

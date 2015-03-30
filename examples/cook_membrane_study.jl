@@ -5,7 +5,7 @@ using FEM
 
 # Generate geomesh and node / elementsets
 
-n_ele = 10
+n_ele = 4
 
 geomesh = gencook(n_ele, n_ele)
 push!(geomesh, gennodeset(n->n.coords[1]>=48.0, "right", geomesh.nodes))
@@ -15,7 +15,7 @@ push!(geomesh, ElementSet("all", collect(1:length(geomesh.elements))))
 
 
 # Material section
-mat_section = MaterialSection(LinearIsotropic(1, 0.3))
+mat_section = MaterialSection(LinearIsotropic(1, 0.45))
 push!(mat_section, geomesh.element_sets["all"])
 
 # Element section
@@ -23,7 +23,7 @@ ele = LinTrig
 ele_section = ElementSection(ele)
 push!(ele_section, geomesh.element_sets["all"])
 
-# Boundarý conditions
+# Boundary conditions
 bcs = [DirichletBC(0.0, [Du, Dv], geomesh.node_sets["left"])]
 
 # Loads
@@ -35,7 +35,7 @@ solver = NRSolver(1e-7, 2)
 
 solve(solver, fp)
 
-#exportVTK(fp, "test.vtk")
+#exportVTK(fp, "test_bin.vtk", true)
 
 #write_vtk_file(fp.FEMesh, "cook.jl", false)
 
