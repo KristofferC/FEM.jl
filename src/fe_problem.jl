@@ -57,11 +57,11 @@ function create_feproblem(geomesh, element_regions, material_regions, bcs, loads
                 element = ele_type(vertices, gps_ele, ele_id, interp,
                                    elem_storage)
                 push!(section, element)
-                material.matstats[element.n] = Array(LinearIsotropicMS, 0)
-                material.temp_matstats[element.n] = Array(LinearIsotropicMS, 0)
-                for i in 1:length(gps_ele)
-                    addmatstat!(material, element.n)
-                end
+                #material.matstats[element.n] = Array(LinearIsotropicMS, 0)
+                #material.temp_matstats[element.n] = Array(LinearIsotropicMS, 0)
+
+                addmatstats!(material, length(gps_ele))
+
             end
             push!(sections, section)
         end

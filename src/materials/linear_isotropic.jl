@@ -10,11 +10,11 @@ type LinearIsotropic <: AbstractMaterial
     G::Float64
     k::Matrix{Float64}
     σ::Vector{Float64}
-    matstats::Dict{Int, Vector{LinearIsotropicMS}}
-    temp_matstats::Dict{Int, Vector{LinearIsotropicMS}}
+    matstats::Vector{Vector{LinearIsotropicMS}}
+    temp_matstats::Vector{Vector{LinearIsotropicMS}}
 end
 
-#=
+
 function addmatstats!(mat::LinearIsotropic, n::Int)
     mat_stats = Array(LinearIsotropicMS, 0)
     temp_matstats = Array(LinearIsotropicMS, 0)
@@ -25,13 +25,14 @@ function addmatstats!(mat::LinearIsotropic, n::Int)
     push!(mat.matstats, mat_stats)
     push!(mat.temp_matstats, temp_matstats)
 end
-=#
 
 
+#=
 function addmatstat!(mat::LinearIsotropic, i::Int)
     push!(mat.matstats[i], create_matstat(typeof(mat)))
     push!(mat.temp_matstats[i], create_matstat(typeof(mat)))
 end
+=#
 
 
 function LinearIsotropic(E, ν)
@@ -46,8 +47,8 @@ function LinearIsotropic(E, ν)
     # Off diagonals
     k[1, 2] = k[1, 3] = k[2, 1] = k[2, 3] = k[3, 1] = k[3, 2] = f * ν
 
-    matstats = Dict{Int, Vector{LinearIsotropicMS}}()
-    temp_matstats = Dict{Int, Vector{LinearIsotropicMS}}()
+    matstats = Array(Vector{LinearIsotropicMS}, 0)
+    temp_matstats = Array(Vector{LinearIsotropicMS}, 0)
     LinearIsotropic(E, ν, G, k, zeros(4), matstats, temp_matstats)
 end
 
