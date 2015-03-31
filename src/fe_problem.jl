@@ -69,9 +69,10 @@ function create_feproblem(geomesh, element_regions, material_regions, bcs, loads
     fe = FEProblem(nodes, bcs, loads, sections)
 end
 
+# Type stability sanitized
 function set_dof_types_section!{T<:AbstractFElement, P <: AbstractMaterial}(section::FESection{T,P},
                                        node_doftypes::Dict{Int, Vector{DofType}})
-    for element in values(section.elements)
+    for (element_id, element) in section.elements
         for vertex in element.vertices
             dof_types = doftypes(element, vertex)
             node_doftypes[vertex] = dof_types
@@ -149,7 +150,8 @@ function assembleK(fp::FEProblem)
     for section in fp.sections
         assemble_K_section(section, fp.nodes, dof_rows, dof_cols, k_values)
     end
-    return Base.sparse(dof_rows, dof_cols, k_values, fp.n_eqs, fp.n_eqs)
+
+    return sparse_plus(dof_rows, dof_cols, k_values, fp.n_eqs, fp.n_eqs)
 end
 
 function assemble_K_section{T<:AbstractFElement, P <: AbstractMaterial}(section::FESection{T,P}, nodes::Vector{FENode2},

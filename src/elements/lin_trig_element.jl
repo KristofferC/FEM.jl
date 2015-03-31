@@ -32,6 +32,8 @@ end
 
 
 get_geoelem(ele::LinTrig) = GeoTrig(ele.n, ele.vertices)
+get_geotype(ele::LinTrig) = GeoTrig
+
 get_storage(::Type{LinTrig}) = LinTrigStorage()
 get_interp(::Type{LinTrig}) = LinTrigInterp()
 get_gps(::Type{LinTrig}) = [GaussPoint2(Point2(1/3, 1/3), 0.5)]

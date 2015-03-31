@@ -36,16 +36,17 @@ function exportVTK(fp::FEProblem, filename, ascii::Bool=false)
        end
     end
 
-    # Calculate the total number of numbers we will write
+    # Calculate the total number of numbers
+    # we will write for the CELLS ection
     n_verts = 0
     for section in fp.sections
         for element in values(section.elements)
+            # +1 for the number saying how many vertices
             n_verts += 1 + length(element.vertices)
         end
     end
 
-
-    println(fid,"CELLS ",nr_of_elements, " ", n_verts);
+    println(fid,"CELLS ", nr_of_elements, " ", n_verts);
     for section in fp.sections
         for element in values(section.elements)
             if ascii
@@ -53,7 +54,7 @@ function exportVTK(fp::FEProblem, filename, ascii::Bool=false)
                 for i in 1:length(element.vertices)
                     print(fid, element.vertices[i]-1, " ");
                 end
-                print("\n");
+                print(fid, "\n");
             else
                 write(fid, bswap(Int32(length(element.vertices))))
                  for i in 1:length(element.vertices)
@@ -65,17 +66,16 @@ function exportVTK(fp::FEProblem, filename, ascii::Bool=false)
 
     println(fid,"\nCELL_TYPES ",nr_of_elements);
     for section in fp.sections
-
         for element in values(section.elements)
             if ascii
-                print(fid, 5, "\n")
+                print(fid, get_vtk_num(get_geotype(element)), "\n")
             else
-                write(fid, bswap(Int32(5)))
+                write(fid, bswap(Int32(get_vtk_num(get_geotype(element)))))
             end
         end
     end
 
-#=
+
     print(fid, "\nPOINT_DATA $(length(fp.nodes))\n");
 
     println(fid, "\nVECTORS Displacement double");
@@ -92,7 +92,7 @@ function exportVTK(fp::FEProblem, filename, ascii::Bool=false)
         end
     end
 
-
+#=
     print(fid, "\nCELL_DATA $(nr_of_elements)\n");
 
     println(fid, "\nTENSORS Strain double");
@@ -178,12 +178,10 @@ function exportVTK(geomesh::GeoMesh, filename, ascii::Bool=false)
        end
     end
 
-
     n_verts = 0
     for element in geomesh.elements
         n_verts += 1 + length(element.vertices)
     end
-
 
     println(fid,"CELLS ",nr_of_elements," " ,n_verts);
     for element in geomesh.elements

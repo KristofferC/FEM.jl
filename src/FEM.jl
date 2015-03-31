@@ -3,7 +3,9 @@ module FEM
 import Base.push!
 
 import Base.show
+using Base.sparse
 using Base.LinAlg
+
 
 using Compat
 using FixedSizeArrays
@@ -16,6 +18,7 @@ macro lintpragma(s) end
 
 include("geomesh.jl")
 include("core.jl")
+
 
 export NodeSet, gennodeset, ElementSet, DirichletBC, NodeLoad, Dof
 export FEMesh, FENode2, FENode3
@@ -40,7 +43,7 @@ export exportVTK
 
 
 
-
+include("sparse.jl")
 include("materials/material.jl")
 include("interpolators/interpolator.jl")
 include("elements/element.jl")

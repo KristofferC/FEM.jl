@@ -9,7 +9,7 @@ include("lin_quad_element.jl")
 getindex{T <: AbstractFElement}(elem::T, i0::Real) = getindex(elem.vertices, i0)
 
 function show{T <: AbstractFElement}(io::IO,elem::T)
-    print(io, string(typeof(elem), " :", elem.vertices))
+    print(io, string(typeof(elem), ":", elem.vertices))
 end
 
 
@@ -22,8 +22,7 @@ function stiffness{T <: AbstractFElement,  P <: AbstractMaterial}(elem::T,
         Be = Bmatrix(elem, gp, nodes)
         De = stiffness(material, gp)
         dV = weight(elem, gp, nodes)
-        # DeBe = De * Be
-        A_mul_B!(elem.storage.DeBe, De, Be)
+        A_mul_B!(elem.storage.DeBe, De, Be) # DeBe = De * Be
         # Ke += B' * DeBe * dV
         BLAS.gemm!('T', 'N' ,dV, Be, elem.storage.DeBe, 1.0, elem.storage.Ke)
     end
