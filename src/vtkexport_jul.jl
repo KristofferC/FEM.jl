@@ -40,7 +40,7 @@ function exportVTK(fp::FEProblem, filename, ascii::Bool=false)
     # we will write for the CELLS ection
     n_verts = 0
     for section in fp.sections
-        for element in values(section.elements)
+        for element in section.elements
             # +1 for the number saying how many vertices
             n_verts += 1 + length(element.vertices)
         end
@@ -48,7 +48,7 @@ function exportVTK(fp::FEProblem, filename, ascii::Bool=false)
 
     println(fid,"CELLS ", nr_of_elements, " ", n_verts);
     for section in fp.sections
-        for element in values(section.elements)
+        for element in section.elements
             if ascii
                 print(fid, length(element.vertices), " ");
                 for i in 1:length(element.vertices)
@@ -66,7 +66,7 @@ function exportVTK(fp::FEProblem, filename, ascii::Bool=false)
 
     println(fid,"\nCELL_TYPES ",nr_of_elements);
     for section in fp.sections
-        for element in values(section.elements)
+        for element in section.elements
             if ascii
                 print(fid, get_vtk_num(get_geotype(element)), "\n")
             else
@@ -99,7 +99,7 @@ function exportVTK(fp::FEProblem, filename, ascii::Bool=false)
     strain_buf = zeros(3,3)
      for section in fp.sections
         mat = section.material
-        for element in values(section.elements)
+        for element in section.elements
             mat_stats = mat.matstats[element.n]
             strain = mat.matstats[element.n][1].strain
             strain_buf[1,1] = strain[1]
@@ -122,7 +122,7 @@ function exportVTK(fp::FEProblem, filename, ascii::Bool=false)
     stress_buf = zeros(3,3)
      for section in fp.sections
         mat = section.material
-        for element in values(section.elements)
+        for element in section.elements
             mat_stats = mat.matstats[element.n]
             stress = mat.matstats[element.n][1].stress
             stress_buf[1,1] = stress[1]

@@ -1,4 +1,49 @@
 
+immutable FESection{P <: AbstractFElement, T <: AbstractMaterial}
+    elements::Vector{P}
+    material::T
+    ele_type::Type{P}
+end
+
+function FESection{P <: AbstractFElement, T <: AbstractMaterial}(mat::T, ele_type::Type{P})
+    elements = Array(ele_type, 0)
+    FESection(elements, mat, ele_type)
+end
+
+
+immutable MaterialSection{P <: AbstractMaterial}
+    material::P
+    elements::Set{Int}
+end
+MaterialSection{P <: AbstractMaterial}(mat::P) = MaterialSection(mat, Set{Int}())
+
+
+immutable ElementSection{P <: AbstractFElement}
+    element_type::Type{P}
+    elements::Set{Int}
+end
+
+ElementSection{P <: AbstractFElement}(ele_type::Type{P}) = ElementSection{P}(ele_type, Set{Int}())
+
+
+# TODO: Clean this up
+function push!(section::FESection, elem::AbstractFElement)
+    push!(section.elements, elem)
+end
+
+
+function push!{P <: AbstractMaterial}(section::MaterialSection{P}, elemset::ElementSet)
+    for i in elemset.element_ids
+        push!(section.elements, i)
+    end
+end
+
+function push!{P <: AbstractFElement}(section::ElementSection{P}, elemset::ElementSet)
+    for i in elemset.element_ids
+        push!(section.elements, i)
+    end
+end
+
 ##########
 # FEMesh #
 ##########
@@ -51,48 +96,3 @@ function show(io::IO,mesh::FEMesh)
     print(io, string("FEMesh, ", length(mesh.elements)))
 end
 =#
-
-immutable FESection{P <: AbstractFElement, T <: AbstractMaterial}
-    elements::Dict{Int, P}
-    material::T
-    ele_type::Type{P}
-end
-
-function FESection{P <: AbstractFElement, T <: AbstractMaterial}(mat::T, ele_type::Type{P})
-    elements = Dict{Int, P} ()
-    FESection(elements, mat, ele_type)
-end
-
-
-immutable MaterialSection{P <: AbstractMaterial}
-    material::P
-    elements::Set{Int}
-end
-MaterialSection{P <: AbstractMaterial}(mat::P) = MaterialSection(mat, Set{Int}())
-
-
-immutable ElementSection{P <: AbstractFElement}
-    element_type::Type{P}
-    elements::Set{Int}
-end
-
-ElementSection{P <: AbstractFElement}(ele_type::Type{P}) = ElementSection{P}(ele_type, Set{Int}())
-
-
-# TODO: Clean this up
-function push!(section::FESection, elem::AbstractFElement)
-    section.elements[elem.n] = elem
-end
-
-
-function push!{P <: AbstractMaterial}(section::MaterialSection{P}, elemset::ElementSet)
-    for i in elemset.element_ids
-        push!(section.elements, i)
-    end
-end
-
-function push!{P <: AbstractFElement}(section::ElementSection{P}, elemset::ElementSet)
-    for i in elemset.element_ids
-        push!(section.elements, i)
-    end
-end

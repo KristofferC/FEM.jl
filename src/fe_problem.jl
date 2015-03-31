@@ -69,10 +69,12 @@ function create_feproblem(geomesh, element_regions, material_regions, bcs, loads
     fe = FEProblem(nodes, bcs, loads, sections)
 end
 
+
+
 # Type stability sanitized
 function set_dof_types_section!{T<:AbstractFElement, P <: AbstractMaterial}(section::FESection{T,P},
                                        node_doftypes::Dict{Int, Vector{DofType}})
-    for (element_id, element) in section.elements
+    for element in section.elements
         for vertex in element.vertices
             dof_types = doftypes(element, vertex)
             node_doftypes[vertex] = dof_types
@@ -157,7 +159,7 @@ end
 function assemble_K_section{T<:AbstractFElement, P <: AbstractMaterial}(section::FESection{T,P}, nodes::Vector{FENode2},
                                     dof_rows::Vector{Int}, dof_cols::Vector{Int}, k_values::Vector{Float64})
     mat = section.material
-    for element in values(section.elements)
+    for element in section.elements
         Ke = stiffness(element, nodes, mat)
         dof1_n = 0
         for vertex1 in element.vertices
@@ -191,7 +193,7 @@ function assemble_intf_section{T<:AbstractFElement, P <: AbstractMaterial}(secti
                                                                            int_forces::Vector{Float64},
                                                                            nodes::Vector{FENode2})
     mat = section.material
-    for element in values(section.elements)
+    for element in section.elements
         finte = intf(element, mat, nodes)
         i = 1
         for vertex in element.vertices
