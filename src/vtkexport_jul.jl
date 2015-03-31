@@ -2,6 +2,7 @@
 # https://groups.google.com/forum/#!topic/julia-users/d6CEi2VFV94
 
 #TODO, ASCII export is currently slow
+#TODO, fix type instability in section loop
 function exportVTK(fp::FEProblem, filename, ascii::Bool=false)
 
     nr_of_elements = 0
@@ -35,26 +36,36 @@ function exportVTK(fp::FEProblem, filename, ascii::Bool=false)
        end
     end
 
+    # Calculate the total number of numbers we will write
+    n_verts = 0
+    for section in fp.sections
+        for element in values(section.elements)
+            n_verts += 1 + length(element.vertices)
+        end
+    end
 
-    println(fid,"CELLS ",nr_of_elements," " ,nr_of_elements * (3+1));
+
+    println(fid,"CELLS ",nr_of_elements, " ", n_verts);
     for section in fp.sections
         for element in values(section.elements)
             if ascii
-                print(fid, 3, " ");
-                print(fid, element.vertices.v1-1, " ");
-                print(fid, element.vertices.v2-1, " ");
-                print(fid, element.vertices.v3-1, "\n");
+                print(fid, length(element.vertices), " ");
+                for i in 1:length(element.vertices)
+                    print(fid, element.vertices[i]-1, " ");
+                end
+                print("\n");
             else
-                write(fid, bswap(Int32(3)))
-                write(fid, bswap(Int32(element.vertices.v1-1)))
-                write(fid, bswap(Int32(element.vertices.v2-1)))
-                write(fid, bswap(Int32(element.vertices.v3-1)))
+                write(fid, bswap(Int32(length(element.vertices))))
+                 for i in 1:length(element.vertices)
+                    write(fid, bswap(Int32(element.vertices[i]-1, " ");))
+                end
             end
         end
     end
 
     println(fid,"\nCELL_TYPES ",nr_of_elements);
     for section in fp.sections
+
         for element in values(section.elements)
             if ascii
                 print(fid, 5, "\n")
@@ -64,7 +75,7 @@ function exportVTK(fp::FEProblem, filename, ascii::Bool=false)
         end
     end
 
-
+#=
     print(fid, "\nPOINT_DATA $(length(fp.nodes))\n");
 
     println(fid, "\nVECTORS Displacement double");
@@ -127,6 +138,75 @@ function exportVTK(fp::FEProblem, filename, ascii::Bool=false)
                     write(fid, bswap(stress))
                 end
             end
+        end
+    end
+    =#
+
+    close(fid);
+end
+
+
+
+
+function exportVTK(geomesh::GeoMesh, filename, ascii::Bool=false)
+
+    nr_of_elements = length(geomesh.elements)
+
+    fid = open(filename, "w");
+
+    #ASCII file header
+    println(fid, "# vtk DataFile Version 3.0");
+    println(fid, "FEM.jl export");
+    if ascii
+        println(fid, "ASCII\n");
+    else
+        println(fid, "BINARY\n");
+    end
+    println(fid, "DATASET UNSTRUCTURED_GRID");
+
+    println(fid, "POINTS $(length(geomesh.nodes)) double");
+    for node in geomesh.nodes
+        c = get_coord(node)
+        if ascii
+            print(fid, c.x, " ");
+            print(fid, c.y, " ");
+            print(fid, c.z, "\n");
+        else
+           write(fid, bswap(c.x))
+           write(fid, bswap(c.y))
+           write(fid, bswap(c.z))
+       end
+    end
+
+
+    n_verts = 0
+    for element in geomesh.elements
+        n_verts += 1 + length(element.vertices)
+    end
+
+
+    println(fid,"CELLS ",nr_of_elements," " ,n_verts);
+    for element in geomesh.elements
+        if ascii
+            print(fid, length(element.vertices), " ");
+            for i in 1:length(element.vertices)
+                print(fid, element.vertices[i]-1, " ");
+            end
+            print("\n");
+        else
+            write(fid, bswap(Int32(length(element.vertices))))
+            for vertex in element.vertices
+                write(fid, bswap(Int32(vertex-1)))
+            end
+        end
+    end
+
+    println(fid,"\nCELL_TYPES ",nr_of_elements);
+    for element in geomesh.elements
+        if ascii
+            print(fid, get_vtk_num(element), "\n")
+        else
+            write(fid, bswap(Int32(get_vtk_num(element))))
         end
     end
 

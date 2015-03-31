@@ -54,8 +54,6 @@ function create_feproblem(geomesh, element_regions, material_regions, bcs, loads
 
             for ele_id in common
                 vertices = geomesh.elements[ele_id].vertices
-               # mat_stat = create_matstat(typeof(material))
-
                 element = ele_type(vertices, gps_ele, ele_id, interp,
                                    elem_storage)
                 push!(section, element)

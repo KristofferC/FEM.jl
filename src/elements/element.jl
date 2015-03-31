@@ -1,45 +1,35 @@
-abstract AbstractFElement #{T <: AbstractMaterialStatus}
+abstract AbstractFElement
+
+abstract ElemStorage
 
 include("lin_trig_element.jl")
-#include("bilin_quad_element.jl")
+include("lin_quad_element.jl")
 
 
 getindex{T <: AbstractFElement}(elem::T, i0::Real) = getindex(elem.vertices, i0)
 
-
-function stiffness{T <: AbstractFElement, P <: AbstractMaterial}(elem::T,
-                                                                 nodes::Vector{FENode2},
-                                                                 mat::P)
-    Ke = zeros(get_ndofs(elem), get_ndofs(elem))
-
-    for gp in elem.gps
-        Be = Bmatrix(elem, gp, nodes)
-        De = stiffness(mat, gp)
-        dV = weight(elem, gp, nodes)
-        Ke += Be.' * De * Be * dV
-    end
-
-    return Ke
+function show{T <: AbstractFElement}(io::IO,elem::T)
+    print(io, string(typeof(elem), " :", elem.vertices))
 end
 
-#=
+
+
 function stiffness{T <: AbstractFElement,  P <: AbstractMaterial}(elem::T,
                                                                   nodes::Vector{FENode2},
                                                                   material::P)
-    n_dofs = get_ndofs(elem)
-
+    fill!(elem.storage.Ke, 0.0)
     for gp in elem.gps
         Be = Bmatrix(elem, gp, nodes)
-        println(Be)
         De = stiffness(material, gp)
         dV = weight(elem, gp, nodes)
-        A_mul_B!(elem.lts.DeBe, De, Be)
-        At_mul_B!(elem.lts.Ke, Be, elem.lts.DeBe)
-        scale!(elem.lts.Ke, dV)
+        # DeBe = De * Be
+        A_mul_B!(elem.storage.DeBe, De, Be)
+        # Ke += B' * DeBe * dV
+        BLAS.gemm!('T', 'N' ,dV, Be, elem.storage.DeBe, 1.0, elem.storage.Ke)
     end
-    return elem.lts.Ke
+    return elem.storage.Ke
 end
-=#
+
 
 function get_field{T <: AbstractFElement}(elem::T, nodes::Vector{FENode2})
     u = zeros(get_ndofs(elem))
@@ -53,45 +43,31 @@ function get_field{T <: AbstractFElement}(elem::T, nodes::Vector{FENode2})
     return u
 end
 
-function intf{T <: AbstractFElement, P <: AbstractMaterial}(elem::T, mat::P,
-                          nodes::Vector{FENode2})
-    f_int = zeros(get_ndofs(elem))
+
+function intf{T <: AbstractFElement, P <: AbstractMaterial}(elem::T, mat::P, nodes::Vector{FENode2})
     u = get_field(elem, nodes)
-    for gp in elem.gps
+    fill!(elem.storage.f_int, 0.0)
+    for (i, gp) in enumerate(elem.gps)
         B = Bmatrix(elem, gp, nodes)
-        println(B)
-        ɛ = B * u
-        σ = stress(mat, ɛ, gp)
+        A_mul_B!(elem.storage.ɛ, B, u)
+
+        σ = stress(mat, elem.storage.ɛ, gp)
         dV = weight(elem, gp, nodes)
-        f_int += B.' * σ * dV
+        # f_int += B' * σ * dV
+        BLAS.gemv!('T', dV, B, σ, 1.0, elem.storage.f_int)
+
+        copy!(mat.temp_matstats[elem.n][i].strain, elem.storage.ɛ)
+        copy!(mat.temp_matstats[elem.n][i].stress, σ)
     end
-    return f_int
+    return elem.storage.f_int
 end
 
 
 #=
-
-function intf{T <: AbstractFElement, P <: AbstractMaterial}(elem::T, mat::P, nodes::Vector{FENode2})
-    u = get_field(elem, nodes)
-    for (i, gp) in enumerate(elem.gps)
-        B = Bmatrix(elem, gp, nodes)
-        A_mul_B!(elem.lts.ɛ, B, u)
-
-        σ = stress(mat, elem.lts.ɛ, gp)
-        dV = weight(elem, gp, nodes)
-        At_mul_B!(elem.lts.f_int, B, σ)
-        scale!(elem.lts.f_int, dV)
-            # Store in matstat
-
-        copy!(mat.temp_matstats[elem.n][i].strain, elem.lts.ɛ)
-        copy!(mat.temp_matstats[elem.n][i].stress, σ)
-    end
-    return elem.lts.f_int
-end
-=#
-
 function weight{T <: AbstractFElement}(elem::T, gp::GaussPoint2, nodes::Vector{FENode2})
     dN = dNmatrix(elem.interp, gp.local_coords)
     J = Jmatrix(elem.interp, gp.local_coords, elem.vertices, nodes, dN)
+
     return det(J) * gp.weight
 end
+=#

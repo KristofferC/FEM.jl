@@ -4,6 +4,7 @@ import FEM.get_gps
 import FEM.get_interp
 import FEM.get_storage
 import FEM.Vertex3
+import FEM.Vertex4
 facts("FEM.Element") do
 
 
@@ -35,14 +36,20 @@ context("FEM.Element.LinTrig") do
 
 end # context
 
-#=
-context("FEM.Element.BilinQuad") do
 
-    nodes = [Node2(1, [0.0, 0.0]), Node2(2, [1.0, 0.0]), Node2(3, [1.0, 2.5]), Node2(4, [0.0, 1.5])]
+context("FEM.Element.LinQuad") do
 
-    elem = BilinQuad(Vertex4(1, 2, 3, 4), 1)
+    nodes = [FENode2(1, [0.0, 0.0]), FENode2(2, [1.0, 0.0]), FENode2(3, [1.0, 2.5]), FENode2(4, [0.0, 1.5])]
 
+    gps = get_gps(LinQuad)
+    interp = get_interp(LinQuad)
+    storage = get_storage(LinQuad)
+    elem = LinQuad(Vertex4(1, 2, 3, 4), gps, 1, interp, storage)
     mat = LinearIsotropic(200e9, 0.3)
+
+
+
+    elem = LinQuad(Vertex4(1, 2, 3, 4), gps, 1, interp, storage)
 
     Ke = stiffness(elem, nodes, mat)
 
@@ -62,6 +69,6 @@ context("FEM.Element.BilinQuad") do
 
 
 end # context
-=#
+
 
 end # facts

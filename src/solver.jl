@@ -29,11 +29,14 @@ function solve(solver::NRSolver, fp::FEProblem)
             break
         end
 
+
         K = assembleK(fp)
-        println(K)
+
         du = cholfact(Symmetric(K, :L)) \ force_imbalance
+        #du = K \ force_imbalance
 
         updatedofs!(fp, du)
+
         println(load'*du)
     end
     update_feproblem(fp)

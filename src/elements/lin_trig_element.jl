@@ -1,23 +1,35 @@
-abstract ElemStorage
+
 
 type LinTrigStorage <: ElemStorage
     B::Matrix{Float64}
     DeBe::Matrix{Float64}
-    Bet::Matrix{Float64}
     Ke::Matrix{Float64}
     ɛ::Vector{Float64}
     f_int::Vector{Float64}
 end
 
-LinTrigStorage() = LinTrigStorage(zeros(4, 6), zeros(4,6), zeros(6,4), zeros(6,6), zeros(4), zeros(6))
+LinTrigStorage() = LinTrigStorage(zeros(4, 6), zeros(4,6), zeros(6,6), zeros(4), zeros(6))
 
 immutable LinTrig <: AbstractFElement
     vertices::Vertex3
     gps::Vector{GaussPoint2}
     n::Int
     interp::LinTrigInterp
-    lts::LinTrigStorage
+    storage::LinTrigStorage
 end
+
+# Constructors
+function LinTrig(vertices::Vertex3, n, interp::LinTrigInterp,
+                 lts::LinTrigStorage, gps::Vector{GaussPoint2})
+
+    LinTrig(vertices, gps, n, interp, lts)
+end
+
+function LinTrig(v::Vector{Int}, n, interp::LinTrigInterp,
+                 lts::LinTrigStorage, gps::Vector{GaussPoint2})
+    LinTrig(Vertex3(v[1], v[2], v[3]), gps, n, interp, lts)
+end
+
 
 get_geoelem(ele::LinTrig) = GeoTrig(ele.n, ele.vertices)
 get_storage(::Type{LinTrig}) = LinTrigStorage()
@@ -29,21 +41,6 @@ get_gps(::Type{LinTrig}) = [GaussPoint2(Point2(1/3, 1/3), 0.5)]
     return 6
 end
 
-function show(io::IO,elem::LinTrig)
-    print(io, string("LinTrig", elem.vertices))
-end
-
-function LinTrig(vertices::Vertex3, n, interp::LinTrigInterp,
-                 lts::LinTrigStorage, gps::Vector{GaussPoint2})
-
-    n_dofs = 6
-    LinTrig(vertices, gps, n_dofs, n, interp, lts)
-end
-
-function LinTrig(v::Vector{Int}, n, interp::LinTrigInterp,
-                 lts::LinTrigStorage, gps::Vector{GaussPoint2})
-    LinTrig(Vertex3(v[1], v[2], v[3]), n, interp, lts, gps)
-end
 
 function doftypes(::LinTrig, ::Int)
     return [Du, Dv]
@@ -53,7 +50,7 @@ end
 function Bmatrix(elem::LinTrig, gp::GaussPoint2, nodes::Vector{FENode2})
     dNdx = dNdxmatrix(elem.interp, gp.local_coords, elem.vertices, nodes)
 
-    B = elem.lts.B
+    B = elem.storage.B
 
     B[1, 1] = dNdx[1, 1]
     B[1, 3] = dNdx[2, 1]

@@ -38,7 +38,10 @@ function LinearIsotropic(E, ν)
     temp_matstats = Dict{Int, Vector{LinearIsotropicMS}}()
     LinearIsotropic(E, ν, G, k, zeros(4), matstats, temp_matstats)
 end
+
 stiffness(mat::LinearIsotropic, ::GaussPoint2) = mat.k
+
+
 
 function stress(mat::LinearIsotropic, ɛ::Vector{Float64}, gp::GaussPoint2)
     D = stiffness(mat, gp)

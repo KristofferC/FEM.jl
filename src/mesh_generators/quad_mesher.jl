@@ -7,7 +7,8 @@
    # Node number for column i and row j
 
 
-function meshquad(nx::Int, ny::Int, corners::Matrix{Float64})
+function meshquad(nx::Int, ny::Int, corners::Matrix{Float64},
+                 ele_type::Union(Type{GeoQuad}, Type{GeoTrig}))
 
     if size(corners) != (2,4)
         error("corner argument needs to be a 2x4 matrix")
@@ -50,19 +51,25 @@ function meshquad(nx::Int, ny::Int, corners::Matrix{Float64})
     n_elem = 0
     for i in 1:ny
         for j in 1:nx
-            n_elem += 1
-            elem1 = GeoTrig(n_elem, Vertex3(node_nr(i, j), node_nr(i+1, j), node_nr(i+1, j+1)))
-            push!(mesh, elem1)
-            n_elem += 1
-            elem2 = GeoTrig(n_elem, Vertex3(node_nr(i, j), node_nr(i+1, j+1), node_nr(i, j+1)))
-            push!(mesh, elem2)
+            if ele_type == GeoTrig
+                n_elem += 1
+                elem1 = GeoTrig(n_elem, Vertex3(node_nr(i, j), node_nr(i+1, j), node_nr(i+1, j+1)))
+                push!(mesh, elem1)
+                n_elem += 1
+                elem2 = GeoTrig(n_elem, Vertex3(node_nr(i, j), node_nr(i+1, j+1), node_nr(i, j+1)))
+                push!(mesh, elem2)
+            else
+                n_elem += 1
+                elem = GeoQuad(n_elem, Vertex4(node_nr(i,j), node_nr(i,j+1), node_nr(i+1,j+1), node_nr(i+1,j)))
+                push!(mesh, elem)
+            end
         end
     end
     return mesh
 end
 
 # Generates what is known as the "Cook membrane"
-function gencook(nx, ny, scale = 1.0)
+function gencook(nx, ny, ele_type::Union(Type{GeoQuad}, Type{GeoTrig}), scale = 1.0)
     m = scale * [[0.0; 0.0] [0.0; 44.0] [48.0; 60.0] [48.0; 44.0]]
-    meshquad(nx, ny, m)
+    meshquad(nx, ny, m, ele_type)
 end

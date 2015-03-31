@@ -26,6 +26,8 @@ end
 # Check size here?
 GeoNode2(n::Int, c::Vector{Float64}) = GeoNode2(n, Point2(c[1], c[2]))
 GeoNode2(n::Int, c::Vector{Int}) = GeoNode2(n, convert(Vector{Float64}, c))
+get_coord(node::GeoNode2) = Point3(node.coords.x, node.coords.y, 0.0)
+
 
 immutable GeoNode3 <: AbstractGeoNode
     n::Int
@@ -75,24 +77,23 @@ immutable GeoTrig <: AbstractGeoElem2
     n::Int
     vertices::Vertex3
 end
-
-
 GeoTrig(n::Int, v::Vector{Int}) = GeoTrig(n, Vertex3(v[1], v[2], v[3]))
+get_vtk_num(::GeoTrig) = 5
 
 
 immutable GeoQuad <: AbstractGeoElem2
     n::Int
     vertices::Vertex4
 end
-
 GeoQuad(n::Int, v::Vector{Int}) = GeoQuad(n, Vertex4(v[1], v[2], v[3], v[4]))
+get_vtk_num(::GeoQuad) = 9
 
 immutable GeoTetra <: AbstractGeoElem3
     n::Int
     vertices::Vertex4
 end
-
 GeoTetra(n::Int, v::Vector{Int}) = GeoTetra(n, Vertex3(v[1], v[2], v[3], v[4]))
+get_vtk_num(::GeoTetra) = 10
 
 ########
 # Sets #

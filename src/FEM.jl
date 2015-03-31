@@ -3,6 +3,7 @@ module FEM
 import Base.push!
 
 import Base.show
+using Base.LinAlg
 
 using Compat
 using FixedSizeArrays
@@ -16,13 +17,13 @@ macro lintpragma(s) end
 include("geomesh.jl")
 include("core.jl")
 
-export NodeSet, gennodeset, ElementSet, DirichletBC, NodeLoad, Du, Dv, Dw, Dof
+export NodeSet, gennodeset, ElementSet, DirichletBC, NodeLoad, Dof
 export FEMesh, FENode2, FENode3
 export GeoMesh, GeoTrig, GeoQuad, GeoNode3, GeoNode2
 
 # Elements, interpolators, materials, materialstatuses
-export AbstractFElement, LinTrig #, BilinQuad
-export AbstractInterpolator, LinTrigInterp
+export AbstractFElement, LinTrig, LinQuad
+export AbstractInterpolator, LinTrigInterp, LinQuadInterp
 export AbstractMaterial, LinearIsotropic
 export AbstractMaterialStatus, LinearIsotropicMS
 

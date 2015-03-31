@@ -18,7 +18,7 @@ immutable GaussPoint3 <: AbstractGaussPoint
 end
 
 
-@enum DofType Du Dv Dw
+@enum DofType Du Dv Dw Pressure
 
 type Dof
     eq_n::Int
