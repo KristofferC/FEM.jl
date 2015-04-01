@@ -3,7 +3,7 @@ module FEM
 import Base.push!
 
 import Base.show
-using Base.sparse
+
 using Base.LinAlg
 
 
@@ -21,7 +21,7 @@ include("core.jl")
 
 
 export NodeSet, gennodeset, ElementSet, DirichletBC, NodeLoad, Dof
-export FEMesh, FENode2, FENode3
+export FENode2, FENode3
 export GeoMesh, GeoTrig, GeoQuad, GeoNode3, GeoNode2
 
 # Elements, interpolators, materials, materialstatuses

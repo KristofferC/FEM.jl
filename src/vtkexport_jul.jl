@@ -58,7 +58,7 @@ function exportVTK(fp::FEProblem, filename, ascii::Bool=false)
             else
                 write(fid, bswap(Int32(length(element.vertices))))
                  for i in 1:length(element.vertices)
-                    write(fid, bswap(Int32(element.vertices[i]-1, " ");))
+                    write(fid, bswap(Int32(element.vertices[i]-1)))
                 end
             end
         end

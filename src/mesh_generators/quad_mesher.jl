@@ -20,11 +20,13 @@ function meshquad(nx::Int, ny::Int, corners::Matrix{Float64},
 
     mesh = GeoMesh()
 
+    #... you what Lint?
+    @lintpragma("Ignore use of undeclared variable :")
     # The four corners
-    LL = corners[:,1]
-    UL = corners[:,2]
-    UR = corners[:,3]
-    LR = corners[:,4]
+    LL = corners[:, 1]
+    UL = corners[:, 2]
+    UR = corners[:, 3]
+    LR = corners[:, 4]
 
 
     @inline node_nr(i::Int, j::Int) = (nx + 1) * (i-1) + j

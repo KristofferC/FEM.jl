@@ -72,7 +72,7 @@ end
 
 
 # Type stability sanitized
-function set_dof_types_section!{T<:AbstractFElement, P <: AbstractMaterial}(section::FESection{T,P},
+function set_dof_types_section!{T<:FESection}(section::T,
                                        node_doftypes::Dict{Int, Vector{DofType}})
     for element in section.elements
         for vertex in element.vertices
@@ -94,7 +94,6 @@ function createdofs(fp::FEProblem)
 
     # Create a dictionary between a tuple of node_id
     # and dof type to the BC for that tuple.
-
     for bc in fp.bcs
         node_ids = bc.node_set.node_ids
         for node_id in node_ids
@@ -156,8 +155,9 @@ function assembleK(fp::FEProblem)
     return sparse_plus(dof_rows, dof_cols, k_values, fp.n_eqs, fp.n_eqs)
 end
 
-function assemble_K_section{T<:AbstractFElement, P <: AbstractMaterial}(section::FESection{T,P}, nodes::Vector{FENode2},
-                                    dof_rows::Vector{Int}, dof_cols::Vector{Int}, k_values::Vector{Float64})
+function assemble_K_section{T<:FESection}(section::T, nodes::Vector{FENode2},
+                                          dof_rows::Vector{Int}, dof_cols::Vector{Int},
+                                          k_values::Vector{Float64})
     mat = section.material
     for element in section.elements
         Ke = stiffness(element, nodes, mat)
@@ -165,14 +165,16 @@ function assemble_K_section{T<:AbstractFElement, P <: AbstractMaterial}(section:
         for vertex1 in element.vertices
             for dof1 in nodes[vertex1].dofs
                 dof1_n += 1
-                dof2_n = 0
-                for vertex2 in element.vertices
-                    for dof2 in nodes[vertex2].dofs
-                        dof2_n += 1
-                        if dof1.active && dof2.active
-                            push!(dof_rows, dof1.eq_n)
-                            push!(dof_cols, dof2.eq_n)
-                            push!(k_values, Ke[dof1_n, dof2_n])
+                if dof1.active
+                    dof2_n = 0
+                    for vertex2 in element.vertices
+                        for dof2 in nodes[vertex2].dofs
+                            dof2_n += 1
+                            if dof2.active
+                                push!(dof_rows, dof1.eq_n)
+                                push!(dof_cols, dof2.eq_n)
+                                push!(k_values, Ke[dof1_n, dof2_n])
+                            end
                         end
                     end
                 end
@@ -189,9 +191,9 @@ function assemble_intf(fp::FEProblem)
     return fint
 end
 
-function assemble_intf_section{T<:AbstractFElement, P <: AbstractMaterial}(section::FESection{T, P},
-                                                                           int_forces::Vector{Float64},
-                                                                           nodes::Vector{FENode2})
+function assemble_intf_section{T<:FESection}(section::T,
+                                           int_forces::Vector{Float64},
+                                           nodes::Vector{FENode2})
     mat = section.material
     for element in section.elements
         finte = intf(element, mat, nodes)
@@ -223,35 +225,6 @@ function update_feproblem(fp::FEProblem)
     end
 end
 
-function update_section{T<:AbstractFElement, P <: AbstractMaterial}(section::FESection{T, P})
+function update_section{T <: FESection}(section::T)
     update(section.material)
-end
-
-function assemble_dry(fp::FEProblem)
-    dof_rows = Array(Int, 0)
-    dof_cols = Array(Int, 0)
-    k_values = Array(Float64, 0)
-    for section in fp.sections
-        mat = section.material
-        for element_id in section.elements
-            element = fp.mesh.elements[element_id]
-            dof1_n = 0
-            for vertex1 in element.vertices
-                for dof1 in fp.mesh.nodes[vertex1].dofs
-                    dof1_n += 1
-                    dof2_n = 0
-                    for vertex2 in element.vertices
-                        for dof2 in fp.mesh.nodes[vertex2].dofs
-                            dof2_n += 1
-                            if dof1.active && dof2.active
-                                push!(dof_rows, dof1.eq_n)
-                                push!(dof_cols, dof2.eq_n)
-                                push!(k_values, 0)
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
 end

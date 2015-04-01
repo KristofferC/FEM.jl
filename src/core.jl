@@ -17,6 +17,12 @@ immutable GaussPoint3 <: AbstractGaussPoint
     weight::Float64
 end
 
+# Lint does not refognize enums
+@lintpragma("Ignore use of undeclared variable DofType")
+@lintpragma("Ignore use of undeclared variable Du")
+@lintpragma("Ignore use of undeclared variable Dv")
+@lintpragma("Ignore use of undeclared variable Dw")
+@lintpragma("Ignore use of undeclared variable Pressure")
 
 @enum DofType Du Dv Dw Pressure
 

@@ -22,7 +22,7 @@ end
 function LinQuad(vertices::Vertex4, n, interp::LinQuadInterp,
                  storage::LinQuadStorage, gps::Vector{GaussPoint2})
 
-    LinQuad(vertices, gps, n, interp, lts)
+    LinQuad(vertices, gps, n, interp, storage)
 end
 
 function LinQuadv(v::Vector{Int}, n, interp::LinQuadInterp,
@@ -32,7 +32,7 @@ end
 
 
 get_geoelem(ele::LinQuad) = GeoQuad(ele.n, ele.vertices)
-get_geotype(ele::LinQuad) = GeoQuad
+get_geotype(::LinQuad) = GeoQuad
 
 get_storage(::Type{LinQuad}) = LinQuadStorage()
 get_interp(::Type{LinQuad}) = LinQuadInterp()
