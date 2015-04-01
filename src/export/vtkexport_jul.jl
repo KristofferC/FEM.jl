@@ -3,6 +3,8 @@
 
 #TODO, ASCII export is currently slow
 #TODO, fix type instability in section loop
+
+
 function exportVTK(fp::FEProblem, filename, ascii::Bool=false)
 
     nr_of_elements = 0
@@ -10,7 +12,11 @@ function exportVTK(fp::FEProblem, filename, ascii::Bool=false)
         nr_of_elements += length(section.elements)
     end
 
-    fid = open(filename, "w");
+    file = open(filename, "w");
+
+    fid = Zlib.Writer(file, 5, true)
+
+
 
     #ASCII file header
     println(fid, "# vtk DataFile Version 3.0");

@@ -1,13 +1,13 @@
 using FEM
-
+import FEM.write_vtk_file
 
 # Nodes
 
 # Generate geomesh and node / elementsets
 
-n_ele = 100
+n_ele = 4
 
-geomesh = gencook(n_ele, n_ele, GeoQuad)
+geomesh = gencook(n_ele, n_ele, GeoTrig)
 
 
 push!(geomesh, gennodeset(n->n.coords[1]>47.999999, "right", geomesh.nodes))
@@ -19,7 +19,7 @@ mat_section = MaterialSection(LinearIsotropic(1, 0.3))
 push!(mat_section, geomesh.element_sets["all"])
 
 # Element section
-ele_section = ElementSection(LinQuad)
+ele_section = ElementSection(LinTrig)
 push!(ele_section, geomesh.element_sets["all"])
 
 # Boundary conditions
@@ -34,27 +34,6 @@ solver = NRSolver(1e-7, 2)
 
 solve(solver, fp)
 
-#exportVTK(fp, "test_bin.vtk", false)
-
-
-#write_vtk_file(fp.FEMesh, "cook.jl", false)
-
-#=
-julia> @time include(".julia/v0.4/FEM/examples/cook_membrance_study.jl")
-Starting Newton-Raphson solver..
-        Iteration 1, relative residual 1.0
-4.718447854656915e-15
-[22.220644996854695]
-        Iteration 2, relative residual 2.6125689174257096e-11
-Converged!
-elapsed time: 0.518623941 seconds (308 MB allocated, 8.98% gc time in 14 pauses with 1 full sweep)
-=#
-
-
-#=
-Starting Newton-Raphson solver..
-        Iteration 1, relative residual 1.0
-        Iteration 2, relative residual 2.0046022544402292e-11
-Converged!
-elapsed time: 1.185315694 seconds (467 MB allocated, 5.20% gc time in 21 pauses with 1 full sweep)
-=#
+#
+write_vtk_file(fp, "test_pycall.vtk", true)
+exportVTK(fp, "test_bin.vtk", false)

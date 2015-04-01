@@ -12,8 +12,8 @@ using Compat
 using FixedSizeArrays
 using GeometryTypes
 #using Devectorize
-#using PyCall
-#@pyimport vtk
+
+using Zlib
 
 macro lintpragma(s) end
 
@@ -52,7 +52,8 @@ include("sections.jl")
 include("fe_problem.jl")
 include("solver.jl")
 include("mesh_generators/quad_mesher.jl")
-include("vtkexport_jul.jl")
+include("export/vtkexport_jul.jl")
+#include("vtkexport.jl")
 
 
 end

@@ -1,27 +1,25 @@
-function create_vtk_object(mesh::Mesh)
+function create_vtk_object(fp::FEProblem)
 
-    element_vtk_table = Dict{Element, Any}
-    element_vtk_table[LinTrig]
-
-    n_nodes = length(mesh.nodes)
+    n_nodes = length(fp.nodes)
 
     # Add points to vtkPoints
     points = pycall(vtk.vtkPoints, PyAny)
-    for node in mesh.nodes
+    for node in fp.nodes
         d_coords = node.coords
-        push!(d_coords, 0)
-        points[:InsertNextPoint](d_coords[1], d_coords[2], d_coords[3])
+        points[:InsertNextPoint](d_coords[1], d_coords[2], 0)
     end
 
     # Add elements to vtkCellArray
     elems_vtk = pycall(vtk.vtkCellArray, PyAny)
-    for element in mesh.elements
-        elem_vtk = pycall(vtk.vtkTriangle, PyAny)
-        for (i, vertex) in enumerate(element.vertices)
-            ids = elem_vtk[:GetPointIds]()
-            ids[:SetId](i-1, vertex - 1)
+    for section in fp.sections
+        for element in section.elements
+            elem_vtk = pycall(vtk.vtkTriangle, PyAny)
+            for (i, vertex) in enumerate(element.vertices)
+                ids = elem_vtk[:GetPointIds]()
+                ids[:SetId](i-1, vertex - 1)
+            end
+            elems_vtk[:InsertNextCell](elem_vtk)
         end
-        elems_vtk[:InsertNextCell](elem_vtk)
     end
 
    # Add displacements
@@ -29,14 +27,10 @@ function create_vtk_object(mesh::Mesh)
     disp_array[:SetNumberOfComponents](3)
     disp_array[:SetName]("Displacement")
     disp_array[:SetNumberOfTuples](n_nodes)
-    for node in mesh.nodes:
-        # TODO: Remove hardcoding, should make like a
-        # get displacements in node class
-        disp = get_displacements(node)
+    for node in fp.nodes
+        disp = get_displacement(node)
         disp_array[:SetTuple3](node.n, disp[1], disp[2], disp[3])
     end
-
-
 
     # Create a polydata to store everything in
     polydata = pycall(vtk.vtkPolyData, PyAny)
@@ -55,8 +49,8 @@ function create_vtk_object(mesh::Mesh)
 end
 
 
-function write_vtk_file(mesh::FEMesh, name::ASCIIString, write_ascii::Bool = false)
-    polydata = create_vtk_object(mesh)
+function write_vtk_file(fp::FEProblem, name::ASCIIString, write_ascii::Bool = false)
+    polydata = create_vtk_object(fp)
 
     writer = pycall(vtk.vtkXMLPolyDataWriter, PyAny)
     writer[:SetFileName](name)
