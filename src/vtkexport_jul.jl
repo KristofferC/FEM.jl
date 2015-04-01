@@ -92,7 +92,7 @@ function exportVTK(fp::FEProblem, filename, ascii::Bool=false)
         end
     end
 
-#=
+
     print(fid, "\nCELL_DATA $(nr_of_elements)\n");
 
     println(fid, "\nTENSORS Strain double");
@@ -100,8 +100,8 @@ function exportVTK(fp::FEProblem, filename, ascii::Bool=false)
      for section in fp.sections
         mat = section.material
         for element in section.elements
-            mat_stats = mat.matstats[element.n]
-            strain = mat.matstats[element.n][1].strain
+            mat_stats = element.temp_matstats
+            strain = mat_stats[1].strain
             strain_buf[1,1] = strain[1]
             strain_buf[2,2] = strain[2]
             strain_buf[3,3] = strain[3]
@@ -123,8 +123,8 @@ function exportVTK(fp::FEProblem, filename, ascii::Bool=false)
      for section in fp.sections
         mat = section.material
         for element in section.elements
-            mat_stats = mat.matstats[element.n]
-            stress = mat.matstats[element.n][1].stress
+            mat_stats = element.temp_matstats
+            stress = mat_stats[1].stress
             stress_buf[1,1] = stress[1]
             stress_buf[2,2] = stress[2]
             stress_buf[3,3] = stress[3]
@@ -140,7 +140,7 @@ function exportVTK(fp::FEProblem, filename, ascii::Bool=false)
             end
         end
     end
-    =#
+
 
     close(fid);
 end
