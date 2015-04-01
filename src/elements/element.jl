@@ -48,15 +48,13 @@ function intf{T <: AbstractFElement, P <: AbstractMaterial}(elem::T, mat::P, nod
     fill!(elem.storage.f_int, 0.0)
     for (i, gp) in enumerate(elem.gps)
         B = Bmatrix(elem, gp, nodes)
-        A_mul_B!(elem.storage.ɛ, B, u)
+        A_mul_B!(elem.temp_matstats[i].strain, B, u)
 
-        σ = stress(mat, elem.storage.ɛ, gp)
+        σ = stress!(elem.temp_matstats[i].stress, mat, elem.temp_matstats[i].strain, gp)
         dV = weight(elem, gp, nodes)
+
         # f_int += B' * σ * dV
         BLAS.gemv!('T', dV, B, σ, 1.0, elem.storage.f_int)
-
-        copy!(elem.temp_matstats[i].strain, elem.storage.ɛ)
-        copy!(elem.temp_matstats[i].stress, σ)
     end
     return elem.storage.f_int
 end

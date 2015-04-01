@@ -16,15 +16,20 @@ immutable LinQuad{T <: AbstractMaterialStatus} <: AbstractFElement{T}
     n::Int
     interp::LinQuadInterp
     storage::LinQuadStorage
-    mat_stats::Vector{T}
-    temp_mat_stats::Vector{T}
+    matstats::Vector{T}
+    temp_matstats::Vector{T}
 end
 
 # Constructors
-function LinQuad(vertices::Vertex4, n, interp::LinQuadInterp,
-                 storage::LinQuadStorage, gps::Vector{GaussPoint2})
-
-    LinQuad(vertices, gps, n, interp, storage)
+function LinQuad{T <: AbstractMaterialStatus}(vertices::Vertex4, n, interp::LinQuadInterp,
+                 storage::LinQuadStorage, gps::Vector{GaussPoint2}, matstat::T)
+    matstats = T[]
+    temp_matstats = T[]
+    for i in 1:length(gps)
+        push!(matstats, copy(matstat))
+        push!(temp_matstats, copy(matstat))
+    end
+    LinQuad(vertices, gps, n, interp, storage, matstats, temp_matstats)
 end
 
 function LinQuadv(v::Vector{Int}, n, interp::LinQuadInterp,

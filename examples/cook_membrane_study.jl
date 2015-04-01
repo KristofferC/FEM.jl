@@ -7,7 +7,7 @@ using FEM
 
 n_ele = 100
 
-geomesh = gencook(n_ele, n_ele, GeoTrig)
+geomesh = gencook(n_ele, n_ele, GeoQuad)
 
 
 push!(geomesh, gennodeset(n->n.coords[1]>47.999999, "right", geomesh.nodes))
@@ -19,7 +19,7 @@ mat_section = MaterialSection(LinearIsotropic(1, 0.3))
 push!(mat_section, geomesh.element_sets["all"])
 
 # Element section
-ele_section = ElementSection(LinTrig)
+ele_section = ElementSection(LinQuad)
 push!(ele_section, geomesh.element_sets["all"])
 
 # Boundary conditions
@@ -34,7 +34,7 @@ solver = NRSolver(1e-7, 2)
 
 solve(solver, fp)
 
-exportVTK(fp, "test_bin.vtk", false)
+#exportVTK(fp, "test_bin.vtk", false)
 
 
 #write_vtk_file(fp.FEMesh, "cook.jl", false)

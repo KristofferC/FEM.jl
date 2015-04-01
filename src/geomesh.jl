@@ -7,12 +7,14 @@ immutable Point2<: FixedVector{Float64, 2}
     x::Float64
     y::Float64
 end
+typealias Vector2 Point2
 
 immutable Point3 <: FixedVector{Float64, 3}
     x::Float64
     y::Float64
     z::Float64
 end
+typealias Vector3 Point3
 
 #########
 # Nodes #

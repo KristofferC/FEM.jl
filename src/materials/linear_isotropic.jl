@@ -4,7 +4,7 @@ immutable LinearIsotropicMS <:AbstractMaterialStatus
 end
 
 
-LinearIsotropicMS() = LinearIsotropicMS(zeros(9), zeros(9))
+LinearIsotropicMS() = LinearIsotropicMS(zeros(4), zeros(4))
 
 copy(matstat::LinearIsotropicMS) = LinearIsotropicMS(copy(matstat.strain), copy(matstat.stress))
 
@@ -14,7 +14,6 @@ type LinearIsotropic <: AbstractMaterial
     ν::Float64
     G::Float64
     k::Matrix{Float64}
-    σ::Vector{Float64}
     matstats::Vector{Vector{LinearIsotropicMS}}
     temp_matstats::Vector{Vector{LinearIsotropicMS}}
 end
@@ -54,17 +53,17 @@ function LinearIsotropic(E, ν)
 
     matstats = Array(Vector{LinearIsotropicMS}, 0)
     temp_matstats = Array(Vector{LinearIsotropicMS}, 0)
-    LinearIsotropic(E, ν, G, k, zeros(4), matstats, temp_matstats)
+    LinearIsotropic(E, ν, G, k, matstats, temp_matstats)
 end
 
 stiffness(mat::LinearIsotropic, ::GaussPoint2) = mat.k
 create_matstat(::Type{LinearIsotropic}) = LinearIsotropicMS()
 
 
-function stress(mat::LinearIsotropic, ɛ::Vector{Float64}, gp::GaussPoint2)
+function stress!(answer::Vector{Float64}, mat::LinearIsotropic, ɛ::Vector{Float64}, gp::GaussPoint2)
     D = stiffness(mat, gp)
-    A_mul_B!(mat.σ, D, ɛ)
-    return mat.σ
+    A_mul_B!(answer, D, ɛ)
+    return answer
 end
 
 

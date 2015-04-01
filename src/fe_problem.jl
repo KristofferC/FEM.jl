@@ -51,7 +51,7 @@ function create_feproblem(geomesh, element_regions, material_regions, bcs, loads
             elem_storage = storage[ele_type]
             interp = interps[ele_type]
 
-            section = FESection(material, ele_type)
+            section = FESection(material, ele_type, typeof(matstat))
 
             for ele_id in common
                 vertices = geomesh.elements[ele_id].vertices
