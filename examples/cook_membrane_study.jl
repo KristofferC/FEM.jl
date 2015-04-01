@@ -7,7 +7,7 @@ using FEM
 
 n_ele = 100
 
-geomesh = gencook(n_ele, n_ele, GeoQuad)
+geomesh = gencook(n_ele, n_ele, GeoTrig)
 
 
 push!(geomesh, gennodeset(n->n.coords[1]>47.999999, "right", geomesh.nodes))
@@ -19,7 +19,7 @@ mat_section = MaterialSection(LinearIsotropic(1, 0.3))
 push!(mat_section, geomesh.element_sets["all"])
 
 # Element section
-ele_section = ElementSection(LinQuad)
+ele_section = ElementSection(LinTrig)
 push!(ele_section, geomesh.element_sets["all"])
 
 # Boundary conditions

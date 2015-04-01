@@ -10,19 +10,26 @@ end
 
 LinTrigStorage() = LinTrigStorage(zeros(4, 6), zeros(4,6), zeros(6,6), zeros(4), zeros(6))
 
-immutable LinTrig <: AbstractFElement
+immutable LinTrig{T <: AbstractMaterialStatus} <: AbstractFElement{T}
     vertices::Vertex3
     gps::Vector{GaussPoint2}
     n::Int
     interp::LinTrigInterp
     storage::LinTrigStorage
+    matstats::Vector{T}
+    temp_matstats::Vector{T}
 end
 
 # Constructors
-function LinTrig(vertices::Vertex3, n, interp::LinTrigInterp,
-                 lts::LinTrigStorage, gps::Vector{GaussPoint2})
-
-    LinTrig(vertices, gps, n, interp, lts)
+function LinTrig{T <: AbstractMaterialStatus}(vertices::Vertex3, n, interp::LinTrigInterp,
+                 lts::LinTrigStorage, gps::Vector{GaussPoint2}, matstat::T)
+    matstats = T[]
+    temp_matstats = T[]
+    for i in 1:length(gps)
+        push!(matstats, copy(matstat))
+        push!(temp_matstats, copy(matstat))
+    end
+    LinTrig(vertices, gps, n, interp, lts, matstats, temp_matstats)
 end
 
 function LinTrig(v::Vector{Int}, n, interp::LinTrigInterp,

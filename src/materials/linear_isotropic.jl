@@ -4,6 +4,11 @@ immutable LinearIsotropicMS <:AbstractMaterialStatus
 end
 
 
+LinearIsotropicMS() = LinearIsotropicMS(zeros(9), zeros(9))
+
+copy(matstat::LinearIsotropicMS) = LinearIsotropicMS(copy(matstat.strain), copy(matstat.stress))
+
+
 type LinearIsotropic <: AbstractMaterial
     E::Float64
     ν::Float64
@@ -53,7 +58,7 @@ function LinearIsotropic(E, ν)
 end
 
 stiffness(mat::LinearIsotropic, ::GaussPoint2) = mat.k
-
+create_matstat(::Type{LinearIsotropic}) = LinearIsotropicMS()
 
 
 function stress(mat::LinearIsotropic, ɛ::Vector{Float64}, gp::GaussPoint2)
@@ -63,7 +68,4 @@ function stress(mat::LinearIsotropic, ɛ::Vector{Float64}, gp::GaussPoint2)
 end
 
 
-LinearIsotropicMS() = LinearIsotropicMS(zeros(9), zeros(9))
-
-create_matstat(::Type{LinearIsotropic}) = LinearIsotropicMS()
 update(mat::LinearIsotropic) = mat.matstats = mat.temp_matstats

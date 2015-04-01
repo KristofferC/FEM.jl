@@ -43,6 +43,7 @@ function create_feproblem(geomesh, element_regions, material_regions, bcs, loads
     sections = Array(FESection, 0)
     for matregion in material_regions
         material = matregion.material
+        matstat = create_matstat(typeof(material))
         for eleregion in element_regions
             ele_type = eleregion.element_type
             common = intersect(matregion.elements, eleregion.elements)
@@ -54,13 +55,13 @@ function create_feproblem(geomesh, element_regions, material_regions, bcs, loads
 
             for ele_id in common
                 vertices = geomesh.elements[ele_id].vertices
-                element = ele_type(vertices, gps_ele, ele_id, interp,
-                                   elem_storage)
+                element = ele_type(vertices, ele_id, interp,
+                                   elem_storage, gps_ele, matstat)
                 push!(section, element)
                 #material.matstats[element.n] = Array(LinearIsotropicMS, 0)
                 #material.temp_matstats[element.n] = Array(LinearIsotropicMS, 0)
 
-                addmatstats!(material, length(gps_ele))
+               # addmatstats!(material, length(gps_ele))
 
             end
             push!(sections, section)

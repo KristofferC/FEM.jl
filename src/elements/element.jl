@@ -1,4 +1,4 @@
-abstract AbstractFElement
+abstract AbstractFElement{T <: AbstractMaterialStatus}
 
 abstract ElemStorage
 
@@ -55,8 +55,8 @@ function intf{T <: AbstractFElement, P <: AbstractMaterial}(elem::T, mat::P, nod
         # f_int += B' * σ * dV
         BLAS.gemv!('T', dV, B, σ, 1.0, elem.storage.f_int)
 
-        copy!(mat.temp_matstats[elem.n][i].strain, elem.storage.ɛ)
-        copy!(mat.temp_matstats[elem.n][i].stress, σ)
+        copy!(elem.temp_matstats[i].strain, elem.storage.ɛ)
+        copy!(elem.temp_matstats[i].stress, σ)
     end
     return elem.storage.f_int
 end

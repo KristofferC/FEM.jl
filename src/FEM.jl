@@ -3,6 +3,7 @@ module FEM
 import Base.push!
 
 import Base.show
+import Base.copy
 
 using Base.LinAlg
 

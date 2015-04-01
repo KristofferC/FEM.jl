@@ -10,12 +10,14 @@ LinQuadStorage() = LinQuadStorage(zeros(4, 8), zeros(4,8),
                                   zeros(8,8), zeros(4), zeros(8))
 
 
-immutable LinQuad<: AbstractFElement
+immutable LinQuad{T <: AbstractMaterialStatus} <: AbstractFElement{T}
     vertices::Vertex4
     gps::Vector{GaussPoint2}
     n::Int
     interp::LinQuadInterp
     storage::LinQuadStorage
+    mat_stats::Vector{T}
+    temp_mat_stats::Vector{T}
 end
 
 # Constructors
