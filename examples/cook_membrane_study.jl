@@ -1,11 +1,11 @@
 using FEM
-
+import FEM.write_vtk_file
 
 # Nodes
 
 # Generate geomesh and node / elementsets
 
-n_ele = 2
+n_ele = 4
 
 geomesh = gencook(n_ele, n_ele, GeoTrig)
 
@@ -34,6 +34,7 @@ solver = NRSolver(1e-7, 2)
 
 solve(solver, fp)
 
+<<<<<<< HEAD
 exportVTK(fp, "test_bin.vtk", true)
 
 
@@ -58,3 +59,8 @@ Starting Newton-Raphson solver..
 Converged!
 elapsed time: 1.185315694 seconds (467 MB allocated, 5.20% gc time in 21 pauses with 1 full sweep)
 =#
+=======
+#
+write_vtk_file(fp, "test_pycall.vtk", true)
+exportVTK(fp, "test_bin.vtk", false)
+>>>>>>> feature/improve/export
