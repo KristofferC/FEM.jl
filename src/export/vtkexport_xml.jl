@@ -1,164 +1,224 @@
 using LightXML
+using Codecs
+
+abstract AbstractVTKXML
+
+abstract AbstractVTKXMLBinary <: AbstractVTKXML
+
+function add_data!{T <: AbstractVTKXMLBinary}(vtkxml::T, data)
+    write(vtkxml.buffer, data)
+end
+
+type VTKXMLBinaryCompressed <: AbstractVTKXMLBinary
+    buffer::IOBuffer
+end
+VTKXMLBinaryCompressed() = VTKXMLBinaryCompressed(IOBuffer())
+
+function write_data!(vtkxml::VTKXMLBinaryCompressed, xmlele::XMLElement)
+    uncompressed_size = vtkxml.buffer.size
+    compressed_data = encode(Zlib, takebuf_array(vtkxml.buffer))
+    compressed_size = length(compressed_data)
+    header = UInt32[1, uncompressed_size, uncompressed_size, compressed_size]
+    header_binary = bytestring(encode(Base64, reinterpret(UInt8, header)))
+    data_binary = bytestring(encode(Base64, compressed_data))
+    add_text(xmlele, header_binary)
+    add_text(xmlele, data_binary)
+end
+
+type VTKXMLBinaryUncompressed <: AbstractVTKXMLBinary
+    buffer::IOBuffer
+end
+VTKXMLBinaryUncompressed() = VTKXMLBinaryUncompressed(IOBuffer())
+
+function write_data!(vtkxml::VTKXMLBinaryUncompressed, xmlele::XMLElement)
+    uncompressed_size = vtkxml.buffer.size
+    uncompressed_data = takebuf_array(vtkxml.buffer)
+    header = UInt32[uncompressed_size]
+    header_binary = bytestring(encode(Base64, reinterpret(UInt8, header)))
+    data_binary = bytestring(encode(Base64, uncompressed_data))
+    add_text(xmlele, header_binary)
+    add_text(xmlele, data_binary)
+end
 
 
-        doc = XMLDocument()
-        xroot = create_root(doc, "VTKFile")
-        set_attribute(xroot, "type", "UnstructuredGrid")
-        set_attribute(xroot, "version", "0.1")
-        set_attribute(xroot, "byte_order", "LittleEndian")
+type VTKXMLASCII <: AbstractVTKXML
+    buffer::IOBuffer
+end
+VTKXMLASCII() = VTKXMLASCII(IOBuffer())
 
-        # Unstructured grid element
-        xunstructured_grid = new_child(xroot, "UnstructuredGrid")
 
-        # Piece 0 (only one)
-        xpiece = new_child(xunstructured_grid, "Piece")
-        set_attribute(xpiece, "NumberOfPoints", 5)
-        set_attribute(xpiece, "NumberOfCells", "0")
+function add_data!(vtkxml::VTKXMLASCII, data)
+    print(vtkxml.buffer, data, " ")
+end
 
-        ### Points ####
-        xpoints = new_child(xpiece, "Points")
+function add_data!{T <: AbstractArray}(vtkxml::VTKXMLASCII, data::T)
+    for comp in data
+        print(vtkxml.buffer, comp, " ")
+    end
+end
 
-        # Point location data
-        xpoint_coords = new_child(xpoints, "DataArray")
-        set_attribute(xpoint_coords, "type", "Float64")
-        set_attribute(xpoint_coords, "format", "ascii")
-        set_attribute(xpoint_coords, "NumberOfComponents", "3")
-        points.appendChild(point_coords)
+function write_data!(vtkxml::VTKXMLASCII, xmlele::XMLElement)
+    add_text(xmlele, takebuf_string(vtkxml.buffer))
+end
 
-        string = self.coords_to_string(x, y, z)
-        point_coords_data = doc.createTextNode(string)
-        point_coords.appendChild(point_coords_data)
+function write_VTKXML(filename::ASCIIString, fp::FEProblem,
+                      binary::Bool=true, compress::Bool=true)
+    for section in fp.sections
+        write_VTKXML_section(filename, fp.nodes, section, binary, compress)
+    end
+end
 
-        #### Cells ####
-        cells = doc.createElementNS("VTK", "Cells")
-        piece.appendChild(cells)
+function write_VTKXML_section{T <: FESection}(filename::ASCIIString, nodes::Vector{FENode2},
+                             section::T, binary::Bool=true, compress::Bool=false)
+    if binary
+        if compress
+            _write_VTKXML_section(filename, nodes, section, binary, compress, VTKXMLBinaryCompressed())
+        else
+            _write_VTKXML_section(filename, nodes, section, binary, compress, VTKXMLBinaryUncompressed())
+        end
+    else
+        _write_VTKXML_section(filename, nodes, section, binary, compress, VTKXMLASCII())
+    end
+end
 
-        # Cell locations
-        cell_connectivity = doc.createElementNS("VTK", "DataArray")
-        cell_connectivity.set_attribute("type", "Int32")
-        cell_connectivity.set_attribute("Name", "connectivity")
-        cell_connectivity.set_attribute("format", "ascii")
-        cells.appendChild(cell_connectivity)
+typealias Vtkd Dict{ASCIIString, ASCIIString}
 
-        # Cell location data
-        connectivity = doc.createTextNode("0")
-        cell_connectivity.appendChild(connectivity)
+function _write_VTKXML_section{T <: FESection, P <: AbstractVTKXML}(filename::ASCIIString, nodes::Vector{FENode2},
+                                              section::T, binary::Bool, compress::Bool, vtkxml::P)
+    if !binary && compress
+        error("Can only compress when using Binary format")
+    end
 
-        cell_offsets = doc.createElementNS("VTK", "DataArray")
-        cell_offsets.set_attribute("type", "Int32")
-        cell_offsets.set_attribute("Name", "offsets")
-        cell_offsets.set_attribute("format", "ascii")
-        cells.appendChild(cell_offsets)
-        offsets = doc.createTextNode("0")
-        cell_offsets.appendChild(offsets)
+    if binary
+        const VTK_FORMAT = "binary"
+    else
+        const VTK_FORMAT = "ascii"
+    end
 
-        cell_types = doc.createElementNS("VTK", "DataArray")
-        cell_types.set_attribute("type", "UInt8")
-        cell_types.set_attribute("Name", "types")
-        cell_types.set_attribute("format", "ascii")
-        cells.appendChild(cell_types)
-        types = doc.createTextNode("1")
-        cell_types.appendChild(types)
+    xdoc = XMLDocument()
+    xroot = create_root(xdoc, "VTKFile")
+    set_attribute(xroot, "type", "UnstructuredGrid")
+    set_attribute(xroot, "version", "0.1")
+    set_attribute(xroot, "byte_order", "LittleEndian")
 
-        #### Data at Points ####
-        point_data = doc.createElementNS("VTK", "PointData")
-        piece.appendChild(point_data)
+    if compress
+        set_attribute(xroot, "compressor", "vtkZLibDataCompressor")
+    end
 
-        # Points
-        point_coords_2 = doc.createElementNS("VTK", "DataArray")
-        point_coords_2.set_attribute("Name", "Points")
-        point_coords_2.set_attribute("NumberOfComponents", "3")
-        point_coords_2.set_attribute("type", "Float32")
-        point_coords_2.set_attribute("format", "ascii")
-        point_data.appendChild(point_coords_2)
 
-        string = self.coords_to_string(x, y, z)
-        point_coords_2_Data = doc.createTextNode(string)
-        point_coords_2.appendChild(point_coords_2_Data)
+    xgrid = new_child(xroot, "UnstructuredGrid")
 
-        # Particle jump vectors
-        if len(x_jump) > 0:
-            jumps = doc.createElementNS("VTK", "DataArray")
-            jumps.set_attribute("Name", "jumps")
-            jumps.set_attribute("NumberOfComponents", "3")
-            jumps.set_attribute("type", "Float32")
-            jumps.set_attribute("format", "ascii")
-            point_data.appendChild(jumps)
+    xpiece = new_child(xgrid, "Piece")
+    set_attribute(xpiece, "NumberOfPoints", length(nodes))
 
-            string = self.coords_to_string(x_jump, y_jump, z_jump)
-            jumpData = doc.createTextNode(string)
-            jumps.appendChild(jumpData)
 
-        # Force vectors
-        if len(x_force) > 0:
-            forces = doc.createElementNS("VTK", "DataArray")
-            forces.set_attribute("Name", "forces")
-            forces.set_attribute("NumberOfComponents", "3")
-            forces.set_attribute("type", "Float32")
-            forces.set_attribute("format", "ascii")
-            point_data.appendChild(forces)
+    ncells = length(section.elements)
+    set_attribute(xpiece, "NumberOfCells", length(section.elements))
 
-            string = self.coords_to_string(x_force, y_force, z_force)
-            forceData = doc.createTextNode(string)
-            forces.appendChild(forceData)
+    # Points
+    xpoints = new_child(xpiece, "Points")
 
-        # Particle radii
-        if len(radii) > 0:
-            radiiNode = doc.createElementNS("VTK", "DataArray")
-            radiiNode.set_attribute("Name", "radii")
-            radiiNode.set_attribute("type", "Float32")
-            radiiNode.set_attribute("format", "ascii")
-            point_data.appendChild(radiiNode)
+    # Coordinates for points
+    xcoords = new_child(xpoints, "DataArray")
+    set_attributes(xcoords, Vtkd("type" => "Float64", "name" => "Points",
+                                "format" => VTK_FORMAT, "NumberOfComponents" => "3"))
 
-            string = self.array_to_string(radii)
-            radiiData = doc.createTextNode(string)
-            radiiNode.appendChild(radiiData)
+    for node in nodes
+        coords = get_coord(node)
+        for c in coords
+            add_data!(vtkxml, c)
+        end
+    end
 
-        if len(colors) > 0:
-            # Particle colors
-            colorNode= doc.createElementNS("VTK", "DataArray")
-            colorNode.set_attribute("Name", "colors")
-            colorNode.set_attribute("type", "Float32")
-            colorNode.set_attribute("format", "ascii")
-            point_data.appendChild(colorNode)
+    write_data!(vtkxml, xcoords)
 
-            string = self.array_to_string(colors)
-            color_Data = doc.createTextNode(string)
-            colorNode.appendChild(color_Data)
+    #### Cells ####
 
-        #### Cell data (dummy) ####
-        cell_data = doc.createElementNS("VTK", "CellData")
-        piece.appendChild(cell_data)
+    xcells = new_child(xpiece, "Cells")
 
-        # Write to file and exit
-        outFile = open(fileName, 'w')
-#        xml.dom.ext.PrettyPrint(doc, file)
-        doc.writexml(outFile, newl='\n')
-        outFile.close()
-        self.fileNames.append(fileName)
 
-    def writePVD(self, fileName):
-        outFile = open(fileName, 'w')
-        import xml.dom.minidom
+    # Cell locations
+    xcellconn = new_child(xcells, "DataArray")
+    set_attribute(xcellconn, "type", "Int64")
+    set_attribute(xcellconn, "Name", "connectivity")
+    set_attribute(xcellconn, "format", VTK_FORMAT)
 
-        pvd = xml.dom.minidom.Document()
-        pvd_root = pvd.createElementNS("VTK", "VTKFile")
-        pvd_root.set_attribute("type", "Collection")
-        pvd_root.set_attribute("version", "0.1")
-        pvd_root.set_attribute("byte_order", "LittleEndian")
-        pvd.appendChild(pvd_root)
+    for element in section.elements
+        for vertex in element.vertices
+            add_data!(vtkxml, vertex-1)
+        end
+    end
+    write_data!(vtkxml, xcellconn)
 
-        collection = pvd.createElementNS("VTK", "Collection")
-        pvd_root.appendChild(collection)
 
-        for i in range(len(self.fileNames)):
-            dataSet = pvd.createElementNS("VTK", "DataSet")
-            dataSet.set_attribute("timestep", str(i))
-            dataSet.set_attribute("group", "")
-            dataSet.set_attribute("part", "0")
-            dataSet.set_attribute("file", str(self.fileNames[i]))
-            collection.appendChild(dataSet)
+    # Cell location data
 
-        outFile = open(fileName, 'w')
-        pvd.writexml(outFile, newl='\n')
-        outFile.close()
+
+    xcell_offsets = new_child(xcells, "DataArray")
+    set_attribute(xcell_offsets, "type", "Int64")
+    set_attribute(xcell_offsets, "Name", "offsets")
+    set_attribute(xcell_offsets, "format", VTK_FORMAT)
+    nverts = length(section.elements[1].vertices)
+    offsets = collect(nverts:nverts:nverts*length(section.elements))
+    add_data!(vtkxml, offsets)
+    write_data!(vtkxml, xcell_offsets)
+
+
+    xcell_types = new_child(xcells, "DataArray")
+    set_attribute(xcell_types, "type", "UInt8")
+    set_attribute(xcell_types, "Name", "types")
+    set_attribute(xcell_types, "format", VTK_FORMAT)
+    ele_vtknum = get_vtk_num(get_geotype(section.elements[1]))
+    cell_types = UInt8[ele_vtknum for i in 1:length(section.elements)]
+    add_data!(vtkxml, cell_types)
+    write_data!(vtkxml, xcell_types)
+
+    #### Cell data (dummy) ####
+    #xcell_data = new_child(xpiece, "CellData")
+    #xcol = new_child(xcell_data, "DataArray")
+    #set_attribute(xcol, "Name", "Stress")
+    #set_attribute(xcol, "type", "Float64")
+    #set_attribute(xcol, "format", VTK_FORMAT)
+
+
+ #=
+
+    write(iobuf, "\n")
+    write(iobuf, "5 \n")
+    add_text(xcell_types, takebuf_string(iobuf))
+
+
+    #### Data at Points ####
+    xpoint_data = new_child(xpiece, "PointData")
+
+    # Points
+    xdisp = new_child(xpoint_data, "DataArray")
+    set_attribute(xdisp, "Name", "Displacement")
+    set_attribute(xdisp, "NumberOfComponents", "3")
+    set_attribute(xdisp, "type", "Float64")
+
+
+    if binary
+        set_attribute(xdisp, "format", "binary")
+        data = vec([0.0 0.0 0.0 0.0 0.0 0.0 10.0 10.0 10.0])
+        #write(iobuf, bytestring(encode(Base64, reinterpret(UInt8, [UInt32(8*9)]))))
+        write(iobuf, UInt32(8*9))
+        write(iobuf, data)
+        #write(iobuf, encode(Base64, bytestring(reinterpret(UInt8, data))))
+        #add_text(xdisp, takebuf_string(iobuf))
+        add_text(xdisp, bytestring(encode(Base64, takebuf_string(iobuf))))
+    else
+
+        set_attribute(xdisp, "format", "ascii")
+        write(iobuf, "\n")
+        write(iobuf, "0 0 0 0 0 0 10 10 10\n")
+        add_text(xdisp, takebuf_string(iobuf))
+    #end
+
+    write(iobuf, "\n")
+    write(iobuf, " 1\n")
+    add_text(xcol, takebuf_string(iobuf))
+    =#
+
+    save_file(xdoc, filename)
+end
