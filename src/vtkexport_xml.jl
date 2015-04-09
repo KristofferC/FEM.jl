@@ -9,7 +9,7 @@ type VTKExporter <: AbstractDataExporter
     compress::Bool
 end
 fields(vtkexp::VTKExporter) = vtkexp.fields
-VTKExporter() = VTKExporter( Vector{DataType}[], true, false)
+VTKExporter() = VTKExporter(Vector{DataType}[], true, false)
 
 function set_binary!(vtkexp::VTKExporter, val::Bool)
     vtkexp.binary = val
@@ -19,11 +19,11 @@ function set_binary!(vtkexp::VTKExporter, val::Bool)
 end
 
 function set_compress!(vtkexp::VTKExporter, val::Bool)
-    if !vtkexp.binary
+    if !vtkexp.binary && val
         warning("Can only compress when VTKEXporter is in binary mode")
         return
     else
-        vtkexp.compress = true
+        vtkexp.compress = val
     end
 end
 push!(vtkexp::VTKExporter, field::DataType) = push!(vtkexp.fields, field)
@@ -216,6 +216,7 @@ function _write_VTKXML_section(nodes::Vector{FENode2}, section::FESection,
     set_attribute(xdisp, "Name", "Displacement")
     set_attribute(xdisp, "NumberOfComponents", "3")
     set_attribute(xdisp, "type", "Float64")
+    set_attribute(xdisp, "format", VTK_FORMAT)
     for node in nodes
         disp = get_displacement(node)
         for i in disp
