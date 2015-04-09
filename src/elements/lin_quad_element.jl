@@ -10,7 +10,7 @@ LinQuadStorage() = LinQuadStorage(zeros(4, 8), zeros(4,8),
                                   zeros(8,8), zeros(4), zeros(8))
 
 
-immutable LinQuad{T <: AbstractMaterialStatus} <: AbstractFElement{T}
+type LinQuad{T <: AbstractMaterialStatus} <: AbstractFElement{T}
     vertices::Vertex4
     gps::Vector{GaussPoint2}
     n::Int
@@ -19,6 +19,8 @@ immutable LinQuad{T <: AbstractMaterialStatus} <: AbstractFElement{T}
     matstats::Vector{T}
     temp_matstats::Vector{T}
 end
+
+gausspoints(elem::LinQuad) = elem.gps
 
 # Constructors
 function LinQuad{T <: AbstractMaterialStatus}(vertices::Vertex4, n, interp::LinQuadInterp,
@@ -41,9 +43,10 @@ end
 get_geoelem(ele::LinQuad) = GeoQuad(ele.n, ele.vertices)
 get_geotype(::LinQuad) = GeoQuad
 
-get_storage(::Type{LinQuad}) = LinQuadStorage()
-get_interp(::Type{LinQuad}) = LinQuadInterp()
-function get_gps(::Type{LinQuad})
+createstorage(::Type{LinQuad}) = LinQuadStorage()
+createinterp(::Type{LinQuad}) = LinQuadInterp()
+
+function creategps(::Type{LinQuad})
     p = 1 / sqrt(3)
     [GaussPoint2(Point2(-p, -p), 1.0);
      GaussPoint2(Point2( p, -p), 1.0);
@@ -55,8 +58,10 @@ end
     return 8
 end
 
+# Avoids allocation (remove?)
+const LINTRIG_DOFTYPES = [Du, Dv]
 function doftypes(::LinQuad, ::Int)
-    return [Du, Dv]
+    return return LINTRIG_DOFTYPES
 end
 
 function Bmatrix(elem::LinQuad, gp::GaussPoint2, nodes::Vector{FENode2})
@@ -79,4 +84,17 @@ function weight(elem::LinQuad, gp::GaussPoint2, nodes::Vector{FENode2})
     return abs(det2x2(J)) * gp.weight
 end
 
+
+# Get the stress in gausspoint i
+get_field(elem::LinQuad, ::Type{Stress}, i::Int) = [elem.matstats[i].stress, 0, 0]
+get_field(elem::LinQuad, ::Type{Strain}, i::Int) = [elem.matstats[i].strain, 0, 0]
+
+function get_cell_data{T <: AbstractTensor}(elem::LinQuad, field::Type{T})
+    cellfield = zeros(get_ncomponents(field))
+    for (i, gp) in enumerate(gausspoints(elem))
+        gpfield = get_field(elem, field, i)
+        axpy!(getweight(gp)/4.0, gpfield, cellfield)
+    end
+    return cellfield
+end
 

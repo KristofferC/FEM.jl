@@ -17,6 +17,8 @@ immutable GaussPoint3 <: AbstractGaussPoint
     weight::Float64
 end
 
+getweight(gp::AbstractGaussPoint) = gp.weight
+
 # Lint does not refognize enums
 @lintpragma("Ignore use of undeclared variable DofType")
 @lintpragma("Ignore use of undeclared variable Du")
@@ -24,7 +26,7 @@ end
 @lintpragma("Ignore use of undeclared variable Dw")
 @lintpragma("Ignore use of undeclared variable Pressure")
 
-@enum DofType Du Dv Dw Pressure
+@enum DofType Du Dv Dw
 
 type Dof
     eq_n::Int

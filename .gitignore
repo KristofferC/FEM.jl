@@ -2,3 +2,7 @@
 *.cov
 *.log
 *.vtk
+*.vtu
+*.sublime-project
+*.sublime-workspace
+*.swp

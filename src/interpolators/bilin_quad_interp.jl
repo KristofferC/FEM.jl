@@ -12,6 +12,10 @@ function LinQuadInterp()
     J = Array(Float64, 2, 2)
     LinQuadInterp(N, dN, dNdx, J)
 end
+get_allocated_N(i::LinQuadInterp) = i.N
+get_allocated_dN(i::LinQuadInterp) = i.dN
+get_allocated_dNdx(i::LinQuadInterp) = i.dNdx
+get_allocated_J(i::LinQuadInterp) = i.J
 
 
 # Shape functions in local coords
@@ -20,12 +24,14 @@ function Nvec(interp::LinQuadInterp, loc_coords::Point2)
     ξ = loc_coords[1]
     η = loc_coords[2]
 
-    interp.N[1] = (1.0 + ξ) * (1.0 + η) * 0.25
-    interp.N[2] = (1.0 - ξ) * (1.0 + η) * 0.25
-    interp.N[3] = (1.0 - ξ) * (1.0 - η) * 0.25
-    interp.N[4] = (1.0 + ξ) * (1.0 - η) * 0.25
+    N = get_allocated_N(interp)
 
-    return interp.N
+    N[1] = (1.0 + ξ) * (1.0 + η) * 0.25
+    N[2] = (1.0 - ξ) * (1.0 + η) * 0.25
+    N[3] = (1.0 - ξ) * (1.0 - η) * 0.25
+    N[4] = (1.0 + ξ) * (1.0 - η) * 0.25
+
+    return N
 end
 
 
@@ -33,38 +39,39 @@ function dNmatrix(interp::LinQuadInterp, loc_coords::Point2)
     ξ = loc_coords[1]
     η = loc_coords[2]
 
+    dN = get_allocated_dN(interp)
 
-    interp.dN[1,1] =  (1.0 + η) * 0.25
-    interp.dN[1,2] =  (1.0 + ξ) * 0.25
+   dN[1,1] =  (1.0 + η) * 0.25
+   dN[1,2] =  (1.0 + ξ) * 0.25
 
-    interp.dN[2,1] = -(1.0 + η) * 0.25
-    interp.dN[2,2] =  (1.0 - ξ) * 0.25
+   dN[2,1] = -(1.0 + η) * 0.25
+   dN[2,2] =  (1.0 - ξ) * 0.25
 
-    interp.dN[3,1] = -(1.0 - η) * 0.25
-    interp.dN[3,2] = -(1.0 - ξ) * 0.25
+   dN[3,1] = -(1.0 - η) * 0.25
+   dN[3,2] = -(1.0 - ξ) * 0.25
 
-    interp.dN[4,1] =  (1.0 - η) * 0.25
-    interp.dN[4,2] = -(1.0 + ξ) * 0.25
+   dN[4,1] =  (1.0 - η) * 0.25
+   dN[4,2] = -(1.0 + ξ) * 0.25
 
-    return interp.dN
+    return dN
 end
 
 function Jmatrix(interp::LinQuadInterp, local_coords::Point2,
                  vertices::Vertex4, nodes::Vector{FENode2},
                  dN::Matrix{Float64})
 
-    fill!(interp.J, 0.0)
+    J = get_allocated_J(interp)
+    fill!(J, 0.0)
     for row in 1:size(dN, 1)
         x = nodes[vertices[row]].coords.x
         y = nodes[vertices[row]].coords.y
 
-
-        interp.J[1, 1] += dN[row, 1] * x
-        interp.J[1, 2] += dN[row, 1] * y
-        interp.J[2, 1] += dN[row, 2] * x
-        interp.J[2, 2] += dN[row, 2] * y
+        J[1, 1] += dN[row, 1] * x
+        J[1, 2] += dN[row, 1] * y
+        J[2, 1] += dN[row, 2] * x
+        J[2, 2] += dN[row, 2] * y
     end
-    return interp.J
+    return J
 end
 
 

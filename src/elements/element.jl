@@ -59,6 +59,14 @@ function intf{T <: AbstractFElement, P <: AbstractMaterial}(elem::T, mat::P, nod
     return elem.storage.f_int
 end
 
+#get_cell_data{T <: AbstractScalar}(::AbstractFElement, ::Type{T}) = 0.0
+get_point_data{T <: AbstractScalar}(::AbstractFElement, ::Type{T}) = 0.0
+
+#get_cell_data{T <: AbstractTensor}(::AbstractFElement, ::Type{T}) = zeros(6)
+get_point_data{T <: AbstractTensor}(::AbstractFElement, ::Type{T}) = zeros(6)
+
+#get_cell_data{T <: AbstractVector}(::AbstractFElement, ::Type{T}) = zeros(3)
+get_point_data{T <: AbstractVector}(::AbstractFElement, ::Type{T}) = zeros(3)
 
 #=
 function weight{T <: AbstractFElement}(elem::T, gp::GaussPoint2, nodes::Vector{FENode2})

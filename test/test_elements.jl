@@ -1,8 +1,8 @@
 import FEM.stiffness
 import FEM.Bmatrix
-import FEM.get_gps
-import FEM.get_interp
-import FEM.get_storage
+import FEM.creategps
+import FEM.createinterp
+import FEM.createstorage
 import FEM.Vertex3
 import FEM.Vertex4
 facts("FEM.Element") do
@@ -15,9 +15,9 @@ context("FEM.Element.LinTrig") do
 
     # Create the gps, interpolator, storage...
 
-    gps = get_gps(LinTrig)
-    interp = get_interp(LinTrig)
-    storage = get_storage(LinTrig)
+    gps = creategps(LinTrig)
+    interp = createinterp(LinTrig)
+    storage = createstorage(LinTrig)
     elem = LinTrig(Vertex3(1, 2, 3), gps, 1, interp, storage)
     mat = LinearIsotropic(200e9, 0.3)
 
@@ -41,9 +41,9 @@ context("FEM.Element.LinQuad") do
 
     nodes = [FENode2(1, [0.0, 0.0]), FENode2(2, [1.0, 0.0]), FENode2(3, [1.0, 2.5]), FENode2(4, [0.0, 1.5])]
 
-    gps = get_gps(LinQuad)
-    interp = get_interp(LinQuad)
-    storage = get_storage(LinQuad)
+    gps = creategps(LinQuad)
+    interp = createinterp(LinQuad)
+    storage = createstorage(LinQuad)
     elem = LinQuad(Vertex4(1, 2, 3, 4), gps, 1, interp, storage)
     mat = LinearIsotropic(200e9, 0.3)
 

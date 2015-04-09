@@ -33,26 +33,27 @@ export AbstractMaterialStatus, LinearIsotropicMS
 
 export FESection, MaterialSection, ElementSection
 export FEProblem
+export Stress, Strain
 export Solver, NRSolver, solve
 export meshquad, gencook
 export create_feproblem
-export exportVTK
+export write_VTKXML, VTKExporter, set_binary!, set_compress!
 
 #using Logging
 
 #@Logging.configure(level=DEBUG, filename="log.log")
 
-
-
-include("sparse.jl")
+include("fields.jl")
 include("materials/material.jl")
 include("interpolators/interpolator.jl")
 include("elements/element.jl")
 include("sections.jl")
 include("fe_problem.jl")
+include("vtkexport_xml.jl")
 include("solver.jl")
 include("mesh_generators/quad_mesher.jl")
-include("export/vtkexport_jul.jl")
+#include("export/vtkexport_jul.jl")
+
 #include("vtkexport.jl")
 
 

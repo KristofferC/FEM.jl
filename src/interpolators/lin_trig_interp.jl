@@ -19,6 +19,10 @@ function LinTrigInterp()
     J = Array(Float64, 2, 2)
     LinTrigInterp(N, dN, dNdx, J)
 end
+get_allocated_N(i::LinTrigInterp) = i.N
+get_allocated_dN(i::LinTrigInterp) = i.dN
+get_allocated_dNdx(i::LinTrigInterp) = i.dNdx
+get_allocated_J(i::LinTrigInterp) = i.J
 
 
 # Shape functions in local coords
@@ -26,6 +30,8 @@ function Nvec(interp::LinTrigInterp, loc_coords::Point2)
 
     ξ = loc_coords[1]
     η = loc_coords[2]
+
+    N = get_allocated_N(interp)
 
     interp.N[1] = ξ
     interp.N[2] = η
@@ -36,14 +42,15 @@ end
 
 
 function dNmatrix(interp::LinTrigInterp, ::Point2)
-    return interp.dN
+    # dN is constant so just return it
+    return get_allocated_dN(interp)
 end
 
 function Jmatrix(interp::LinTrigInterp, ::Point2,
                  vertices::Vertex3, nodes::Vector{FENode2},
                  ::Matrix{Float64})
 
-
+    J = get_allocated_J(interp)
 
     x1 =  nodes[vertices[1]].coords.x
     x2 =  nodes[vertices[2]].coords.x
@@ -54,12 +61,12 @@ function Jmatrix(interp::LinTrigInterp, ::Point2,
     y3 =  nodes[vertices[3]].coords.y
 
     # Constant Jacobian
-    interp.J[1, 1] = x1 - x3
-    interp.J[2, 1] = x2 - x3
-    interp.J[1, 2] = y1 - y3
-    interp.J[2, 2] = y2 - y3
+    J[1, 1] = x1 - x3
+    J[2, 1] = x2 - x3
+    J[1, 2] = y1 - y3
+    J[2, 2] = y2 - y3
 
-    return interp.J
+    return J
 end
 
 function dNdxmatrix(interp::LinTrigInterp, local_coords::Point2,

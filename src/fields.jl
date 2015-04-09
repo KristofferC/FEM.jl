@@ -1,28 +1,30 @@
+
+
+
+
 abstract AbstractField
 
-type ScalarField <: AbstractField
-    name::UTF8String
-    data::Vector{Float64}
-    n::Int
-end
+# Tensor fields (right now 6 components)
+abstract AbstractTensor <: AbstractField
+get_ncomponents{T <: AbstractTensor}(::Type{T}) = 6
 
-type VectorField <: AbstractField
-    name::UTF8String
-    data::Vector{Vector2}
-    n::Int
-end
+# Vector fields
+abstract AbstractVector <: AbstractField
+get_ncomponents{T <: AbstractVector}(::Type{T}) = 3
 
-type TensorField <: AbstractField
-    name::UTF8String
-    data::Vector{Vector6}
-    n::Int
-end
+# Scalar fields
+abstract AbstractScalar <: AbstractField
+#get_ncomponents(::Type{AbstractTensor}) = 1 # Not needed for scalars?
 
-type ExportData
-    scalarfields::Dict{Symbol, ScalarField}
-    vectorfields::Dict{Symbol, VectorField}
-    tensorfields::Dict{Symbol, TensorField}
-end
+# TODO: Maybe we need a distinction between primary and secondary fields?
+# Exporting a primary field as cell_data makes no sense? Or does it?
 
+# Tensors
+type Strain <: AbstractTensor end
+type Stress <: AbstractTensor end
 
-push!(strain, export_data.vectorfields[:strain][node.n] =
+# Vectors
+type Displacement <: AbstractVector end
+
+# Scalars
+type Pressure <: AbstractScalar end

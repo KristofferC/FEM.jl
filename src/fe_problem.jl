@@ -1,4 +1,5 @@
 type FEProblem
+    name::ASCIIString
     nodes::Vector{FENode2}
     bcs::Vector{DirichletBC}
     loads::Vector{NodeLoad}
@@ -9,11 +10,11 @@ type FEProblem
     n_fixed::Int
 end
 
-function FEProblem(nodes::Vector{FENode2}, bcs::Vector{DirichletBC}=Array(DirichletBC, 0),
+function FEProblem(name::ASCIIString, nodes::Vector{FENode2}, bcs::Vector{DirichletBC}=Array(DirichletBC, 0),
                     loads::Vector{NodeLoad}=Array(NodeLoad, 0), sections=Array(FESection, 0))
     node_doftype_bc = Dict{Int, Vector{DofType}}()
     node_doftypes = Dict{Int, Vector{DofType}}()
-    FEProblem(nodes, bcs, loads, sections, node_doftypes, node_doftype_bc, 0, 0)
+    FEProblem(name, nodes, bcs, loads, sections, node_doftypes, node_doftype_bc, 0, 0)
 end
 
 push!(fp::FEProblem, bc::DirichletBC) = push!(fp.bcs, bc)
@@ -21,7 +22,7 @@ push!(fp::FEProblem, load::NodeLoad) = push!(fp.loads, load)
 push!(fp::FEProblem, section::FESection) = push!(fp.sections, section)
 
 
-function create_feproblem(geomesh, element_regions, material_regions, bcs, loads)
+function create_feproblem(name, geomesh, element_regions, material_regions, bcs, loads)
 
     gps = Dict{DataType, Vector{GaussPoint2}} ()
     interps = Dict{DataType, AbstractInterpolator} ()
@@ -30,9 +31,9 @@ function create_feproblem(geomesh, element_regions, material_regions, bcs, loads
 
     for element_region in element_regions
         elem_type = element_region.element_type
-        interps[elem_type] = get_interp(elem_type)
-        gps[elem_type] = get_gps(elem_type)
-        storage[elem_type] = get_storage(elem_type)
+        interps[elem_type] = createinterp(elem_type)
+        gps[elem_type] = creategps(elem_type)
+        storage[elem_type] = createstorage(elem_type)
     end
 
     nodes = Array(FENode2, 0)
@@ -67,7 +68,9 @@ function create_feproblem(geomesh, element_regions, material_regions, bcs, loads
             push!(sections, section)
         end
     end
-    fe = FEProblem(nodes, bcs, loads, sections)
+    fe = FEProblem(name, nodes, bcs, loads, sections)
+    createdofs(fe)
+    return fe
 end
 
 
@@ -153,7 +156,7 @@ function assembleK(fp::FEProblem)
         assemble_K_section(section, fp.nodes, dof_rows, dof_cols, k_values)
     end
 
-    return sparse_plus(dof_rows, dof_cols, k_values, fp.n_eqs, fp.n_eqs)
+    return Base.sparse(dof_rows, dof_cols, k_values, fp.n_eqs, fp.n_eqs)
 end
 
 function assemble_K_section{T<:FESection}(section::T, nodes::Vector{FENode2},
@@ -193,8 +196,8 @@ function assemble_intf(fp::FEProblem)
 end
 
 function assemble_intf_section{T<:FESection}(section::T,
-                                           int_forces::Vector{Float64},
-                                           nodes::Vector{FENode2})
+                                            int_forces::Vector{Float64},
+                                            nodes::Vector{FENode2})
     mat = section.material
     for element in section.elements
         finte = intf(element, mat, nodes)
@@ -220,12 +223,12 @@ function updatedofs!(fp::FEProblem, du::Vector{Float64})
     end
 end
 
+
 function update_feproblem(fp::FEProblem)
     for section in fp.sections
-        update_section(section)
+        for element in section.elements
+            element.matstats = element.temp_matstats
+        end
     end
 end
 
-function update_section{T <: FESection}(section::T)
-    update(section.material)
-end

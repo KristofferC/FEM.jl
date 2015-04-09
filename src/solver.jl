@@ -5,9 +5,8 @@ immutable NRSolver <: Solver
     max_iters::Int
 end
 
-function solve(solver::NRSolver, fp::FEProblem)
+function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
     println("Starting Newton-Raphson solver..")
-    createdofs(fp)
     load = extload(fp)
     iteration = 0
 
@@ -37,8 +36,9 @@ function solve(solver::NRSolver, fp::FEProblem)
 
         updatedofs!(fp, du)
 
-        println(load'*du)
     end
+
     update_feproblem(fp)
+    write_data(fp, exporter)
 end
 

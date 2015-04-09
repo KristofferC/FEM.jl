@@ -67,4 +67,4 @@ function stress!(answer::Vector{Float64}, mat::LinearIsotropic, ɛ::Vector{Float
 end
 
 
-update(mat::LinearIsotropic) = mat.matstats = mat.temp_matstats
+update!(mat::LinearIsotropic) = mat.matstats = mat.temp_matstats
