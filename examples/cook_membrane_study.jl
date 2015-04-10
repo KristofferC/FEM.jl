@@ -4,7 +4,7 @@ import FEM.write_data
 
 # Generate geomesh and node / elementsets
 
-n_ele = 50
+n_ele = 100
 
 geomesh = gencook(n_ele, n_ele, GeoQTrig)
 
@@ -37,7 +37,7 @@ set_binary!(vtkexp, false)
 solver = NRSolver(1e-9, 2)
 
 solve(solver, fp, vtkexp)
-
+#write_data(fp, vtkexp)
 #write_data(fp, vtkexp)
 
 #write_VTKXML("test_bin.vtu", fp, false, false)
