@@ -2,9 +2,9 @@ abstract AbstractFElement{T <: AbstractMaterialStatus}
 
 abstract ElemStorage
 
-include("lin_trig_element.jl")
-include("lin_quad_element.jl")
-include("quad_trig_element.jl")
+include("lin_trig.jl")
+include("lin_quad.jl")
+include("quad_trig.jl")
 
 
 getindex{T <: AbstractFElement}(elem::T, i0::Real) = getindex(elem.vertices, i0)

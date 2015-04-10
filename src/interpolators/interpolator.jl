@@ -1,7 +1,7 @@
 abstract AbstractInterpolator
 
 include("lin_trig_interp.jl")
-include("bilin_quad_interp.jl")
+include("lin_quad_interp.jl")
 include("quad_trig_interp.jl")
 
 

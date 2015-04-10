@@ -28,9 +28,6 @@ function meshquad(nx::Int, ny::Int, corners::Matrix{Float64},
     UR = corners[:, 3]
     LR = corners[:, 4]
 
-
-
-
     if ele_type == GeoQTrig
         np_y = 2*ny
         np_x = 2*nx
@@ -79,8 +76,8 @@ function meshquad(nx::Int, ny::Int, corners::Matrix{Float64},
                 push!(mesh, elem2)
             elseif ele_type == GeoQTrig
                 n_elem += 1
-                elem1 = GeoQTrig(n_elem, Vertex6(node_nr(i, j), node_nr(i+2, j), node_nr(i+2, j+2),
-                                                 node_nr(i+1, j), node_nr(i+2, j+1), node_nr(i+1, j+1)))
+                elem1 = GeoQTrig(n_elem, Vertex6(node_nr(i, j), node_nr(i+2, j+2), node_nr(i+2, j),
+                                                 node_nr(i+1, j+1), node_nr(i+2, j+1), node_nr(i+1, j)))
                 push!(mesh, elem1)
                 n_elem += 1
                 elem1 = GeoQTrig(n_elem, Vertex6(node_nr(i, j), node_nr(i, j+2), node_nr(i+2, j+2),
