@@ -4,6 +4,7 @@ abstract ElemStorage
 
 include("lin_trig_element.jl")
 include("lin_quad_element.jl")
+include("quad_trig_element.jl")
 
 
 getindex{T <: AbstractFElement}(elem::T, i0::Real) = getindex(elem.vertices, i0)
@@ -45,12 +46,16 @@ end
 
 function intf{T <: AbstractFElement, P <: AbstractMaterial}(elem::T, mat::P, nodes::Vector{FENode2})
     u = get_field(elem, nodes)
+    ɛ = elem.storage.ɛ
     fill!(elem.storage.f_int, 0.0)
     for (i, gp) in enumerate(elem.gps)
         B = Bmatrix(elem, gp, nodes)
-        A_mul_B!(elem.temp_matstats[i].strain, B, u)
+        A_mul_B!(ɛ, B, u)
+        fill_from_start!(elem.temp_matstats[i].strain, ɛ)
 
-        σ = stress!(elem.temp_matstats[i].stress, mat, elem.temp_matstats[i].strain, gp)
+        σ = stress(mat, ɛ, gp)
+        fill_from_start!(elem.temp_matstats[i].stress, σ)
+
         dV = weight(elem, gp, nodes)
 
         # f_int += B' * σ * dV
@@ -60,13 +65,24 @@ function intf{T <: AbstractFElement, P <: AbstractMaterial}(elem::T, mat::P, nod
 end
 
 #get_cell_data{T <: AbstractScalar}(::AbstractFElement, ::Type{T}) = 0.0
-get_point_data{T <: AbstractScalar}(::AbstractFElement, ::Type{T}) = 0.0
+#get_point_data{T <: AbstractScalar}(::AbstractFElement, ::Type{T}) = 0.0
 
 #get_cell_data{T <: AbstractTensor}(::AbstractFElement, ::Type{T}) = zeros(6)
-get_point_data{T <: AbstractTensor}(::AbstractFElement, ::Type{T}) = zeros(6)
+#get_point_data{T <: AbstractTensor}(::AbstractFElement, ::Type{T}) = zeros(6)
 
 #get_cell_data{T <: AbstractVector}(::AbstractFElement, ::Type{T}) = zeros(3)
-get_point_data{T <: AbstractVector}(::AbstractFElement, ::Type{T}) = zeros(3)
+#get_point_data{T <: AbstractVector}(::AbstractFElement, ::Type{T}) = zeros(3)
+
+
+function get_cell_data{T <: AbstractTensor}(elem::AbstractFElement, field::Type{T})
+    cellfield = zeros(get_ncomponents(field))
+    for (i, gp) in enumerate(elem.gps)
+        gpfield = get_field(elem, field, i)
+        axpy!(getweight(gp)/4.0, gpfield, cellfield)
+    end
+    return cellfield
+end
+
 
 #=
 function weight{T <: AbstractFElement}(elem::T, gp::GaussPoint2, nodes::Vector{FENode2})

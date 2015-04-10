@@ -86,3 +86,5 @@ function weight(elem::LinTrig, gp::GaussPoint2, nodes::Vector{FENode2})
 end
 
 #get_cell_data(elem::LinTrig, field::Stress)
+get_field(elem::LinTrig, ::Type{Stress}, i::Int) = elem.matstats[i].stress
+get_field(elem::LinTrig, ::Type{Strain}, i::Int) = elem.matstats[i].strain

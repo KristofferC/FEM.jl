@@ -106,12 +106,12 @@ function write_data(fp::FEProblem, vtkexp::VTKExporter)
     end
 
     for section in fp.sections
-        _write_VTKXML_section(fp.nodes, section, vtkexp, writer)
+        _write_VTKXML_section(fp.name, fp.nodes, section, vtkexp, writer)
     end
 end
 
 
-function _write_VTKXML_section(nodes::Vector{FENode2}, section::FESection,
+function _write_VTKXML_section(filename::ASCIIString, nodes::Vector{FENode2}, section::FESection,
                                vtkexp:: VTKExporter, vtkw::AbstractVTKXMLWriter)
 
     if vtkexp.binary
@@ -130,12 +130,10 @@ function _write_VTKXML_section(nodes::Vector{FENode2}, section::FESection,
         set_attribute(xroot, "compressor", "vtkZLibDataCompressor")
     end
 
-
     xgrid = new_child(xroot, "UnstructuredGrid")
 
     xpiece = new_child(xgrid, "Piece")
     set_attribute(xpiece, "NumberOfPoints", length(nodes))
-
 
     ncells = length(section.elements)
     set_attribute(xpiece, "NumberOfCells", length(section.elements))
@@ -176,8 +174,6 @@ function _write_VTKXML_section(nodes::Vector{FENode2}, section::FESection,
 
 
     # Cell location data
-
-
     xcell_offsets = new_child(xcells, "DataArray")
     set_attribute(xcell_offsets, "type", "Int64")
     set_attribute(xcell_offsets, "Name", "offsets")
@@ -199,7 +195,6 @@ function _write_VTKXML_section(nodes::Vector{FENode2}, section::FESection,
 
 
     # Cell data
-
     xcell_data = new_child(xpiece, "CellData")
     for field in fields(vtkexp)
         # Separated this into its own function for type stability w.r.t. fields
@@ -225,7 +220,7 @@ function _write_VTKXML_section(nodes::Vector{FENode2}, section::FESection,
     end
     write_data!(vtkw, xdisp)
 
-    save_file(xdoc, string("fdsfdsfs.vtu"))
+    save_file(xdoc, string(filename, ".vtu"))
 end
 
 function write_celldata_field!{T <: AbstractField}(xcellfield::XMLElement, field::Type{T},

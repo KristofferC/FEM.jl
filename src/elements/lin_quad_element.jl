@@ -34,7 +34,7 @@ function LinQuad{T <: AbstractMaterialStatus}(vertices::Vertex4, n, interp::LinQ
     LinQuad(vertices, gps, n, interp, storage, matstats, temp_matstats)
 end
 
-function LinQuadv(v::Vector{Int}, n, interp::LinQuadInterp,
+function LinQuad(v::Vector{Int}, n, interp::LinQuadInterp,
                  storage::LinQuadStorage, gps::Vector{GaussPoint2})
     LinQuad(Vertex4(v[1], v[2], v[3], v[4]), gps, n, interp, storage)
 end
@@ -47,8 +47,8 @@ createstorage(::Type{LinQuad}) = LinQuadStorage()
 createinterp(::Type{LinQuad}) = LinQuadInterp()
 
 function creategps(::Type{LinQuad})
-    p = 1 / sqrt(3)
-    [GaussPoint2(Point2(-p, -p), 1.0);
+    p = 1 / 6
+    [GaussPoint2(Point2(p, p), 1.0);
      GaussPoint2(Point2( p, -p), 1.0);
      GaussPoint2(Point2( p,  p), 1.0);
      GaussPoint2(Point2(-p,  p), 1.0)]
@@ -59,9 +59,9 @@ end
 end
 
 # Avoids allocation (remove?)
-const LINTRIG_DOFTYPES = [Du, Dv]
+const LINQUAD_DOFTYPES = [Du, Dv]
 function doftypes(::LinQuad, ::Int)
-    return return LINTRIG_DOFTYPES
+    return return LINQUAD_DOFTYPES
 end
 
 function Bmatrix(elem::LinQuad, gp::GaussPoint2, nodes::Vector{FENode2})
@@ -86,15 +86,5 @@ end
 
 
 # Get the stress in gausspoint i
-get_field(elem::LinQuad, ::Type{Stress}, i::Int) = [elem.matstats[i].stress, 0, 0]
-get_field(elem::LinQuad, ::Type{Strain}, i::Int) = [elem.matstats[i].strain, 0, 0]
-
-function get_cell_data{T <: AbstractTensor}(elem::LinQuad, field::Type{T})
-    cellfield = zeros(get_ncomponents(field))
-    for (i, gp) in enumerate(gausspoints(elem))
-        gpfield = get_field(elem, field, i)
-        axpy!(getweight(gp)/4.0, gpfield, cellfield)
-    end
-    return cellfield
-end
-
+get_field(elem::LinQuad, ::Type{Stress}, i::Int) = elem.matstats[i].stress
+get_field(elem::LinQuad, ::Type{Strain}, i::Int) = elem.matstats[i].strain

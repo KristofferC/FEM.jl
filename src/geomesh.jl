@@ -64,6 +64,21 @@ immutable Vertex4 <: AbstractVertex{4}
     v4::Int
 end
 
+immutable Vertex5 <: AbstractVertex{5}
+    v1::Int
+    v2::Int
+    v3::Int
+    v4::Int
+end
+
+immutable Vertex6 <: AbstractVertex{6}
+    v1::Int
+    v2::Int
+    v3::Int
+    v4::Int
+    v5::Int
+    v6::Int
+end
 
 ###############
 # GeoElements #
@@ -82,6 +97,15 @@ end
 GeoTrig(n::Int, v::Vector{Int}) = GeoTrig(n, Vertex3(v[1], v[2], v[3]))
 get_vtk_num(::GeoTrig) = 5
 get_vtk_num(::Type{GeoTrig}) = 5
+
+immutable GeoQTrig <: AbstractGeoElem2
+    n::Int
+    vertices::Vertex6
+end
+GeoQTrig(n::Int, v::Vector{Int}) = GeoQTrig(n, Vertex6(v[1], v[2], v[3], v[4], v[5], v[6]))
+
+get_vtk_num(::GeoQTrig) = 22
+get_vtk_num(::Type{GeoQTrig}) = 22
 
 immutable GeoQuad <: AbstractGeoElem2
     n::Int

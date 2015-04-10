@@ -23,11 +23,11 @@ include("core.jl")
 
 export NodeSet, gennodeset, ElementSet, DirichletBC, NodeLoad, Dof
 export FENode2, FENode3
-export GeoMesh, GeoTrig, GeoQuad, GeoNode3, GeoNode2
+export GeoMesh, GeoTrig, GeoQTrig, GeoQuad, GeoNode3, GeoNode2
 
 # Elements, interpolators, materials, materialstatuses
-export AbstractFElement, LinTrig, LinQuad
-export AbstractInterpolator, LinTrigInterp, LinQuadInterp
+export AbstractFElement, LinTrig, LinQuad, QuadTrig
+export AbstractInterpolator, LinTrigInterp, LinQuadInterp, QuadTrigInterp
 export AbstractMaterial, LinearIsotropic
 export AbstractMaterialStatus, LinearIsotropicMS
 

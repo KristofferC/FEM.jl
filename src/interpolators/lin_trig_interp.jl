@@ -33,11 +33,11 @@ function Nvec(interp::LinTrigInterp, loc_coords::Point2)
 
     N = get_allocated_N(interp)
 
-    interp.N[1] = ξ
-    interp.N[2] = η
-    interp.N[3] = 1.0 - ξ - η
+    N[1] = ξ
+    N[2] = η
+    N[3] = 1.0 - ξ - η
 
-    return interp.N
+    return N
 end
 
 

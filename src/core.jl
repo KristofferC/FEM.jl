@@ -102,3 +102,12 @@ immutable EdgeLoad
 end
 
 # TODO Add more loads.
+
+function fill_from_start!{T}(v1::AbstractArray{T}, v2::AbstractArray{T})
+    if length(v2) > length(v1)
+        error("Array to be filled is shorter than array to fill with")
+    end
+    for i in 1:length(v2)
+        v1[i] = v2[i]
+    end
+end
