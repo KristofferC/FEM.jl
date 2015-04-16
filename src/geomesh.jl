@@ -132,7 +132,7 @@ abstract AbstractGeoMesh
 
 immutable GeoMesh <: AbstractGeoMesh
     nodes::Vector{GeoNode2}
-    elements::Vector{AbstractGeoElem2}
+    elements::Vector{GeoTrig}
     element_sets::Dict{ASCIIString, ElementSet}
     node_sets::Dict{ASCIIString, NodeSet}
 end

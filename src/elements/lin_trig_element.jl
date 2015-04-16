@@ -23,12 +23,13 @@ end
 # Constructors
 function LinTrig{T <: AbstractMaterialStatus}(vertices::Vertex3, n, interp::LinTrigInterp,
                  lts::LinTrigStorage, gps::Vector{GaussPoint2}, matstat::T)
-    matstats = T[]
-    temp_matstats = T[]
+    matstats = Array(T, length(gps))
+    temp_matstats = Array(T, length(gps))
     for i in 1:length(gps)
-        push!(matstats, copy(matstat))
-        push!(temp_matstats, copy(matstat))
+        matstats[i] = copy(matstat)
+        temp_matstats[i] = copy(matstat)
     end
+
     LinTrig(vertices, gps, n, interp, lts, matstats, temp_matstats)
 end
 
@@ -50,9 +51,9 @@ get_gps(::Type{LinTrig}) = [GaussPoint2(Point2(1/3, 1/3), 0.5)]
     return 6
 end
 
-
+const dofsa = [Du, Dv]
 function doftypes(::LinTrig, ::Int)
-    return [Du, Dv]
+    return dofsa
 end
 
 

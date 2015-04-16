@@ -5,7 +5,7 @@ using FEM
 
 # Generate geomesh and node / elementsets
 
-n_ele = 2
+n_ele = 200
 
 geomesh = gencook(n_ele, n_ele, GeoTrig)
 
@@ -34,7 +34,7 @@ solver = NRSolver(1e-7, 2)
 
 solve(solver, fp)
 
-exportVTK(fp, "test_bin.vtk", true)
+#exportVTK(fp, "test_bin.vtk", true)
 
 
 #write_vtk_file(fp.FEMesh, "cook.jl", false)

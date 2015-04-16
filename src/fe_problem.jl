@@ -52,7 +52,6 @@ function create_feproblem(geomesh, element_regions, material_regions, bcs, loads
             interp = interps[ele_type]
 
             section = FESection(material, ele_type, typeof(matstat))
-
             for ele_id in common
                 vertices = geomesh.elements[ele_id].vertices
                 element = ele_type(vertices, ele_id, interp,
@@ -110,6 +109,8 @@ function createdofs(fp::FEProblem)
     pres_n = 0
     id = 0
     dofs = Array(Dof, 0)
+
+    # TODO: Optimize
     for node in fp.nodes
         for doftype in fp.node_doftypes[node.n]
             if haskey(fp.node_doftype_bc, (node.n, doftype))
@@ -153,7 +154,7 @@ function assembleK(fp::FEProblem)
         assemble_K_section(section, fp.nodes, dof_rows, dof_cols, k_values)
     end
 
-    return sparse_plus(dof_rows, dof_cols, k_values, fp.n_eqs, fp.n_eqs)
+    return Base.sparse(dof_rows, dof_cols, k_values, fp.n_eqs, fp.n_eqs)
 end
 
 function assemble_K_section{T<:FESection}(section::T, nodes::Vector{FENode2},
