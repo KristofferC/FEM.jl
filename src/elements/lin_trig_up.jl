@@ -25,9 +25,9 @@ immutable LinTrigUP <: AbstractFElement
 end
 
 get_geoelem(ele::LinTrigUP) = GeoTrig(ele.n, ele.vertices)
-get_storage(::Type{LinTrigUP}) = LinTrigUPStorage()
-get_interp(::Type{LinTrigUP}) = LinTrigInterp()
-get_gps(::Type{LinTrigUP}) = [GaussPoint2(Point2(1/6, 1/6), 1/6),
+createstorage(::Type{LinTrigUP}) = LinTrigUPStorage()
+createinterp(::Type{LinTrigUP}) = LinTrigInterp()
+creategps(::Type{LinTrigUP}) = [GaussPoint2(Point2(1/6, 1/6), 1/6),
                               GaussPoint2(Point2(2/3, 1/6), 1/6),
                               GaussPoint2(Point2(1/6, 2/3), 1/6)]
 
@@ -48,7 +48,7 @@ end
 
 
 function doftypes(::LinTrigUP, ::Int)
-    return [Du, Dv, Pressure]
+    return [Du, Dv]#, Pressure]
 end
 
 function stiffness{P <: AbstractMaterial}(elem::LinTrigUP,

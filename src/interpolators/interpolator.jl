@@ -1,7 +1,8 @@
 abstract AbstractInterpolator
 
 include("lin_trig_interp.jl")
-include("bilin_quad_interp.jl")
+include("lin_quad_interp.jl")
+include("quad_trig_interp.jl")
 
 
 function dNdxmatrix{T <: AbstractInterpolator}(interp::T, local_coords::Point2,

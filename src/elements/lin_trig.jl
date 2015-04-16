@@ -10,7 +10,7 @@ end
 
 LinTrigStorage() = LinTrigStorage(zeros(4, 6), zeros(4,6), zeros(6,6), zeros(4), zeros(6))
 
-immutable LinTrig{T <: AbstractMaterialStatus} <: AbstractFElement{T}
+type LinTrig{T <: AbstractMaterialStatus} <: AbstractFElement{T}
     vertices::Vertex3
     gps::Vector{GaussPoint2}
     n::Int
@@ -42,9 +42,9 @@ end
 get_geoelem(ele::LinTrig) = GeoTrig(ele.n, ele.vertices)
 get_geotype(ele::LinTrig) = GeoTrig
 
-get_storage(::Type{LinTrig}) = LinTrigStorage()
-get_interp(::Type{LinTrig}) = LinTrigInterp()
-get_gps(::Type{LinTrig}) = [GaussPoint2(Point2(1/3, 1/3), 0.5)]
+createstorage(::Type{LinTrig}) = LinTrigStorage()
+createinterp(::Type{LinTrig}) = LinTrigInterp()
+creategps(::Type{LinTrig}) = [GaussPoint2(Point2(1/3, 1/3), 0.5)]
 
 
 @inline function get_ndofs(::LinTrig)
@@ -85,3 +85,7 @@ function weight(elem::LinTrig, gp::GaussPoint2, nodes::Vector{FENode2})
     J = Jmatrix(elem.interp, gp.local_coords, elem.vertices, nodes, dN)
     return abs(det2x2(J)) * gp.weight
 end
+
+#get_cell_data(elem::LinTrig, field::Stress)
+get_field(elem::LinTrig, ::Type{Stress}, i::Int) = elem.matstats[i].stress
+get_field(elem::LinTrig, ::Type{Strain}, i::Int) = elem.matstats[i].strain
