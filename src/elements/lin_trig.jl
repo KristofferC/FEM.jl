@@ -6,9 +6,11 @@ type LinTrigStorage <: ElemStorage
     Ke::Matrix{Float64}
     ɛ::Vector{Float64}
     f_int::Vector{Float64}
+    u_field::Vector{Float64}
 end
 
-LinTrigStorage() = LinTrigStorage(zeros(4, 6), zeros(4,6), zeros(6,6), zeros(4), zeros(6))
+LinTrigStorage() = LinTrigStorage(zeros(4, 6), zeros(4,6), zeros(6,6),
+                                  zeros(4), zeros(6), zeros(6))
 
 type LinTrig{T <: AbstractMaterialStatus} <: AbstractFElement{T}
     vertices::Vertex3
@@ -38,7 +40,7 @@ function LinTrig(v::Vector{Int}, n, interp::LinTrigInterp,
     LinTrig(Vertex3(v[1], v[2], v[3]), gps, n, interp, lts)
 end
 
-
+get_ref_area(::LinTrig) = 0.5
 get_geoelem(ele::LinTrig) = GeoTrig(ele.n, ele.vertices)
 get_geotype(ele::LinTrig) = GeoTrig
 

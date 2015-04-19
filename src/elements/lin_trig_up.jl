@@ -48,15 +48,17 @@ end
 
 
 function doftypes(::LinTrigUP, ::Int)
-    return [Du, Dv]#, Pressure]
+    return [Du, Dv, Pressure]
 end
 
 function stiffness{P <: AbstractMaterial}(elem::LinTrigUP,
                                           nodes::Vector{FENode2},
                                           material::P)
     Be = Bmatrix(elem, elem.gps[1], nodes) # Constant in mat, dummy gp
+    Bdiv = Bdiv(elem, elem.gps[1], nodes) # Constant in mat, dummy gp
+    De = stiffness(material, gps[1])
     for gp in elem.gps
-        De = stiffness(material, gp)
+
         # Get deviatoric part
 
         A_mul_B!(elem.storage.DeBe, De, Be)
@@ -73,6 +75,7 @@ function KE_pp(elem::LinTrigUP, gp::GaussPoint2, nodes::Vector{FENode2})
 
 function Bdiv(elem::LinTrigUP, gp::GaussPoint2, nodes::Vector{FENode2})
      dNdx = dNdxmatrix(elem.interp, gp.local_coords, elem.vertices, nodes)
+     Bdiv = elem.storage.Bdiv
      Bdiv[1] = dNdx[1,1]
      Bdiv[2] = dNdx[1,2]
      Bdiv[3] = dNdx[2,1]

@@ -4,7 +4,7 @@ include("lin_trig_interp.jl")
 include("lin_quad_interp.jl")
 include("quad_trig_interp.jl")
 
-
+#=
 function dNdxmatrix{T <: AbstractInterpolator}(interp::T, local_coords::Point2,
                     vertices::Vector{Int}, nodes::Vector{FENode2})
 
@@ -35,3 +35,4 @@ function Jmatrix{T <: AbstractInterpolator}(::T, local_coords::Point2,
 
     return J
 end
+=#

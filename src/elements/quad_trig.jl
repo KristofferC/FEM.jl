@@ -4,10 +4,11 @@ type QuadTrigStorage <: ElemStorage
     Ke::Matrix{Float64}
     ɛ::Vector{Float64}
     f_int::Vector{Float64}
+    u_field::Vector{Float64}
 end
 
 QuadTrigStorage() = QuadTrigStorage(zeros(4, 12), zeros(4,12),
-                                  zeros(12,12), zeros(4), zeros(12))
+                                  zeros(12,12), zeros(4), zeros(12), zeros(12))
 
 
 type QuadTrig{T <: AbstractMaterialStatus} <: AbstractFElement{T}
@@ -33,7 +34,7 @@ function QuadTrig{T <: AbstractMaterialStatus}(vertices::Vertex6, n, interp::Qua
     QuadTrig(vertices, gps, n, interp, storage, matstats, temp_matstats)
 end
 
-
+get_ref_area(::QuadTrig) = 0.5
 get_geoelem(ele::QuadTrig) = GeoQTrig(ele.n, ele.vertices)
 get_geotype(::QuadTrig) = GeoQTrig
 

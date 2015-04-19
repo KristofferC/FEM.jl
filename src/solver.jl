@@ -8,6 +8,7 @@ end
 function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
     println("Starting Newton-Raphson solver..")
     load = extload(fp)
+    residual = similar(load)
     iteration = 0
 
     while true
@@ -18,7 +19,7 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
         end
 
         int_f = assemble_intf(fp)
-        force_imbalance = load - int_f
+        @devec force_imbalance = load .- int_f
         residual = norm(force_imbalance) / norm(load)
 
         println("\t\tIteration $iteration, relative residual $residual")
@@ -39,7 +40,7 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
 
     update_feproblem(fp)
 
-    write_data(fp, exporter)
+    #write_data(fp, exporter)
 
 end
 

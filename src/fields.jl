@@ -26,5 +26,3 @@ type Stress <: AbstractTensor end
 # Vectors
 type Displacement <: AbstractVector end
 
-# Scalars
-type Pressure <: AbstractScalar end

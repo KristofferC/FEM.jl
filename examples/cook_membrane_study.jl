@@ -42,10 +42,10 @@ fp = create_feproblem("cook_example_quad", geomesh, [ele_section], [mat_section]
 # Output fields are added by pushing them into the exporter.
 # We want to export the stress and strain so push them.
 vtkexp = VTKExporter()
-push!(vtkexp, Stress)
-push!(vtkexp, Strain)
-set_binary!(vtkexp, true) # We want to write the resulting VTKXML in binary format.
-set_compress!(vtkexp, true) # Yes, please compress it too
+#push!(vtkexp, Stress)
+#push!(vtkexp, Strain)
+#set_binary!(vtkexp, true) # We want to write the resulting VTKXML in binary format.
+#set_compress!(vtkexp, true) # Yes, please compress it too
 
 
 solver = NRSolver(1e-9, 2)

@@ -4,10 +4,11 @@ type QuadQuadStorage <: ElemStorage
     Ke::Matrix{Float64}
     ɛ::Vector{Float64}
     f_int::Vector{Float64}
+    u_field::Vector{Float64}
 end
 
 QuadQuadStorage() = QuadQuadStorage(zeros(4, 16), zeros(4,16),
-                                  zeros(16,16), zeros(4), zeros(16))
+                                  zeros(16,16), zeros(4), zeros(16), zeros(16))
 
 
 type QuadQuad{T <: AbstractMaterialStatus} <: AbstractFElement{T}
@@ -33,7 +34,7 @@ function QuadQuad{T <: AbstractMaterialStatus}(vertices::Vertex6, n, interp::Qua
     QuadQuad(vertices, gps, n, interp, storage, matstats, temp_matstats)
 end
 
-
+get_ref_area(::QuadQuad) = 4.0
 get_geoelem(ele::QuadQuad) = GeoQTrig(ele.n, ele.vertices)
 get_geotype(::QuadQuad) = GeoQTrig
 

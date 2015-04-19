@@ -11,7 +11,7 @@ using Base.LinAlg
 using Compat
 using FixedSizeArrays
 #using GeometryTypes
-#using Devectorize
+using Devectorize
 
 using Zlib
 

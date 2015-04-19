@@ -13,6 +13,7 @@ function show{T <: AbstractFElement}(io::IO,elem::T)
     print(io, string(typeof(elem), ":", elem.vertices))
 end
 
+gausspoints(elem::AbstractFElement) = elem.gps
 
 
 function stiffness{T <: AbstractFElement,  P <: AbstractMaterial}(elem::T,
@@ -32,9 +33,9 @@ end
 
 
 function get_field{T <: AbstractFElement}(elem::T, nodes::Vector{FENode2})
-    u = zeros(get_ndofs(elem))
+    u = elem.storage.u_field
     i = 1
-    for vert in elem.vertices
+    @inbounds for vert in elem.vertices
         for dof in nodes[vert].dofs
             u[i] = dof.value
             i += 1
@@ -78,7 +79,7 @@ function get_cell_data{T <: AbstractTensor}(elem::AbstractFElement, field::Type{
     cellfield = zeros(get_ncomponents(field))
     for (i, gp) in enumerate(elem.gps)
         gpfield = get_field(elem, field, i)
-        axpy!(getweight(gp)/4.0, gpfield, cellfield)
+        axpy!(getweight(gp)/get_ref_area(elem), gpfield, cellfield)
     end
     return cellfield
 end

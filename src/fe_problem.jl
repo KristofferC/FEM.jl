@@ -58,11 +58,6 @@ function create_feproblem(name, geomesh, element_regions, material_regions, bcs,
                 element = ele_type(vertices, ele_id, interp,
                                    elem_storage, gps_ele, matstat)
                 push!(section, element)
-                #material.matstats[element.n] = Array(LinearIsotropicMS, 0)
-                #material.temp_matstats[element.n] = Array(LinearIsotropicMS, 0)
-
-               # addmatstats!(material, length(gps_ele))
-
             end
             push!(sections, section)
         end
@@ -71,7 +66,6 @@ function create_feproblem(name, geomesh, element_regions, material_regions, bcs,
     createdofs(fe)
     return fe
 end
-
 
 
 # Type stability sanitized

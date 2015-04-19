@@ -4,10 +4,11 @@ type LinQuadStorage <: ElemStorage
     Ke::Matrix{Float64}
     ɛ::Vector{Float64}
     f_int::Vector{Float64}
+    u_field::Vector{Float64}
 end
 
 LinQuadStorage() = LinQuadStorage(zeros(4, 8), zeros(4,8),
-                                  zeros(8,8), zeros(4), zeros(8))
+                                  zeros(8,8), zeros(4), zeros(8), zeros(8))
 
 
 type LinQuad{T <: AbstractMaterialStatus} <: AbstractFElement{T}
@@ -20,7 +21,7 @@ type LinQuad{T <: AbstractMaterialStatus} <: AbstractFElement{T}
     temp_matstats::Vector{T}
 end
 
-gausspoints(elem::LinQuad) = elem.gps
+
 
 # Constructors
 function LinQuad{T <: AbstractMaterialStatus}(vertices::Vertex4, n, interp::LinQuadInterp,
@@ -39,7 +40,7 @@ function LinQuadv(v::Vector{Int}, n, interp::LinQuadInterp,
     LinQuad(Vertex4(v[1], v[2], v[3], v[4]), gps, n, interp, storage)
 end
 
-
+get_ref_area(::LinQuad) = 4.0
 get_geoelem(ele::LinQuad) = GeoQuad(ele.n, ele.vertices)
 get_geotype(::LinQuad) = GeoQuad
 
