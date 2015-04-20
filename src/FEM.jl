@@ -39,9 +39,9 @@ export meshquad, gencook
 export create_feproblem
 export write_VTKXML, VTKExporter, set_binary!, set_compress!
 
-#using Logging
+using Logging
 
-#@Logging.configure(level=DEBUG, filename="log.log")
+@Logging.configure(level=DEBUG, filename="log.log")
 
 include("fields.jl")
 include("materials/material.jl")

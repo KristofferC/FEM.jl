@@ -124,8 +124,10 @@ function stiffness{P <: AbstractMaterial}(elem::GradTrig,
                                           nodes::Vector{FENode2},
                                           material::P)
     const H = 10e-7
-    fill!(elem.storage.Ke, 0.0)
+    Ke = elem.storage.Ke
+    fill!(Ke, 0.0)
     f = intf(elem, mat, nodes)
+    col = 1
     for node in nodes
         for dof in node.dofs
             if !dof.active
@@ -133,16 +135,11 @@ function stiffness{P <: AbstractMaterial}(elem::GradTrig,
             end
             dof.value += H
             f_pert = intf(elem, mat, nodes)
-            fdiff = (f_pert)
-
-        Be = Bmatrix(elem, gp, nodes)
-        De = stiffness(material, gp)
-        dV = weight(elem, gp, nodes)
-        A_mul_B!(elem.storage.DeBe, De, Be) # DeBe = De * Be
-        # Ke += B' * DeBe * dV
-        BLAS.gemm!('T', 'N' ,dV, Be, elem.storage.DeBe, 1.0, elem.storage.Ke)
+            @devec Ke[:, col] = (f_pert .- f) ./ H
+            col += 1
+        end
     end
-    return elem.storage.Ke
+    return Ke
 end
 
 function intf_u{P <: AbstractMaterial}(elem::GradTrig, mat::P, nodes::Vector{FENode2})
@@ -155,7 +152,7 @@ function intf_u{P <: AbstractMaterial}(elem::GradTrig, mat::P, nodes::Vector{FEN
         A_mul_B!(ɛ, B, u)
         fill_from_start!(elem.temp_matstats[i].strain, ɛ)
 
-        F_grad_mekh = [ɛ[1] + 1.0, ɛ[2] + 1.0, 1.0,
+        F_grad_mekh = [ɛ[1] + 1.0, ɛ[2] + 1.0,  ɛ[3] + 1.0,
                        ɛ[4], 0.0, 0.0, 0.0, ɛ[4], 0.0]
 
         σ = stress(mat, F_grad_mekh, gp)
@@ -177,19 +174,20 @@ function intf_grad{P <: AbstractMaterial}(elem::GradTrig, mat::P, nodes::Vector{
         fe += M * field[u_grad_alpha]
     end
 
-
-    for i in length(gausspoints)
-
     # Dummy gp, constant
     B = Bdiv(elem, elem.gps[1], nodes)
     dN = dNmatrix(elem.interp_u, gp.local_coords)
     J = Jmatrix(elem.interp_u, gp.local_coords, elem.vertices, nodes, dN)
-    for slip in 1:NSLIP
-        fe += k_alpha * B * A0 * abs(det2x2(J))
-    end
-    end
 
+    for i in 1:NSLIP
+        k_alpha_tot = 0.0
+        for i in length(gausspoints)
+            k_alpha_tot += elem.matstats[i].k_alpha
+        end
+        k_alpha /= length(gausspoints)
 
+        fe += k_alpha * B * A0
+    end
 end
 
 

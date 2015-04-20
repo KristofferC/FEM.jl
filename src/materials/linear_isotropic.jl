@@ -15,8 +15,6 @@ type LinearIsotropic <: AbstractMaterial
     G::Float64
     k::Matrix{Float64}
     σ::Vector{Float64}
-    matstats::Vector{Vector{LinearIsotropicMS}}
-    temp_matstats::Vector{Vector{LinearIsotropicMS}}
 end
 
 
@@ -52,9 +50,7 @@ function LinearIsotropic(E, ν)
     # Off diagonals
     k[1, 2] = k[1, 3] = k[2, 1] = k[2, 3] = k[3, 1] = k[3, 2] = f * ν
 
-    matstats = Array(Vector{LinearIsotropicMS}, 0)
-    temp_matstats = Array(Vector{LinearIsotropicMS}, 0)
-    LinearIsotropic(E, ν, G, k, zeros(4), matstats, temp_matstats)
+    LinearIsotropic(E, ν, G, k, zeros(4))
 end
 
 stiffness(mat::LinearIsotropic, ::GaussPoint2) = mat.k
@@ -66,6 +62,3 @@ function stress(mat::LinearIsotropic, ɛ::Vector{Float64}, gp::GaussPoint2)
     A_mul_B!(mat.σ, D, ɛ)
     return mat.σ
 end
-
-
-update!(mat::LinearIsotropic) = mat.matstats = mat.temp_matstats
