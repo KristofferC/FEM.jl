@@ -11,7 +11,7 @@ using Base.LinAlg
 using Compat
 using FixedSizeArrays
 using GeometryTypes
-#using Devectorize
+using Devectorize
 
 using Zlib
 
@@ -37,11 +37,11 @@ export Stress, Strain
 export Solver, NRSolver, solve
 export meshquad, gencook
 export create_feproblem
-export write_VTKXML, VTKExporter, set_binary!, set_compress!
+export write_data, VTKExporter, set_binary!, set_compress!
 
 using Logging
 
-@Logging.configure(level=DEBUG, filename="log.log")
+@Logging.configure(level=DEBUG)
 
 include("fields.jl")
 include("materials/material.jl")

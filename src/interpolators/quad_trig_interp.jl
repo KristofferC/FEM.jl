@@ -68,7 +68,7 @@ function dNmatrix(interp::QuadTrigInterp, loc_coords::Point2)
     return dN
 end
 
-function Jmatrix(interp::QuadTrigInterp, local_coords::Point2,
+function Jmatrix(interp::QuadTrigInterp,
                  vertices::Vertex6, nodes::Vector{FENode2},
                  dN::Matrix{Float64})
 
@@ -86,14 +86,10 @@ function Jmatrix(interp::QuadTrigInterp, local_coords::Point2,
     return J
 end
 
-
 function dNdxmatrix(interp::QuadTrigInterp, local_coords::Point2,
                     vertices::Vertex6, nodes::Vector{FENode2})
         dN = dNmatrix(interp, local_coords)
-        J = Jmatrix(interp, local_coords, vertices, nodes, dN)
+        J = Jmatrix(interp, vertices, nodes, dN)
         A_mul_B!(interp.dNdx, dN, inv2x2t!(J))
         return interp.dNdx
 end
-
-
-

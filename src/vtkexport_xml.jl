@@ -229,7 +229,7 @@ function _write_VTKXML_section(filename::ASCIIString, nodes::Vector{FENode2}, se
     free(xgrid)
     free(xpiece)
     free(xpoints)
-    free(xcoord)
+    free(xcoords)
     free(xcells)
     free(xcellconn)
     free(xcell_offsets)
@@ -245,18 +245,6 @@ function write_celldata_field!{T <: AbstractField}(xcellfield::XMLElement, field
     set_attribute(xcellfield, "Name", string(field))
     set_attribute(xcellfield, "type", "Float64")
     set_attribute(xcellfield, "format", VTK_FORMAT)
-    for elem in section.elements
-        add_data!(vtkw, get_cell_data(elem, field))
-    end
-    write_data!(vtkw, xcellfield)
-end
-
-function write_celldata_field!{T <: AbstractScalar}(xcelldata::XMLElement, field::Type{T},
-                               section::FESection, vtkw::AbstractVTKXMLWriter, VTK_FORMAT::ASCIIString)
-    xcol = new_child(xcell_data, "DataArray")
-    set_attribute(xcol, "Name", string(field))
-    set_attribute(xcol, "type", "Float64")
-    set_attribute(xcol, "format", VTK_FORMAT)
     for elem in section.elements
         add_data!(vtkw, get_cell_data(elem, field))
     end

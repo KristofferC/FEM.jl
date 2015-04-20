@@ -24,9 +24,9 @@ function LinTrigInterp()
                     [1.0, 2.0, 1.0];
                     [1.0, 1.0, 2.0]]
 
-    M= zeros(3,3)
+    M = zeros(3,3)
 
-    LinTrigInterp(N, dN, dNdx, J, ref_M, m)
+    LinTrigInterp(N, dN, dNdx, J, ref_M, M)
 end
 get_allocated_N(i::LinTrigInterp) = i.N
 get_allocated_dN(i::LinTrigInterp) = i.dN
@@ -88,8 +88,8 @@ function dNdxmatrix(interp::LinTrigInterp, local_coords::Point2,
 end
 
 
-get_area(interp::LinTrigInterp, nodes::Vector{FENode2}) const
-{
+function get_area(::LinTrigInterp, vertices::Vertex3, nodes::Vector{FENode2})
+
     x1 =  nodes[vertices[1]].coords.x
     x2 =  nodes[vertices[2]].coords.x
     x3 =  nodes[vertices[3]].coords.x
@@ -99,10 +99,11 @@ get_area(interp::LinTrigInterp, nodes::Vector{FENode2}) const
     y3 =  nodes[vertices[3]].coords.y
 
     return 0.5 * (x1*(y2 - y3) + x2*(-y1 + y3) + x3*(y1 - y2));
-}
+end
 
-function mass_matrix(inter::LinTrigInterp, nodes::Vector{FENode2})
+function mass_matrix(interp::LinTrigInterp, vertices::Vertex3, nodes::Vector{FENode2})
     fill!(interp.M, 0.0)
+    area = get_area(interp, vertices, nodes)
     scale!(interp.M, interp.ref_M, area)
     return interp.M
 end
@@ -113,7 +114,5 @@ end
     J[1,2], J[2,1] = -J[2,1]/d, -J[1,2]/d
     return J
 end
-
-
 
 @inline det2x2(J::Matrix{Float64}) = J[1,1]*J[2,2] - J[1,2]*J[2,1]

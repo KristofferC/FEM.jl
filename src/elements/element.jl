@@ -5,7 +5,7 @@ abstract ElemStorage
 include("lin_trig.jl")
 include("lin_quad.jl")
 include("quad_trig.jl")
-
+include("grad_trig.jl")
 
 getindex{T <: AbstractFElement}(elem::T, i0::Real) = getindex(elem.vertices, i0)
 

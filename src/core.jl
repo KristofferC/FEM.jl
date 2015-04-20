@@ -24,9 +24,12 @@ getweight(gp::AbstractGaussPoint) = gp.weight
 @lintpragma("Ignore use of undeclared variable Du")
 @lintpragma("Ignore use of undeclared variable Dv")
 @lintpragma("Ignore use of undeclared variable Dw")
-@lintpragma("Ignore use of undeclared variable Pressure")
+@lintpragma("Ignore use of undeclared variable Gu1")
+@lintpragma("Ignore use of undeclared variable Gv1")
+@lintpragma("Ignore use of undeclared variable Gu2")
+@lintpragma("Ignore use of undeclared variable Gv2")
 
-@enum DofType Du Dv Dw Gu1, Gv1, Gu2, Gv2
+@enum DofType Du Dv Dw Gu1 Gv1 Gu2 Gv2
 
 type Dof
     eq_n::Int

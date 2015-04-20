@@ -39,7 +39,7 @@ end
 
 
 get_geoelem(ele::LinTrig) = GeoTrig(ele.n, ele.vertices)
-get_geotype(ele::LinTrig) = GeoTrig
+get_geotype(::LinTrig) = GeoTrig
 
 createstorage(::Type{LinTrig}) = LinTrigStorage()
 createinterp(::Type{LinTrig}) = LinTrigInterp()
