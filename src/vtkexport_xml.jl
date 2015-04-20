@@ -46,7 +46,8 @@ VTKXMLBinaryCompressedWriter() = VTKXMLBinaryCompressedWriter(IOBuffer())
 function write_data!(vtkw::VTKXMLBinaryCompressedWriter, xmlele::XMLElement)
     uncompressed_size = vtkw.buffer.size
     buff = takebuf_array(vtkw.buffer)
-    compressed_data = encode(Zlib, buff)
+    #compressed_data = encode(Zlib, buff, 5)
+    compressed_data = compress(buff, 5)
     compressed_size = length(compressed_data)
     header = UInt32[1, uncompressed_size, uncompressed_size, compressed_size]
     header_binary = bytestring(encode(Base64, reinterpret(UInt8, header)))

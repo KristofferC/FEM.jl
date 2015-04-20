@@ -31,13 +31,14 @@ vtkexp = VTKExporter()
 # Output fields are added by pushing them into the exporter
 push!(vtkexp, Stress)
 push!(vtkexp, Strain)
-set_binary!(vtkexp, false)
+set_compress!(vtkexp, false)
 #push!(vtkexp, Displacement)
 
 solver = NRSolver(1e-9, 2)
 
 solve(solver, fp, vtkexp)
-#write_data(fp, vtkexp)
+
+@time write_data(fp, vtkexp)
 #write_data(fp, vtkexp)
 
 #write_VTKXML("test_bin.vtu", fp, false, false)

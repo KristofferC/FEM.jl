@@ -61,7 +61,7 @@ end
 # Avoids allocation (remove?)
 const LINTRIG_DOFTYPES = [Du, Dv]
 function doftypes(::LinQuad, ::Int)
-    return return LINTRIG_DOFTYPES
+    return LINTRIG_DOFTYPES
 end
 
 function Bmatrix(elem::LinQuad, gp::GaussPoint2, nodes::Vector{FENode2})
