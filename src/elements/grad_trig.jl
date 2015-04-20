@@ -98,6 +98,7 @@ get_geotype(::GradTrig) = GeoQTrig
 createstorage(::Type{GradTrig}) = GradTrigStorage()
 createinterp(::Type{GradTrig}) = GradTrigInterp()
 
+#=
 function creategps(::Type{GradTrig})
     p1 = 1/3
     p2 = 0.2
@@ -106,6 +107,16 @@ function creategps(::Type{GradTrig})
      GaussPoint2(Point2(p2, p3), 0.260416666666667);
      GaussPoint2(Point2(p2, p2), 0.260416666666667)
      GaussPoint2(Point2(p3, p2), 0.260416666666667)]
+end
+=#
+
+function creategps(::Type{GradTrig})
+    p1 = 2/3
+    p2 = 1/6
+    w = 1/3
+    [GaussPoint2(Point2(p1, p2), w);
+     GaussPoint2(Point2(p2, p1), w);
+     GaussPoint2(Point2(p2, p2), w)]
 end
 
 @inline function get_ndofs(::GradTrig)
@@ -126,7 +137,7 @@ function stiffness{P <: AbstractMaterial}(elem::GradTrig,
     const H = 10e-7
     Ke = elem.storage.Ke
     fill!(Ke, 0.0)
-    f = intf(elem, mat, nodes)
+    f = intf!(elem, mat, nodes)
     col = 1
     for node in nodes
         for dof in node.dofs
@@ -136,6 +147,7 @@ function stiffness{P <: AbstractMaterial}(elem::GradTrig,
             dof.value += H
             f_pert = intf(elem, mat, nodes)
             @devec Ke[:, col] = (f_pert .- f) ./ H
+            dof.value -= H
             col += 1
         end
     end
