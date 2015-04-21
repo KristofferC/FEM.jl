@@ -17,19 +17,6 @@ type LinearIsotropic <: AbstractMaterial
     σ::Vector{Float64}
 end
 
-
-function addmatstats!(mat::LinearIsotropic, n::Int)
-    mat_stats = Array(LinearIsotropicMS, 0)
-    temp_matstats = Array(LinearIsotropicMS, 0)
-    for i in 1:n
-        push!(mat_stats, create_matstat(typeof(mat)))
-        push!(temp_matstats, create_matstat(typeof(mat)))
-    end
-    push!(mat.matstats, mat_stats)
-    push!(mat.temp_matstats, temp_matstats)
-end
-
-
 #=
 function addmatstat!(mat::LinearIsotropic, i::Int)
     push!(mat.matstats[i], create_matstat(typeof(mat)))

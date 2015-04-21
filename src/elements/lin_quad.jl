@@ -78,11 +78,6 @@ function Bmatrix(elem::LinQuad, gp::GaussPoint2, nodes::Vector{FENode2})
 end
 
 
-function weight(elem::LinQuad, gp::GaussPoint2, nodes::Vector{FENode2})
-    dN = dNmatrix(elem.interp, gp.local_coords)
-    J = Jmatrix(elem.interp, gp.local_coords, elem.vertices, nodes, dN)
-    return abs(det2x2(J)) * gp.weight
-end
 
 
 # Get the stress in gausspoint i

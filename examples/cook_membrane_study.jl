@@ -4,9 +4,9 @@ import FEM.write_data
 
 # Generate geomesh and node / elementsets
 
-n_ele = 100
+n_ele = 2
 
-geomesh = gencook(n_ele, n_ele, GeoQTrig)
+geomesh = gencook(n_ele, n_ele, GeoTrig)
 
 push!(geomesh, gennodeset(n->n.coords[1]>47.999999, "right", geomesh.nodes))
 push!(geomesh, gennodeset(n->n.coords[1]<0.00001, "left", geomesh.nodes))
@@ -16,7 +16,7 @@ mat_section = MaterialSection(LinearIsotropic(1, 0.3))
 push!(mat_section, geomesh.element_sets["all"])
 
 # Element section
-ele_section = ElementSection(QuadTrig)
+ele_section = ElementSection(LinTrig)
 push!(ele_section, geomesh.element_sets["all"])
 
 # Boundary conditions
@@ -38,7 +38,7 @@ solver = NRSolver(1e-9, 2)
 
 solve(solver, fp, vtkexp)
 
-@time write_data(fp, vtkexp)
+#write_data(fp, vtkexp)
 #write_data(fp, vtkexp)
 
 #write_VTKXML("test_bin.vtu", fp, false, false)

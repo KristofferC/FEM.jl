@@ -114,3 +114,12 @@ function fill_from_start!{T}(v1::AbstractArray{T}, v2::AbstractArray{T})
         v1[i] = v2[i]
     end
 end
+
+function assemble!{T <: Real}(A::Array, X::AbstractArray, I::AbstractVector{T})
+   count = 1
+   for i in I
+        A[count] = X[i]
+        count += 1
+   end
+end
+

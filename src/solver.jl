@@ -31,7 +31,11 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
 
         K = assembleK(fp)
 
-        du = cholfact(Symmetric(K, :L)) \ force_imbalance
+        #du = cholfact(Symmetric(K, :L)) \ force_imbalance
+
+        du = K \ force_imbalance
+
+        println(du)
 
         updatedofs!(fp, du)
 

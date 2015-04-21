@@ -16,6 +16,9 @@ get_ncomponents{T <: AbstractVector}(::Type{T}) = 3
 abstract AbstractScalar <: AbstractField
 #get_ncomponents(::Type{AbstractTensor}) = 1 # Not needed for scalars?
 
+abstract AbstractFullTensor <: AbstractField
+get_ncomponents{T <: AbstractFullTensor}(::Type{T}) = 9
+
 # TODO: Maybe we need a distinction between primary and secondary fields?
 # Exporting a primary field as cell_data makes no sense? Or does it?
 
@@ -28,3 +31,6 @@ type Displacement <: AbstractVector end
 
 # Scalars
 type Pressure <: AbstractScalar end
+
+type FullStress <: AbstractFullTensor end
+type FullStrain <: AbstractFullTensor end
