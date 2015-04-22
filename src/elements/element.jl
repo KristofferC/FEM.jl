@@ -27,8 +27,7 @@ function stiffness2{T <: AbstractFElement,  P <: AbstractMaterial}(elem::T,
         # Ke += B' * DeBe * dV
         BLAS.gemm!('T', 'N' ,dV, Be, elem.storage.DeBe, 1.0, elem.storage.Ke)
     end
-    #println(elem.storage.Ke)
-   # println("------")
+
     return elem.storage.Ke
 end
 

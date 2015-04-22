@@ -20,9 +20,15 @@ function LinTrigInterp()
 
     J = Array(Float64, 2, 2)
 
-    ref_M = 1/12 * [[2.0, 1.0, 1.0] [1.0, 2.0, 1.0] [1.0, 1.0, 2.0]]
+    ref_M = 1/12 *
+                     [[2.0  0.0  1.0  0.0  1.0  0.0],
+                      [0.0  2.0  0.0  1.0  0.0  1.0],
+                      [1.0  0.0  2.0  0.0  1.0  0.0],
+                      [0.0  1.0  0.0  2.0  0.0  1.0],
+                      [1.0  0.0  1.0  1.0  2.0  0.0],
+                      [0.0  1.0  0.0  1.0  0.0  2.0]]
 
-    M = zeros(3,3)
+    M = zeros(6,6)
 
     LinTrigInterp(N, dN, dNdx, J, ref_M, M)
 end
@@ -81,7 +87,8 @@ function dNdxmatrix(interp::LinTrigInterp, local_coords::Point2,
 
         dN = dNmatrix(interp, local_coords)
         J = Jmatrix(interp, vertices, nodes, dN)
-        A_mul_B!(interp.dNdx, dN, inv2x2t!(J))
+        J = inv2x2t!(J)
+        A_mul_B!(interp.dNdx, dN, J)
         return interp.dNdx
 end
 

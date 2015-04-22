@@ -224,7 +224,7 @@ function _write_VTKXML_section(filename::ASCIIString, nodes::Vector{FENode2}, se
 
     save_file(xdoc, string(filename, ".vtu"))
 
-    free(xdoc) # Does this free everything?
+    #free(xdoc) # Does this free everything?
 end
 
 function write_celldata_field!{T <: AbstractField}(xcellfield::XMLElement, field::Type{T},

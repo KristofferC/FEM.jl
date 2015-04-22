@@ -19,7 +19,8 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
 
         int_f = assemble_intf(fp)
         force_imbalance = load - int_f
-        residual = norm(force_imbalance) / norm(load)
+        #residual = norm(force_imbalance) / norm(load)
+        residual = norm(int_f)
 
         println("\t\tIteration $iteration, relative residual $residual")
 
@@ -41,7 +42,9 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
 
     end
 
+
     update_feproblem(fp)
+     write_data(fp, vtkexp)
 
 end
 

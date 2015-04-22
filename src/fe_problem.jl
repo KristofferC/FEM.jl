@@ -10,8 +10,8 @@ type FEProblem
     n_fixed::Int
 end
 
-function FEProblem(name::ASCIIString, nodes::Vector{FENode2}, bcs::Vector{DirichletBC}=Array(DirichletBC, 0),
-                    loads::Vector{NodeLoad}=Array(NodeLoad, 0), sections=Array(FESection, 0))
+function FEProblem(name::ASCIIString, nodes::Vector{FENode2}, bcs,
+                    loads, sections=Array(FESection, 0))
     node_doftype_bc = Dict{Int, Vector{DofType}}()
     node_doftypes = Dict{Int, Vector{DofType}}()
     FEProblem(name, nodes, bcs, loads, sections, node_doftypes, node_doftype_bc, 0, 0)
@@ -22,7 +22,7 @@ push!(fp::FEProblem, load::NodeLoad) = push!(fp.loads, load)
 push!(fp::FEProblem, section::FESection) = push!(fp.sections, section)
 
 
-function create_feproblem(name, geomesh, element_regions, material_regions, bcs, loads)
+function create_feproblem(name, geomesh, element_regions, material_regions, bcs::Vector{DirichletBC}=Array(DirichletBC, 0), loads::Vector{NodeLoad}=Array(NodeLoad, 0))
 
     gps = Dict{DataType, Vector{GaussPoint2}} ()
     interps = Dict{DataType, AbstractInterpolator} ()
@@ -36,6 +36,8 @@ function create_feproblem(name, geomesh, element_regions, material_regions, bcs,
         storage[elem_type] = createstorage(elem_type)
     end
 
+    interp_grad = LinTrigInterp()
+
     nodes = Array(FENode2, 0)
     for node in geomesh.nodes
         push!(nodes, FENode2(node.n, node.coords))
@@ -48,6 +50,9 @@ function create_feproblem(name, geomesh, element_regions, material_regions, bcs,
         for eleregion in element_regions
             ele_type = eleregion.element_type
             common = intersect(matregion.elements, eleregion.elements)
+            common = collect(common)
+            sort!(common)
+            println(common)
             gps_ele = gps[ele_type]
             elem_storage = storage[ele_type]
             interp = interps[ele_type]
@@ -56,7 +61,7 @@ function create_feproblem(name, geomesh, element_regions, material_regions, bcs,
 
             for ele_id in common
                 vertices = geomesh.elements[ele_id].vertices
-                element = ele_type(vertices, ele_id, interp,
+                element = ele_type(vertices, ele_id, interp, interp_grad,
                                    elem_storage, gps_ele, matstat)
                 push!(section, element)
                 #material.matstats[element.n] = Array(LinearIsotropicMS, 0)
@@ -79,9 +84,9 @@ end
 function set_dof_types_section!{T<:FESection}(section::T,
                                        node_doftypes::Dict{Int, Vector{DofType}})
     for element in section.elements
-        for vertex in element.vertices
-            dof_types = doftypes(element, vertex)
-            node_doftypes[vertex] = dof_types
+        for (i, v) in enumerate(element.vertices)
+            dof_types = doftypes(element, i)
+            node_doftypes[v] = dof_types
         end
     end
 end

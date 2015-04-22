@@ -26,7 +26,7 @@ export FENode2, FENode3
 export GeoMesh, GeoTrig, GeoQTrig, GeoQuad, GeoNode3, GeoNode2
 
 # Elements, interpolators, materials, materialstatuses
-export AbstractFElement, LinTrig, LinQuad, QuadTrig
+export AbstractFElement, LinTrig, LinQuad, QuadTrig, GradTrig
 export AbstractInterpolator, LinTrigInterp, LinQuadInterp, QuadTrigInterp
 export AbstractMaterial, LinearIsotropic, GradMekh
 
@@ -40,7 +40,7 @@ export write_data, VTKExporter, set_binary!, set_compress!
 
 using Logging
 
-@Logging.configure(level=DEBUG)
+@Logging.configure(level=WARNING, filename="log.log")
 
 include("fields.jl")
 include("materials/material.jl")

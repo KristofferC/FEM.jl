@@ -6,7 +6,7 @@ import FEM.write_data
 
 n_ele = 2
 
-geomesh = gencook(n_ele, n_ele, GeoTrig)
+geomesh = gencook(n_ele, n_ele, GeoQTrig)
 
 push!(geomesh, gennodeset(n->n.coords[1]>47.999999, "right", geomesh.nodes))
 push!(geomesh, gennodeset(n->n.coords[1]<0.00001, "left", geomesh.nodes))
@@ -16,7 +16,7 @@ mat_section = MaterialSection(LinearIsotropic(1, 0.3))
 push!(mat_section, geomesh.element_sets["all"])
 
 # Element section
-ele_section = ElementSection(LinTrig)
+ele_section = ElementSection(QuadTrig)
 push!(ele_section, geomesh.element_sets["all"])
 
 # Boundary conditions
