@@ -4,7 +4,7 @@ import FEM.write_data
 
 # Generate geomesh and node / elementsets
 
-n_ele = 2
+n_ele = 5
 
 geomesh = gencook(n_ele, n_ele, GeoQTrig)
 
@@ -31,7 +31,6 @@ vtkexp = VTKExporter()
 # Output fields are added by pushing them into the exporter
 push!(vtkexp, Stress)
 push!(vtkexp, Strain)
-set_compress!(vtkexp, false)
 #push!(vtkexp, Displacement)
 
 solver = NRSolver(1e-9, 2)

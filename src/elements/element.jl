@@ -15,7 +15,7 @@ end
 
 
 
-function stiffness2{T <: AbstractFElement,  P <: AbstractMaterial}(elem::T,
+function stiffness{T <: AbstractFElement,  P <: AbstractMaterial}(elem::T,
                                                                   nodes::Vector{FENode2},
                                                                   material::P)
     fill!(elem.storage.Ke, 0.0)
@@ -29,35 +29,6 @@ function stiffness2{T <: AbstractFElement,  P <: AbstractMaterial}(elem::T,
     end
 
     return elem.storage.Ke
-end
-
-function stiffness{T <: AbstractFElement,  P <: AbstractMaterial}(elem::T,
-                                                                  nodes::Vector{FENode2},
-                                                                  material::P)
-    const H = 10e-7
-    Ke = elem.storage.Ke
-    fill!(Ke, 0.0)
-    f = intf(elem, material, nodes)
-    # Need to copy because intf returns a reference
-    # which will be overwritten on subseq call to intf
-    ff = copy(f)
-    col = 1
-    for v in elem.vertices
-        node = nodes[v]
-        for dof in node.dofs
-            if !dof.active
-                continue
-            end
-            dof.value += H
-            f_pert = intf(elem, material, nodes)
-            # Numeric derivative
-            @devec Ke[:, col] = (f_pert .- ff) ./ H
-            dof.value -= H
-            col += 1
-        end
-    end
-
-    return Ke
 end
 
 
@@ -108,9 +79,7 @@ function get_cell_data{T <: AbstractTensor}(elem::AbstractFElement, field::Type{
     cellfield = zeros(get_ncomponents(field))
     for (i, gp) in enumerate(elem.gps)
         gpfield = get_field(elem, field, i)
-        println(gpfield)
-        println(cellfield)
-        axpy!(getweight(gp)/4.0, gpfield, cellfield)
+        axpy!(getweight(gp), gpfield, cellfield)
     end
     return cellfield
 end

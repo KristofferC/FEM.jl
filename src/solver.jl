@@ -44,7 +44,6 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
 
 
     update_feproblem(fp)
-     write_data(fp, vtkexp)
-
+     write_data(fp, exporter)
 end
 

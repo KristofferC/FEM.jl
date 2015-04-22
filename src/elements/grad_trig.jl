@@ -238,7 +238,7 @@ function intf_u{P <: AbstractMaterial}(elem::GradTrig, mat::P, nodes::Vector{FEN
         σ = stress(mat, elem.matstats[i], elem.temp_matstats[i],kappas)
 
         #@debug("σ = $σ")
-        fill_from_start!(elem.temp_matstats[i].stress, σ[[1,2,3,5,7,4]])
+        fill_from_start!(elem.temp_matstats[i].stress, σ[[1,2,3,4,5,6]])
 
         dV = weight(elem, gp, nodes)
 

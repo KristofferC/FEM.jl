@@ -201,7 +201,6 @@ function _write_VTKXML_section(filename::ASCIIString, nodes::Vector{FENode2}, se
         # Separated this into its own function for type stability w.r.t. fields
         xcellfield = new_child(xcell_data, "DataArray")
         write_celldata_field!(xcellfield, field, section, vtkw, VTK_FORMAT)
-        free(xcellfield) # Needed?
     end
 
 
@@ -221,6 +220,8 @@ function _write_VTKXML_section(filename::ASCIIString, nodes::Vector{FENode2}, se
         end
     end
     write_data!(vtkw, xdisp)
+
+    println("Finished writing data")
 
     save_file(xdoc, string(filename, ".vtu"))
 
