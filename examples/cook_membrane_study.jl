@@ -31,7 +31,7 @@ vtkexp = VTKExporter()
 # Output fields are added by pushing them into the exporter
 push!(vtkexp, Stress)
 push!(vtkexp, Strain)
-#push!(vtkexp, Displacement)
+set_binary!(vtkexp, false)
 
 solver = NRSolver(1e-9, 2)
 

@@ -138,7 +138,7 @@ end
 function creategps(::Type{GradTrig})
     p1 = 2/3
     p2 = 1/6
-    w = 1/3
+    w = 1/6
     [GaussPoint2(Point2(p1, p2), w);
      GaussPoint2(Point2(p2, p1), w);
      GaussPoint2(Point2(p2, p2), w)]

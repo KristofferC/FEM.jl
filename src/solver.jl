@@ -19,8 +19,13 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
 
         int_f = assemble_intf(fp)
         force_imbalance = load - int_f
-        #residual = norm(force_imbalance) / norm(load)
-        residual = norm(int_f)
+        residual = norm(force_imbalance) / norm(load)
+        if norm(load) < 1.00^(-15)
+            residual = norm(int_f)
+        else
+            residual = norm(force_imbalance) / norm(load)
+        end
+
 
         println("\t\tIteration $iteration, relative residual $residual")
 
