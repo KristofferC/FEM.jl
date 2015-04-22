@@ -41,8 +41,6 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
 
         du = K \ force_imbalance
 
-        println(du)
-
         updatedofs!(fp, du)
 
     end
