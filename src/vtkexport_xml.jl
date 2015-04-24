@@ -94,7 +94,7 @@ end
 
 
 
-function write_data(fp::FEProblem, vtkexp::VTKExporter)
+function write_data(fp::FEProblem, vtkexp::VTKExporter, tstep::Int)
 
     if vtkexp.binary
         if vtkexp.compress
@@ -107,13 +107,13 @@ function write_data(fp::FEProblem, vtkexp::VTKExporter)
     end
 
     for section in fp.sections
-        _write_VTKXML_section(fp.name, fp.nodes, section, vtkexp, writer)
+        _write_VTKXML_section(fp.name, fp.nodes, section, vtkexp, writer, tstep)
     end
 end
 
 
 function _write_VTKXML_section(filename::ASCIIString, nodes::Vector{FENode2}, section::FESection,
-                               vtkexp:: VTKExporter, vtkw::AbstractVTKXMLWriter)
+                               vtkexp:: VTKExporter, vtkw::AbstractVTKXMLWriter, tstep::Int)
 
     if vtkexp.binary
         const VTK_FORMAT = "binary"
@@ -223,7 +223,7 @@ function _write_VTKXML_section(filename::ASCIIString, nodes::Vector{FENode2}, se
 
     println("Finished writing data")
 
-    save_file(xdoc, string(filename, ".vtu"))
+    save_file(xdoc, string(filename, "_$(tstep).vtu"))
 
     #free(xdoc) # Does this free everything?
 end

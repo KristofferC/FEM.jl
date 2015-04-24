@@ -166,6 +166,7 @@ function compute_hardening(elem::GradTrig, nodes::Vector{FENode2})
     factor = 1
 
     u = get_field(elem, nodes)
+     assemble!(elem.storage.u_grad, u, elem.storage.dofs_idx_grad)
      vertslin = Vertex3(elem.vertices[1],elem.vertices[2], elem.vertices[3])
     # Dummy gp
     dNdx = dNdxmatrix(elem.interp_grad, elem.gps[1].local_coords, vertslin, nodes)
@@ -176,13 +177,13 @@ function compute_hardening(elem::GradTrig, nodes::Vector{FENode2})
     for i = 1:NSLIP
         fill!(hessian, 0.0)
 
-        assemble!(elem.storage.u_grad, u, get_dofs_slipplane(elem, i))
+        assemble!(elem.storage.u_grad_plane, elem.storage.u_grad, get_dofs_slipplane(elem, i))
 
         NSLIPNODES = 2
         for j = 1:NDIM
             for k = 1:NDIM
                 for node = 1:NSLIPNODES
-                    hessian[j,k] += dNdx[node, k] * elem.storage.u_grad[(node - 1) * NDIM + j]
+                    hessian[j,k] += dNdx[node, k] * elem.storage.u_grad_plane[(node - 1) * NDIM + j]
                 end
             end
         end
@@ -200,7 +201,7 @@ function stiffness{P <: AbstractMaterial}(elem::GradTrig,
     Ke = elem.storage.Ke
     fill!(Ke, 0.0)
     f = intf(elem, material, nodes)
-    @warn("Got this f for ele $(elem.n): $f")
+
     # Need to copy because intf returns a reference
     # which will be overwritten on subseq call to intf
     ff = copy(f)
@@ -209,16 +210,17 @@ function stiffness{P <: AbstractMaterial}(elem::GradTrig,
         node = nodes[v]
         for dof in node.dofs
             dof.value += H
-            @warn("Perturbing dof with type $(dof.dof_type)")
+
 
             f_pert = intf(elem, material, nodes)
-            @warn("Got: $f_pert")
             # Numeric derivative
             @devec Ke[:, col] = (f_pert .- ff) ./ H
             dof.value -= H
             col += 1
         end
     end
+    println(Ke)
+    exit()
     return Ke
 end
 
@@ -235,7 +237,7 @@ function intf_u{P <: AbstractMaterial}(elem::GradTrig, mat::P, nodes::Vector{FEN
         # TODO:
         kappas = compute_hardening(elem, nodes)
 
-        σ = stress(mat, elem.matstats[i], elem.temp_matstats[i],kappas)
+        σ = stress(mat, elem.matstats[i], elem.temp_matstats[i], kappas)
 
         #@debug("σ = $σ")
         fill_from_start!(elem.temp_matstats[i].stress, σ[[1,2,3,4,5,6]])
@@ -262,8 +264,6 @@ function intf_grad{P <: AbstractMaterial}(elem::GradTrig, mat::P, nodes::Vector{
     for i in 1:NSLIP
         dofs_slip_plane = get_dofs_slipplane(elem, i)
         assemble!(elem.storage.u_grad_plane, elem.storage.u_grad, dofs_slip_plane)
-        @warn("elem:n ")
-        @warn("u_grad_plane = $(elem.storage.u_grad_plane)")
         elem.storage.f_grad[dofs_slip_plane] += M * elem.storage.u_grad_plane
 
         A = get_area(elem.interp_grad, vertslin, nodes)
@@ -323,5 +323,7 @@ end
 # Get the stress/strain in gausspoint i
 get_field(elem::GradTrig, ::Type{Stress}, i::Int) = elem.matstats[i].stress
 get_field(elem::GradTrig, ::Type{Strain}, i::Int) = elem.matstats[i].strain
+get_field(elem::GradTrig, ::Type{InvFp}, i::Int) = elem.matstats[i].state[1:9]
+get_field(elem::GradTrig, ::Type{KappaVector}, i::Int) = elem.matstats[i].state[10:11]
 
 

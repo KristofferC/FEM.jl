@@ -91,6 +91,17 @@ immutable DirichletBC
     dof_types::Vector{DofType}
     node_set::NodeSet
 end
+#=
+function DirichletBC(f::String, dof_types::Vector{DofType}, node_set::NodeSet)
+    prog = string("ff = @anon (x,y,z,t) -> ", f)
+    eval(parse(prog))
+    DirichletBC(ff, dof_types,  node_set)
+end
+function evaluate(dbc::DirichletBC, node::FENode2, t::Float64)
+    return dbc.func(node.x, node.y, 0.0, t)
+end
+=#
+
 
 immutable NodeLoad
     value::Float64

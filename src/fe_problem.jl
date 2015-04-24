@@ -10,7 +10,7 @@ type FEProblem
     n_fixed::Int
 end
 
-function FEProblem(name::ASCIIString, nodes::Vector{FENode2}, bcs,
+function FEProblem(name::ASCIIString, nodes::Vector{FENode2}, bcs::Vector{DirichletBC},
                     loads, sections=Array(FESection, 0))
     node_doftype_bc = Dict{Int, Vector{DofType}}()
     node_doftypes = Dict{Int, Vector{DofType}}()
@@ -22,7 +22,8 @@ push!(fp::FEProblem, load::NodeLoad) = push!(fp.loads, load)
 push!(fp::FEProblem, section::FESection) = push!(fp.sections, section)
 
 
-function create_feproblem(name, geomesh, element_regions, material_regions, bcs::Vector{DirichletBC}=Array(DirichletBC, 0), loads::Vector{NodeLoad}=Array(NodeLoad, 0))
+function create_feproblem(name, geomesh, element_regions, material_regions,
+                              bcs::Vector{DirichletBC}, loads::Vector{NodeLoad}=Array(NodeLoad, 0))
 
     gps = Dict{DataType, Vector{GaussPoint2}} ()
     interps = Dict{DataType, AbstractInterpolator} ()
@@ -121,7 +122,7 @@ function createdofs(fp::FEProblem)
                 bc = fp.node_doftype_bc[(node.n, doftype)]
                 pres_n += 1
                 id += 1
-                push!(node.dofs, Dof(pres_n, id, false, bc.value, doftype))
+                push!(node.dofs, Dof(pres_n, id, false, 0.0, doftype))
             else
                 eq_n += 1
                 id += 1
@@ -225,6 +226,17 @@ function updatedofs!(fp::FEProblem, du::Vector{Float64})
     end
 end
 
+function updatebcs!(fp::FEProblem, t::Float64)
+    for node in fp.nodes
+        for dof in node.dofs
+            if !dof.active
+                bc = fp.node_doftype_bc[(node.n, dof.dof_type)]
+                dof.value = bc.value * t
+            end
+        end
+    end
+end
+
 
 function update_feproblem(fp::FEProblem)
     for section in fp.sections
@@ -276,8 +288,7 @@ function create_feproblem_grad(name, geomesh, element_regions, material_regions,
             ele_type = eleregion.element_type
             common = intersect(matregion.elements, eleregion.elements)
             common = collect(common)
-            sort!(common)
-            println(common)
+            sort!(common) # TODO: Remove?
             gps_ele = gps[ele_type]
             elem_storage = storage[ele_type]
             interp = interps[ele_type]
@@ -289,10 +300,6 @@ function create_feproblem_grad(name, geomesh, element_regions, material_regions,
                 element = ele_type(vertices, ele_id, interp, interp_grad,
                                    elem_storage, gps_ele, matstat)
                 push!(section, element)
-                #material.matstats[element.n] = Array(LinearIsotropicMS, 0)
-                #material.temp_matstats[element.n] = Array(LinearIsotropicMS, 0)
-
-               # addmatstats!(material, length(gps_ele))
 
             end
             push!(sections, section)

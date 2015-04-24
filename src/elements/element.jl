@@ -75,11 +75,11 @@ end
 #get_point_data{T <: AbstractVector}(::AbstractFElement, ::Type{T}) = zeros(3)
 
 
-function get_cell_data{T <: AbstractTensor}(elem::AbstractFElement, field::Type{T})
+function get_cell_data{T <: AbstractField}(elem::AbstractFElement, field::Type{T})
     cellfield = zeros(get_ncomponents(field))
     for (i, gp) in enumerate(elem.gps)
         gpfield = get_field(elem, field, i)
-        axpy!(getweight(gp), gpfield, cellfield)
+        axpy!(getweight(gp)*2.0, gpfield, cellfield)
     end
     return cellfield
 end
