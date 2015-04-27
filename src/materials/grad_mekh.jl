@@ -97,12 +97,13 @@ create_matstat(::Type{GradMekh}) = GradMekhMS()
 #TODO:
 
 
-function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS, kappas)
+function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS, kappas::Vector{Float64})
     ɛ = temp_matstat.strain
 
 
     F = [ɛ[1] + 1.0, ɛ[2] + 1.0, 1.0,
         0.5*ɛ[4], 0.0, 0.0, 0.0, 0.5*ɛ[4], 0.0]
+
 
 
    dtime = 2.0/1000.0 # TODO: Fix
@@ -116,43 +117,28 @@ function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS, ka
    stressz = zeros(9)
    kappa_nl = kappas
 
-   if (abs(state_old[1]) - 1.0) >  0.0
-     @warn("F: $F")
-     @warn("invFP: $state_old[1:9]")
-      @warn("kappas: $kappas")
-    end
 
+    @warn("F: $F")
+    @warn("invFP: $state_old[1:9]")
+    @warn("kappas: $kappas")
 
     ccall(mat.libmekh,
                Void,
-                (Ref{Int}, Ptr{Float64}, Ref{Int},
+                (Ptr{Int}, Ptr{Float64}, Ptr{Int},
                  Ptr{Float64}, Ptr{Float64},
-                Ref{Float64}, Ptr{Float64},
-                 Ref{Int}, Ptr{Float64},
+                 Ptr{Float64}, Ptr{Float64},
+                 Ptr{Int}, Ptr{Float64},
                  Ptr{Float64},
                  Ptr{Float64},
                  Ptr{Float64},
-                 Ref{Int}),
-                length(mat.para), mat.para, length(state_old),
-                state_old, state_old, dtime, F,
-                NSLIP, kappa_nl, mat.s_x_m,
-                state_new, stressz, LKONV)
+                 Ptr{Int}),
+                &length(mat.para), mat.para, &length(state_old),
+                state_old, state_old, &dtime, F,
+                &NSLIP, kappa_nl, mat.s_x_m,
+                state_new, stressz, &LKONV)
 
 
    return stressz
-#=
-   pkstress.changeComponentOrder_Mekh(0);
 
-   // compute Green-Lagrange strain
-   FloatArray reducedStrain;
-   FloatMatrix F, E;
-   F.beMatrixForm(vF);
-   E.beTProductOf(F, F);
-   E.at(1, 1) -= 1.0;
-   E.at(2, 2) -= 1.0;
-   E.at(3, 3) -= 1.0;
-   E.times(0.5);
-   reducedStrain.beSymVectorFormOfStrain(E);
-=#
 
 end

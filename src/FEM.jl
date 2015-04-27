@@ -12,7 +12,6 @@ using Compat
 using FixedSizeArrays
 using GeometryTypes
 using Devectorize
-using FastAnonymous
 
 using Zlib
 
@@ -33,7 +32,7 @@ export AbstractMaterial, LinearIsotropic, GradMekh
 
 export FESection, MaterialSection, ElementSection
 export FEProblem
-export Stress, Strain, InvFp, KappaVector, VonMises
+export Stress, Strain, InvFp, KAlpha, VonMises
 export Solver, NRSolver, solve
 export meshquad, gencook
 export create_feproblem
@@ -41,7 +40,8 @@ export write_data, VTKExporter, set_binary!, set_compress!
 
 using Logging
 
-@Logging.configure(level=WARNING, filename="log.log")
+@Logging.configure(level=CRITICAL)
+
 
 include("fields.jl")
 include("materials/material.jl")

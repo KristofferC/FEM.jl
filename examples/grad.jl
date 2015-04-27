@@ -1,8 +1,8 @@
 using FEM
-n_ele = 2
+#n_ele = 6
 
 m = [[0.0; 0.0] [0.0; 10.0] [10.0; 10.0] [10.0; 0.0]]
-geomesh = meshquad(n_ele, n_ele, m, GeoQTrig)
+geomesh = meshquad(2, 4, m, GeoQTrig)
 
 using FEM
 import FEM.write_data
@@ -23,7 +23,7 @@ lambda_0 = 4.e-2
 Hg = 4.e7
 Hl = 10_000.0
 m = 2.0
-faktor = 0.5
+faktor = 1
 sy = 1000.0
 tstar = 1000.0
 c_dam = 1.0
@@ -55,10 +55,10 @@ push!(vtkexp, Stress)
 push!(vtkexp, Strain)
 push!(vtkexp, VonMises)
 push!(vtkexp, InvFp)
-push!(vtkexp, KappaVector)
+push!(vtkexp, KAlpha)
 
 
-solver = NRSolver(1e-4, 20)
+solver = NRSolver(1e-2, 20)
 
 solve(solver, fp, vtkexp)
 #=

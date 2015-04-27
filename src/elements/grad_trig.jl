@@ -172,24 +172,15 @@ function compute_hardening(elem::GradTrig, nodes::Vector{FENode2})
     dNdx = dNdxmatrix(elem.interp_grad, elem.gps[1].local_coords, vertslin, nodes)
     hessian = zeros(NDIM, NDIM);
     kappas = zeros(NSLIP)
-
-
+    B = Bdiv(elem, elem.gps[1], nodes)
     for i = 1:NSLIP
         fill!(hessian, 0.0)
-
         assemble!(elem.storage.u_grad_plane, elem.storage.u_grad, get_dofs_slipplane(elem, i))
 
-        NSLIPNODES = 2
-        for j = 1:NDIM
-            for k = 1:NDIM
-                for node = 1:NSLIPNODES
-                    hessian[j,k] += dNdx[node, k] * elem.storage.u_grad_plane[(node - 1) * NDIM + j]
-                end
-            end
-        end
+        kappas[i] = Hg * l * l * factor * sum(B .* elem.storage.u_grad_plane)
 
-        kappas[i] = Hg * l * l * factor * trace(hessian)
     end
+
     return kappas
 end
 
@@ -197,7 +188,7 @@ end
 function stiffness{P <: AbstractMaterial}(elem::GradTrig,
                                           nodes::Vector{FENode2},
                                           material::P)
-   const H = 10e-7
+   const H = 1e-7
     Ke = elem.storage.Ke
     fill!(Ke, 0.0)
     f = intf(elem, material, nodes)
@@ -205,13 +196,12 @@ function stiffness{P <: AbstractMaterial}(elem::GradTrig,
     # Need to copy because intf returns a reference
     # which will be overwritten on subseq call to intf
     ff = copy(f)
+    p = 1
     col = 1
     for v in elem.vertices
         node = nodes[v]
         for dof in node.dofs
             dof.value += H
-
-
             f_pert = intf(elem, material, nodes)
             # Numeric derivative
             @devec Ke[:, col] = (f_pert .- ff) ./ H
@@ -219,9 +209,8 @@ function stiffness{P <: AbstractMaterial}(elem::GradTrig,
             col += 1
         end
     end
-    println(Ke)
-    exit()
     return Ke
+
 end
 
 function intf_u{P <: AbstractMaterial}(elem::GradTrig, mat::P, nodes::Vector{FENode2})
@@ -254,29 +243,39 @@ end
 function intf_grad{P <: AbstractMaterial}(elem::GradTrig, mat::P, nodes::Vector{FENode2})
     fill!(elem.storage.f_grad, 0.0)
     u = get_field(elem, nodes)
+
     assemble!(elem.storage.u_grad, u, elem.storage.dofs_idx_grad)
+
     vertslin = Vertex3(elem.vertices[1],elem.vertices[2], elem.vertices[3])
     M = mass_matrix(elem.interp_grad, vertslin, nodes)
 
     # Dummy gp, constant
     B = Bdiv(elem, elem.gps[1], nodes)
+    A = get_area(elem.interp_grad, vertslin, nodes)
 
     for i in 1:NSLIP
         dofs_slip_plane = get_dofs_slipplane(elem, i)
         assemble!(elem.storage.u_grad_plane, elem.storage.u_grad, dofs_slip_plane)
-        elem.storage.f_grad[dofs_slip_plane] += M * elem.storage.u_grad_plane
 
-        A = get_area(elem.interp_grad, vertslin, nodes)
+        elem.storage.f_grad[dofs_slip_plane] += M * elem.storage.u_grad_plane
 
         k_alpha_tot = 0.0
         for j in 1:length(elem.gps)
-            k_alpha_tot += get_kalpha(elem.matstats[j], i)
+            k_alpha = get_kalpha(elem.matstats[j], i)
+            k_alpha_tot += k_alpha
         end
         k_alpha_tot /= length(elem.gps)
 
         # f_grad += k_alpha * B * A
-        elem.storage.f_grad[dofs_slip_plane] += k_alpha_tot * B .* elem.storage.u_grad_plane * A
+        elem.storage.f_grad[dofs_slip_plane] += k_alpha_tot * B * A
+
+       #  if abs(k_alpha_tot) > 0
+       #     println(elem.storage.f_grad[dofs_slip_plane])
+       #     println("UELEM")
+       #     println(elem.storage.u_grad)
+       # end
     end
+
     return elem.storage.f_grad
 end
 
@@ -287,6 +286,10 @@ function intf{P <: AbstractMaterial}(elem::GradTrig, mat::P, nodes::Vector{FENod
 
   elem.storage.f[elem.storage.dofs_idx_u] = f_u
   elem.storage.f[elem.storage.dofs_idx_grad] = f_grad
+  # println(f_u)
+  #println(f_grad)
+  #println(elem.storage.f)
+  #println("---------------")
   return elem.storage.f
 end
 
@@ -323,7 +326,7 @@ end
 # Get the stress/strain in gausspoint i
 get_field(elem::GradTrig, ::Type{Stress}, i::Int) = elem.matstats[i].stress
 get_field(elem::GradTrig, ::Type{Strain}, i::Int) = elem.matstats[i].strain
-get_field(elem::GradTrig, ::Type{InvFp}, i::Int) = elem.matstats[i].state[1:9]
-get_field(elem::GradTrig, ::Type{KappaVector}, i::Int) = elem.matstats[i].state[10:11]
+get_field(elem::GradTrig, ::Type{InvFp}, i::Int) = (invfp=elem.matstats[i].state[1:9]; invfp[1:3] -= 1.0; invfp)
+get_field(elem::GradTrig, ::Type{KAlpha}, i::Int) = elem.matstats[i].state[10:11]
 
 

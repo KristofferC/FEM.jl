@@ -20,8 +20,8 @@ get_ncomponents{T <: AbstractScalar}(::Type{T}) = 1
 abstract AbstractFullTensor <: AbstractField
 get_ncomponents{T <: AbstractFullTensor}(::Type{T}) = 9
 
-type KappaVector <: AbstractField end
-get_ncomponents(::Type{KappaVector}) = 2
+type KAlpha <: AbstractField end
+get_ncomponents(::Type{KAlpha}) = 2
 
 # TODO: Maybe we need a distinction between primary and secondary fields?
 # Exporting a primary field as cell_data makes no sense? Or does it?

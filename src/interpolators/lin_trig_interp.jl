@@ -25,7 +25,7 @@ function LinTrigInterp()
                       [0.0  2.0  0.0  1.0  0.0  1.0];
                       [1.0  0.0  2.0  0.0  1.0  0.0];
                       [0.0  1.0  0.0  2.0  0.0  1.0];
-                      [1.0  0.0  1.0  1.0  2.0  0.0];
+                      [1.0  0.0  1.0  0.0  2.0  0.0];
                       [0.0  1.0  0.0  1.0  0.0  2.0]]
 
     M = zeros(6,6)
@@ -103,7 +103,9 @@ function get_area(::LinTrigInterp, vertices::Vertex3, nodes::Vector{FENode2})
     y2 =  nodes[vertices[2]].coords.y
     y3 =  nodes[vertices[3]].coords.y
 
-    return 0.5 * (x1*(y2 - y3) + x2*(-y1 + y3) + x3*(y1 - y2));
+    area = 0.5 * (x1*(y2 - y3) + x2*(-y1 + y3) + x3*(y1 - y2))
+    @assert area > 0.0
+    return area
 end
 
 function mass_matrix(interp::LinTrigInterp, vertices::Vertex3, nodes::Vector{FENode2})
@@ -120,4 +122,9 @@ end
     return J
 end
 
-@inline det2x2(J::Matrix{Float64}) = J[1,1]*J[2,2] - J[1,2]*J[2,1]
+@inline function det2x2(J::Matrix{Float64})
+    d = J[1,1]*J[2,2] - J[1,2]*J[2,1]
+    @assert d > 0.0
+    return d
+end
+
