@@ -65,7 +65,7 @@ push!(geomesh, ElementSet("all", collect(1:length(geomesh.elements))))
 # Boundary conditions
 bcs = [DirichletBC(0.0, [FEM.Du, FEM.Dv], geomesh.node_sets["bottom"]),
        DirichletBC(0.0, [FEM.Dv], geomesh.node_sets["top"]),
-        DirichletBC(0.027/2, [FEM.Du], geomesh.node_sets["top"])]
+        DirichletBC(2.806425e-5/(0.002), [FEM.Du], geomesh.node_sets["top"])]
 
 
 
@@ -108,6 +108,6 @@ push!(vtkexp, InvFp)
 push!(vtkexp, KAlpha)
 
 
-solver = NRSolver(1e-2, 20)
+solver = NRSolver(0.01, 20)
 
 solve(solver, fp, vtkexp)

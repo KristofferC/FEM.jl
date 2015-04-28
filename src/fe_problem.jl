@@ -213,6 +213,7 @@ function assemble_intf_section{T<:FESection}(section::T,
                 i+=1
             end
         end
+
     end
 end
 
@@ -241,7 +242,9 @@ end
 function update_feproblem(fp::FEProblem)
     for section in fp.sections
         for element in section.elements
-            element.matstats = element.temp_matstats
+            for i in 1:length(element.matstats)
+                element.matstats[i] = copy(element.temp_matstats[i])
+            end
         end
     end
 end

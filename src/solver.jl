@@ -40,7 +40,7 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
     dofferinos = [(Du, du), (Dv, dv), (Gu1, gu1), (Gv1, gv1), (Gu2, gu2), (Gv2, gv2)]
 
 
-    for t in 0:2.0/1000.0:2.0
+    for t in [0:2.0/1000.0:2.0]
         println("Current time $t")
         iteration = 0
         tstep += 1
@@ -54,6 +54,7 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
 
             int_f = assemble_intf(fp)
             force_imbalance = - int_f
+
 
 
             #display(force_imbalance)
@@ -96,6 +97,7 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
         end
 
         update_feproblem(fp)
+
         if (tstep % 5 == 0)
             n_print += 1
             write_data(fp, exporter, n_print)

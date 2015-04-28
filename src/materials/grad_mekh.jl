@@ -1,6 +1,6 @@
 
 
-immutable GradMekhMS <:AbstractMaterialStatus
+type GradMekhMS <:AbstractMaterialStatus
     state::Vector{Float64}
     strain::Vector{Float64}
     stress::Vector{Float64}
@@ -13,6 +13,7 @@ function GradMekhMS()
   GradMekhMS(state, zeros(6), zeros(6))
 end
 
+copyy(matstat::GradMekhMS) = GradMekhMS(copy(matstat.state), copy(matstat.strain), copy(matstat.stress))
 
 
 copy(matstat::GradMekhMS) = GradMekhMS(copy(matstat.state), copy(matstat.strain), copy(matstat.stress))
@@ -97,17 +98,21 @@ create_matstat(::Type{GradMekh}) = GradMekhMS()
 #TODO:
 
 
-function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS, kappas::Vector{Float64})
+function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS, kappas::Vector{Float64}, F::Matrix{Float64})
     ɛ = temp_matstat.strain
 
 
-    F = [ɛ[1] + 1.0, ɛ[2] + 1.0, 1.0,
-        0.5*ɛ[4], 0.0, 0.0, 0.0, 0.5*ɛ[4], 0.0]
+  #  F = [ɛ[1] + 1.0, ɛ[2] + 1.0, 1.0,
+  #      0.5*ɛ[4], 0.0, 0.0, 0.0, 0.5*ɛ[4], 0.0]
 
 
+  F1 = M_2_V9(F)
+ # println(F1)
 
-   dtime = 2.0/1000.0 # TODO: Fix
-   LKONV = 1
+      #  println("F: $F")
+
+   dtime = 2.000000000000000e-003
+   LKONV = [1]
    npara = length(mat.para)
 
    state_old = matstat.state
@@ -117,10 +122,13 @@ function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS, ka
    stressz = zeros(9)
    kappa_nl = kappas
 
+ #  println("kappas $kappas")
+ #  println("para $(mat.para)")
 
-    @warn("F: $F")
-    @warn("invFP: $state_old[1:9]")
-    @warn("kappas: $kappas")
+
+    #@warn("F: $F")
+    #@warn("invFP: $state_old[1:9]")
+    #@warn("kappas: $kappas")
 
     ccall(mat.libmekh,
                Void,
@@ -133,9 +141,23 @@ function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS, ka
                  Ptr{Float64},
                  Ptr{Int}),
                 &length(mat.para), mat.para, &length(state_old),
-                state_old, state_old, &dtime, F,
+                state_old, state_old, &dtime, F1,
                 &NSLIP, kappa_nl, mat.s_x_m,
-                state_new, stressz, &LKONV)
+                state_new, stressz, LKONV)
+
+    if LKONV[1] != 1
+      println("F: $F1")
+      println("ɛ: $ɛ")
+      println("u: $u")
+      println("B: $B")
+      println("invFP: $(state_old[1:9])")
+      println("state_new $state_new")
+      println("kappas: $kappas")
+      println("stress: $stressz")
+      exit()
+    end
+
+  #  println("stress: $stressz")
 
 
    return stressz

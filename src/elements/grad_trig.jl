@@ -166,8 +166,8 @@ function compute_hardening(elem::GradTrig, nodes::Vector{FENode2})
     factor = 1
 
     u = get_field(elem, nodes)
-     assemble!(elem.storage.u_grad, u, elem.storage.dofs_idx_grad)
-     vertslin = Vertex3(elem.vertices[1],elem.vertices[2], elem.vertices[3])
+    assemble!(elem.storage.u_grad, u, elem.storage.dofs_idx_grad)
+    vertslin = Vertex3(elem.vertices[1],elem.vertices[2], elem.vertices[3])
     # Dummy gp
     dNdx = dNdxmatrix(elem.interp_grad, elem.gps[1].local_coords, vertslin, nodes)
     hessian = zeros(NDIM, NDIM);
@@ -178,8 +178,9 @@ function compute_hardening(elem::GradTrig, nodes::Vector{FENode2})
         assemble!(elem.storage.u_grad_plane, elem.storage.u_grad, get_dofs_slipplane(elem, i))
 
         kappas[i] = Hg * l * l * factor * sum(B .* elem.storage.u_grad_plane)
-
     end
+
+   # println("kappas $kappas")
 
     return kappas
 end
@@ -209,15 +210,20 @@ function stiffness{P <: AbstractMaterial}(elem::GradTrig,
             col += 1
         end
     end
+    intf(elem, material, nodes)
     return Ke
-
 end
+
 
 function intf_u{P <: AbstractMaterial}(elem::GradTrig, mat::P, nodes::Vector{FENode2})
     u = get_field(elem, nodes)
+
     assemble!(elem.storage.u_u, u, elem.storage.dofs_idx_u) # 12 dofs
+    uu = elem.storage.u_u
+    #println("u: $uu")
     fill!(elem.storage.f_u, 0.0)
     ɛ = elem.storage.ɛ
+    F = zeros(3,3)
     for (i, gp) in enumerate(elem.gps)
         B = Bmatrix(elem, gp, nodes)
         A_mul_B!(ɛ, B, elem.storage.u_u) # B = 4 x 12
@@ -226,15 +232,41 @@ function intf_u{P <: AbstractMaterial}(elem::GradTrig, mat::P, nodes::Vector{FEN
         # TODO:
         kappas = compute_hardening(elem, nodes)
 
-        σ = stress(mat, elem.matstats[i], elem.temp_matstats[i], kappas)
+        dNdx = dNdxmatrix(elem.interp, gp.local_coords, elem.vertices, nodes)
+        fill!(F, 0.0)
+        F[1,1:2]= uu[1]*dNdx[1,1:2]+uu[3]*dNdx[2,1:2]+
+                 uu[5]*dNdx[3,1:2]+uu[7]*dNdx[4,1:2]+
+                 uu[9]*dNdx[5,1:2]+uu[11]*dNdx[6,1:2]
+        F[2,1:2]=uu[2]*dNdx[1,1:2]+uu[4]*dNdx[2,1:2]+
+                 uu[6]*dNdx[3,1:2]+uu[8]*dNdx[4,1:2]+
+                 uu[10]*dNdx[5,1:2]+uu[12]*dNdx[6,1:2]
+
+        F[1,1] += 1
+        F[2,2] += 1
+        F[3,3] += 1
+
+
+       # println(F)
+
+
+        σ = stress(mat, elem.matstats[i], elem.temp_matstats[i], kappas, F)
 
         #@debug("σ = $σ")
         fill_from_start!(elem.temp_matstats[i].stress, σ[[1,2,3,4,5,6]])
 
         dV = weight(elem, gp, nodes)
+        fe = zeros(12)
+        for i = 1:6
+            fe[2*i-1] += (σ[1]*dNdx[i,1]+σ[8]*dNdx[i,2] );
+            fe[2*i]   += (σ[4]*dNdx[i,1]+σ[2]*dNdx[i,2] );
+        end
+        #println("fe $fe")
+        elem.storage.f_u += fe * dV
+       # println("fe_u contrib, $i: $fe")
+
 
         # f_u += B' * σ * dV
-        BLAS.gemv!('T', dV, B, σ[[1,2,3,4]], 1.0, elem.storage.f_u)
+        #BLAS.gemv!('T', dV, B, σ[[1,2,3,4]], 1.0, elem.storage.f_u)
     end
     return elem.storage.f_u
 end
@@ -261,13 +293,16 @@ function intf_grad{P <: AbstractMaterial}(elem::GradTrig, mat::P, nodes::Vector{
 
         k_alpha_tot = 0.0
         for j in 1:length(elem.gps)
-            k_alpha = get_kalpha(elem.matstats[j], i)
+            k_alpha = get_kalpha(elem.temp_matstats[j], i)
             k_alpha_tot += k_alpha
         end
         k_alpha_tot /= length(elem.gps)
+      #  println("k_alph_tot $(k_alpha_tot)")
 
         # f_grad += k_alpha * B * A
         elem.storage.f_grad[dofs_slip_plane] += k_alpha_tot * B * A
+
+      #  println("f_grad: $(elem.storage.f_grad[dofs_slip_plane])")
 
        #  if abs(k_alpha_tot) > 0
        #     println(elem.storage.f_grad[dofs_slip_plane])
@@ -286,10 +321,6 @@ function intf{P <: AbstractMaterial}(elem::GradTrig, mat::P, nodes::Vector{FENod
 
   elem.storage.f[elem.storage.dofs_idx_u] = f_u
   elem.storage.f[elem.storage.dofs_idx_grad] = f_grad
-  # println(f_u)
-  #println(f_grad)
-  #println(elem.storage.f)
-  #println("---------------")
   return elem.storage.f
 end
 

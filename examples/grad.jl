@@ -2,7 +2,7 @@ using FEM
 #n_ele = 6
 
 m = [[0.0; 0.0] [0.0; 10.0] [10.0; 10.0] [10.0; 0.0]]
-geomesh = meshquad(2, 4, m, GeoQTrig)
+geomesh = meshquad(10, 10, m, GeoQTrig)
 
 using FEM
 import FEM.write_data
@@ -47,7 +47,7 @@ bcs = [DirichletBC(0.0, [FEM.Du, FEM.Dv], geomesh.node_sets["bottom"]),
         DirichletBC(0.125, [FEM.Du], geomesh.node_sets["top"])]
 
 
-fp = FEM.create_feproblem_grad("grad", geomesh, [ele_section], [mat_section], bcs)
+fp = FEM.create_feproblem_grad("grad_sq", geomesh, [ele_section], [mat_section], bcs)
 
 vtkexp = VTKExporter()
 set_binary!(vtkexp, false)

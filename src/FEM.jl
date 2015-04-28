@@ -40,7 +40,7 @@ export write_data, VTKExporter, set_binary!, set_compress!
 
 using Logging
 
-@Logging.configure(level=CRITICAL)
+@Logging.configure(level=CRITICAL, filename="log.log")
 
 
 include("fields.jl")
