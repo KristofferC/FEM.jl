@@ -130,11 +130,16 @@ immutable ElementSet
     name::String
     element_ids::Vector{Int}
 end
+Base.append!(es1::ElementSet, es2::ElementSet) = append!(es1.element_ids, ne2.element_ids)
+
 
 immutable NodeSet
     name::String
-    node_ids::Vector{Int}
+    node_ids::Set{Int}
 end
+Base.append!(ns1::NodeSet, ns2::NodeSet) = union!(ns1.node_ids, ns2.node_ids)
+
+
 
 immutable EdgeSet
     name::String
@@ -193,7 +198,7 @@ end
 
 # Set generation functions
 function gennodeset(f::Function, name::ASCIIString, nodes::Vector{GeoNode2})
-    node_ids = Int[]
+    node_ids = Set{Int}()
     for node in nodes
         if f(node)
             push!(node_ids, node.n)

@@ -1,18 +1,24 @@
 using FEM
-#n_ele = 6
+
+n_ele = 8
 
 m = [[0.0; 0.0] [0.0; 10.0] [10.0; 10.0] [10.0; 0.0]]
-geomesh = meshquad(10, 10, m, GeoQTrig)
+geomesh = meshquad(n_ele, n_ele, m, GeoQTrig)
 
 using FEM
 import FEM.write_data
 # Nodes
 
 
-push!(geomesh, gennodeset(n->n.coords[2]>9.9999, "top", geomesh.nodes))
-push!(geomesh, gennodeset(n->n.coords[2]<0.0001, "bottom", geomesh.nodes))
+boundary_set = gennodeset(n->n.coords[2]>9.9999, "boundary", geomesh.nodes)
+append!(boundary_set, gennodeset(n->n.coords[1]>9.9999, "boundary", geomesh.nodes))
+append!(boundary_set, gennodeset(n->n.coords[2]<0.0001, "boundary", geomesh.nodes))
+append!(boundary_set, gennodeset(n->n.coords[1]<0.0001, "boundary", geomesh.nodes))
+
+push!(geomesh, boundary_set)
 push!(geomesh, ElementSet("all", collect(1:length(geomesh.elements))))
 # Material section
+
 
 E = 200000.e0
 nu = 0.3e0
@@ -34,6 +40,8 @@ mat = GradMekh(E, nu, n, l, kinf, lambda_0,
                Hg, Hl, m, faktor, sy, tstar,
                c_dam, angles, nslip)
 
+#mat = LinearIsotropic(E, nu)
+
 mat_section = MaterialSection(mat)
 push!(mat_section, geomesh.element_sets["all"])
 
@@ -42,12 +50,12 @@ ele_section = ElementSection(GradTrig)
 push!(ele_section, geomesh.element_sets["all"])
 
 # Boundary conditions
-bcs = [DirichletBC(0.0, [FEM.Du, FEM.Dv], geomesh.node_sets["bottom"]),
-       DirichletBC(0.0, [FEM.Dv], geomesh.node_sets["top"]),
-        DirichletBC(0.125, [FEM.Du], geomesh.node_sets["top"])]
+γ = 0.0125
+bcs = [DirichletBC("$(γ)*y*t", [FEM.Du], geomesh.node_sets["boundary"]),
+       DirichletBC("0.0", [FEM.Dv], geomesh.node_sets["boundary"])]
 
+fp = FEM.create_feproblem_grad("grad_sq_big", geomesh, [ele_section], [mat_section], bcs)
 
-fp = FEM.create_feproblem_grad("grad_sq", geomesh, [ele_section], [mat_section], bcs)
 
 vtkexp = VTKExporter()
 set_binary!(vtkexp, false)
@@ -58,24 +66,6 @@ push!(vtkexp, InvFp)
 push!(vtkexp, KAlpha)
 
 
-solver = NRSolver(1e-2, 20)
+solver = NRSolver(1e-4, 20)
 
 solve(solver, fp, vtkexp)
-#=
-K = FEM.assembleK(fp)
-
-#du = cholfact(Symmetric(K, :L)) \ force_imbalance
-
-du = -K \ int_f
-
-solve(solver, fp, vtkexp)
-
-FEM.updatedofs!(fp, du)
-FEM.update_feproblem(fp)
-
-
-# Output fields are added by pushing them into the exporter
-
-set_binary!(vtkexp, false)
-write_data(fp, vtkexp)
-=#

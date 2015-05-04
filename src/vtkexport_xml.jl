@@ -1,3 +1,4 @@
+using Zlib
 using LightXML
 using Codecs
 

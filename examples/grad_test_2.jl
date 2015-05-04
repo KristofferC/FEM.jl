@@ -63,9 +63,9 @@ push!(geomesh, gennodeset(n->n.coords[2]<-0.572, "bottom", geomesh.nodes))
 push!(geomesh, ElementSet("all", collect(1:length(geomesh.elements))))
 
 # Boundary conditions
-bcs = [DirichletBC(0.0, [FEM.Du, FEM.Dv], geomesh.node_sets["bottom"]),
-       DirichletBC(0.0, [FEM.Dv], geomesh.node_sets["top"]),
-        DirichletBC(2.806425e-5/(0.002), [FEM.Du], geomesh.node_sets["top"])]
+bcs = [DirichletBC("0.0", [FEM.Du, FEM.Dv], geomesh.node_sets["bottom"]),
+       DirichletBC("0.0", [FEM.Dv], geomesh.node_sets["top"]),
+        DirichletBC("0.004*t", [FEM.Du], geomesh.node_sets["top"])]
 
 
 

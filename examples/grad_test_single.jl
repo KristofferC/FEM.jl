@@ -179,40 +179,5 @@ println(fe)
 Ke = FEM.assembleK(fp)
 #println(full(Ke))
 
-i = 3
-println("Before:")
-    println(".......")
-    println(elem.matstats[i].state)
-    println("")
-    println(elem.temp_matstats[i].state)
-    println(".....")
-
-
-println("Before:")
-println(pointer_from_objref(elem.temp_matstats))
-println(pointer_from_objref(elem.matstats))
-
-FEM.update_feproblem(fp)
-
-println("After:")
-println(pointer_from_objref(elem.temp_matstats))
-println(pointer_from_objref(elem.matstats))
-
-
-i = 3
-println("After:")
-    println(".......")
-    println(elem.matstats[i].state)
-    println("")
-    println(elem.temp_matstats[i].state)
-    println(".....")
-
-elem.temp_matstats[i].state[1] = 100
-    println(".......")
-    println(elem.matstats[i].state)
-    println("")
-    println(elem.temp_matstats[i].state)
-    println(".....")
-
 
 #println(fe)

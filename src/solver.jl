@@ -8,12 +8,12 @@ end
 function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
     println("Starting Newton-Raphson solver..")
     load = extload(fp)
-    residual = similar(load)
+    force_imbalance = similar(load)
     iteration = 0
     tstep = 0
     n_print = 0
 
-    #=
+
     gu1 = Array(Int, 0)
     gv1 = Array(Int, 0)
     gu2 = Array(Int, 0)
@@ -41,12 +41,12 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
     end
 
     dofferinos = [(Du, du), (Dv, dv), (Gu1, gu1), (Gv1, gv1), (Gu2, gu2), (Gv2, gv2)]
-    =#
+
 
     @time K = create_sparse_structure(fp::FEProblem)
     @time colptrs = get_colptrs(K, fp::FEProblem)
 
-    for t in 0:10
+    for t in [0:2.0/1000.0:2.0]
         println("Current time $t")
         iteration = 0
         tstep += 1
@@ -59,50 +59,65 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
             end
 
             int_f = assemble_intf(fp)
-            @devec force_imbalance[:] = load .- int_f
+            force_imbalance = - int_f
+            #@devec force_imbalance[:] = load .- int_f
 
             #display(force_imbalance)
 
             #residual = norm(force_imbalance) / norm(load)
-            if norm(load) < 1.00^(-15)
+           # if norm(load) < 1.00^(-15)
                 residual = norm(int_f)
-            else
-                residual = norm(force_imbalance) / norm(load)
-            end
+           # else
+           #     residual = norm(force_imbalance) / norm(load)
+           # end
 
 
             println("\n\t\tIteration $iteration, relative residual $residual")
 
-            #=
+
             println("\n Residual:")
             for dof in dofferinos
                 @printf("%s: %1.2e   \n", dof[1], norm(int_f[dof[2]]))
             end
 
+
+
+
             if residual < solver.tol
                 println("Converged!")
                 break
             end
-            =#
 
-            @time assembleK!(K, fp, colptrs)
+           if iteration > 2 && norm(du) < 1e-6
+                println("Converged with alt conv!")
+                break
+            end
 
-            du = cholfact(Symmetric(K, :L)) \ force_imbalance
 
-            #du = K \ force_imbalance
 
-       #     println("\nUpdated:")
-       #     for dof in dofferinos
-       #         @printf("%s: %1.2e   \n", dof[1], norm(du[dof[2]]))
-       #     end
+
+              assembleK!(K, fp, colptrs)
+
+
+            #du = cholfact(Symmetric(K, :L)) \ force_imbalance
+
+            du = K \ force_imbalance
+
+            println("\nUpdated:")
+            for dof in dofferinos
+                @printf("%s: %1.2e   \n", dof[1], norm(du[dof[2]]))
+            end
             updatedofs!(fp, du)
+
+
+
         end
         update_feproblem(fp)
 
-        #if (tstep % 5 == 0)
-        #    n_print += 1
-      #      write_data(fp, exporter, n_print)
-        #end
+        if (tstep % 5 == 0)
+            n_print += 1
+            write_data(fp, exporter, n_print)
+        end
     end
 end
 

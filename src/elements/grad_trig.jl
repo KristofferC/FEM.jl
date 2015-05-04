@@ -99,7 +99,7 @@ type GradTrig{T <: AbstractMaterialStatus} <: AbstractFElement{T}
     temp_matstats::Vector{T}
 end
 gausspoints(elem::GradTrig) = elem.gps
-get_dofs_slipplane(elem, i::Int) = elem.storage.dofs_slip_plane[:, i]
+get_dofs_slipplane(elem, i::Int) = sub(elem.storage.dofs_slip_plane,:, i)
 
 # Constructor
 function GradTrig{T <: AbstractMaterialStatus}(vertices::Vertex6, n, interp_u::QuadTrigInterp,
@@ -116,10 +116,10 @@ function GradTrig{T <: AbstractMaterialStatus}(vertices::Vertex6, n, interp_u::Q
              matstats, temp_matstats)
 end
 
-get_ndofs(::GradTrig) = 12 + 2*3*NSLIP
+@inline get_ndofs(::GradTrig) = 12 + 2*3*NSLIP
 get_geoelem(ele::GradTrig) = GeoQTrig(ele.n, ele.vertices)
 get_geotype(::GradTrig) = GeoQTrig
-
+@inline get_ref_area(::GradTrig) = 0.5
 createstorage(::Type{GradTrig}) = GradTrigStorage()
 createinterp(::Type{GradTrig}) = QuadTrigInterp()
 
@@ -175,9 +175,9 @@ function compute_hardening(elem::GradTrig, nodes::Vector{FENode2})
     B = Bdiv(elem, elem.gps[1], nodes)
     for i = 1:NSLIP
         fill!(hessian, 0.0)
-        assemble!(elem.storage.u_grad_plane, elem.storage.u_grad, get_dofs_slipplane(elem, i))
-
-        kappas[i] = Hg * l * l * factor * sum(B .* elem.storage.u_grad_plane)
+        slips = get_dofs_slipplane(elem, i)
+        assemble!(elem.storage.u_grad_plane, elem.storage.u_grad, slips)
+        kappas[i] = Hg * l * l * factor * dot(B, elem.storage.u_grad_plane)
     end
 
    # println("kappas $kappas")
@@ -234,12 +234,13 @@ function intf_u{P <: AbstractMaterial}(elem::GradTrig, mat::P, nodes::Vector{FEN
 
         dNdx = dNdxmatrix(elem.interp, gp.local_coords, elem.vertices, nodes)
         fill!(F, 0.0)
-        F[1,1:2]= uu[1]*dNdx[1,1:2]+uu[3]*dNdx[2,1:2]+
-                 uu[5]*dNdx[3,1:2]+uu[7]*dNdx[4,1:2]+
-                 uu[9]*dNdx[5,1:2]+uu[11]*dNdx[6,1:2]
-        F[2,1:2]=uu[2]*dNdx[1,1:2]+uu[4]*dNdx[2,1:2]+
-                 uu[6]*dNdx[3,1:2]+uu[8]*dNdx[4,1:2]+
-                 uu[10]*dNdx[5,1:2]+uu[12]*dNdx[6,1:2]
+        @devec F[1,1:2] = uu[1].*dNdx[1,1:2].+uu[3].*dNdx[2,1:2].+
+                 uu[5].*dNdx[3,1:2].+uu[7].*dNdx[4,1:2].+
+                 uu[9].*dNdx[5,1:2].+uu[11].*dNdx[6,1:2]
+
+        @devec F[2,1:2]=uu[2].*dNdx[1,1:2].+uu[4].*dNdx[2,1:2].+
+                 uu[6].*dNdx[3,1:2].+uu[8].*dNdx[4,1:2].+
+                 uu[10].*dNdx[5,1:2].+uu[12].*dNdx[6,1:2]
 
         F[1,1] += 1
         F[2,2] += 1
@@ -261,7 +262,7 @@ function intf_u{P <: AbstractMaterial}(elem::GradTrig, mat::P, nodes::Vector{FEN
             fe[2*i]   += (σ[4]*dNdx[i,1]+σ[2]*dNdx[i,2] );
         end
         #println("fe $fe")
-        elem.storage.f_u += fe * dV
+        @devec elem.storage.f_u[:] += fe .* dV
        # println("fe_u contrib, $i: $fe")
 
 
@@ -285,11 +286,10 @@ function intf_grad{P <: AbstractMaterial}(elem::GradTrig, mat::P, nodes::Vector{
     B = Bdiv(elem, elem.gps[1], nodes)
     A = get_area(elem.interp_grad, vertslin, nodes)
 
+    buff = zeros(6)
     for i in 1:NSLIP
         dofs_slip_plane = get_dofs_slipplane(elem, i)
         assemble!(elem.storage.u_grad_plane, elem.storage.u_grad, dofs_slip_plane)
-
-        elem.storage.f_grad[dofs_slip_plane] += M * elem.storage.u_grad_plane
 
         k_alpha_tot = 0.0
         for j in 1:length(elem.gps)
@@ -297,10 +297,14 @@ function intf_grad{P <: AbstractMaterial}(elem::GradTrig, mat::P, nodes::Vector{
             k_alpha_tot += k_alpha
         end
         k_alpha_tot /= length(elem.gps)
+
+        A_mul_B!(buff, M, elem.storage.u_grad_plane)
+        @devec elem.storage.f_grad[dofs_slip_plane] += buff
+
       #  println("k_alph_tot $(k_alpha_tot)")
 
         # f_grad += k_alpha * B * A
-        elem.storage.f_grad[dofs_slip_plane] += k_alpha_tot * B * A
+        @devec elem.storage.f_grad[dofs_slip_plane] += k_alpha_tot .* B .* A
 
       #  println("f_grad: $(elem.storage.f_grad[dofs_slip_plane])")
 

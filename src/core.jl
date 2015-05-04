@@ -92,21 +92,22 @@ end
 # TODO: Add more sets
 # Only constant loads right now
 
-immutable DirichletBC
-    value::Float64
+immutable DirichletBC{f}
+    func::f
     dof_types::Vector{DofType}
     node_set::NodeSet
 end
-#=
 function DirichletBC(f::String, dof_types::Vector{DofType}, node_set::NodeSet)
     prog = string("ff = @anon (x,y,z,t) -> ", f)
     eval(parse(prog))
     DirichletBC(ff, dof_types,  node_set)
 end
+
+
 function evaluate(dbc::DirichletBC, node::FENode2, t::Float64)
-    return dbc.func(node.x, node.y, 0.0, t)
+    return dbc.func(node.coords.x, node.coords.y, 0.0, t)
 end
-=#
+
 
 
 immutable NodeLoad

@@ -11,8 +11,7 @@ using Compat
 using FixedSizeArrays
 
 using Devectorize
-
-@lazymod Zlib
+using FastAnonymous
 
 macro lintpragma(s) end
 
