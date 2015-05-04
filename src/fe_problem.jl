@@ -22,7 +22,7 @@ push!(fp::FEProblem, load::NodeLoad) = push!(fp.loads, load)
 push!(fp::FEProblem, section::FESection) = push!(fp.sections, section)
 
 
-function create_feproblem(name, geomesh, element_regions, material_regions, bcs::Vector{DirichletBC}=Array(DirichletBC, 0), loads::Vector{NodeLoad}=Array(NodeLoad, 0))
+function create_feproblem_grad(name, geomesh, element_regions, material_regions, bcs::Vector{DirichletBC}=Array(DirichletBC, 0), loads::Vector{NodeLoad}=Array(NodeLoad, 0))
 
     gps = Dict{DataType, Vector{GaussPoint2}} ()
     interps = Dict{DataType, AbstractInterpolator} ()
@@ -49,17 +49,19 @@ function create_feproblem(name, geomesh, element_regions, material_regions, bcs:
             ele_type = eleregion.element_type
             common = intersect(matregion.elements, eleregion.elements)
             common = collect(common)
-            sort!(common)
+            sort!(common) # TODO: Remove?
             gps_ele = gps[ele_type]
             elem_storage = storage[ele_type]
             interp = interps[ele_type]
 
             section = FESection(material, ele_type, typeof(matstat))
+
             for ele_id in common
                 vertices = geomesh.elements[ele_id].vertices
                 element = ele_type(vertices, ele_id, interp,
                                    elem_storage, gps_ele, matstat)
                 push!(section, element)
+
             end
             push!(sections, section)
         end
