@@ -5,9 +5,10 @@ abstract ElemStorage
 include("lin_trig.jl")
 include("lin_quad.jl")
 include("quad_trig.jl")
-
+include("grad_trig.jl")
 
 getindex{T <: AbstractFElement}(elem::T, i0::Real) = getindex(elem.vertices, i0)
+vertices(elem::AbstractFElement) = elem.vertices
 
 function show{T <: AbstractFElement}(io::IO,elem::T)
     print(io, string(typeof(elem), ":", elem.vertices))
@@ -28,6 +29,7 @@ function stiffness{T <: AbstractFElement,  P <: AbstractMaterial}(elem::T,
         # Ke += B' * DeBe * dV
         BLAS.gemm!('T', 'N' ,dV, Be, elem.storage.DeBe, 1.0, elem.storage.Ke)
     end
+
     return elem.storage.Ke
 end
 
@@ -75,7 +77,7 @@ end
 #get_point_data{T <: AbstractVector}(::AbstractFElement, ::Type{T}) = zeros(3)
 
 
-function get_cell_data{T <: AbstractTensor}(elem::AbstractFElement, field::Type{T})
+function get_cell_data{T <: AbstractField}(elem::AbstractFElement, field::Type{T})
     cellfield = zeros(get_ncomponents(field))
     for (i, gp) in enumerate(elem.gps)
         gpfield = get_field(elem, field, i)
@@ -84,12 +86,74 @@ function get_cell_data{T <: AbstractTensor}(elem::AbstractFElement, field::Type{
     return cellfield
 end
 
-
-#=
-function weight{T <: AbstractFElement}(elem::T, gp::GaussPoint2, nodes::Vector{FENode2})
+function weight(elem::AbstractFElement, gp::GaussPoint2, nodes::Vector{FENode2})
     dN = dNmatrix(elem.interp, gp.local_coords)
-    J = Jmatrix(elem.interp, gp.local_coords, elem.vertices, nodes, dN)
-
-    return det(J) * gp.weight
+    J = Jmatrix(elem.interp, elem.vertices, nodes, dN)
+    return abs(det2x2(J)) * gp.weight
 end
-=#
+
+
+# Iterator for active dofs, too slow right now.
+immutable ActiveDofsIterator{T <: AbstractFElement}
+    nodes::Vector{FENode2}
+    ele::T
+end
+
+function activedofs(element::AbstractFElement, nodes::Vector{FENode2})
+    ActiveDofsIterator(nodes, element)
+end
+
+
+function Base.start(adi::ActiveDofsIterator)
+    # We need to find first active dof because
+    # we cant start the iterator loop unless
+    # we actually have active dofs
+    skip_inactive(adi, (1, 0, 0))
+end
+
+
+# Iterator for
+function Base.done(adi::ActiveDofsIterator, state)
+    state[1] > length(vertices(adi.ele))
+end
+
+function Base.next(adi::ActiveDofsIterator, state)
+    v = state[1]
+    i = state[2]
+    n = state[3]
+
+    node = adi.nodes[vertices(adi.ele)[v]]
+    dof = get_dof(node, i)
+    return((dof, n), skip_inactive(adi, state))
+end
+
+
+function skip_inactive(adi::ActiveDofsIterator, state)
+    v = state[1]
+    i = state[2] + 1
+    n = state[3]
+
+    node = adi.nodes[vertices(adi.ele)[v]]
+
+    # Finish dofs for this node
+    for i in i:length(get_dofs(node))
+        n+= 1
+        if isactive(get_dof(node, i))
+            return (v, i, n)
+        end
+    end
+
+    # Start looking for new active dof
+    v+=1
+    for v in v:length(vertices(adi.ele))
+        node = adi.nodes[vertices(adi.ele)[v]]
+        for i in 1:length(get_dofs(node))
+            n += 1
+            dof = get_dof(node, i)
+            if isactive(dof)
+                return (v, i, n)
+            end
+        end
+    end
+    return (v+1, i, n)
+end

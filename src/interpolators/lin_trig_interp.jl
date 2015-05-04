@@ -3,6 +3,8 @@ immutable LinTrigInterp <: AbstractInterpolator
     dN::Matrix{Float64}
     dNdx::Matrix{Float64}
     J::Matrix{Float64}
+    ref_M::Matrix{Float64}
+    M::Matrix{Float64}
 end
 
 function LinTrigInterp()
@@ -17,7 +19,18 @@ function LinTrigInterp()
     dNdx = Array(Float64, 3, 2)
 
     J = Array(Float64, 2, 2)
-    LinTrigInterp(N, dN, dNdx, J)
+
+    ref_M = 1/12 *
+                     [[2.0  0.0  1.0  0.0  1.0  0.0];
+                      [0.0  2.0  0.0  1.0  0.0  1.0];
+                      [1.0  0.0  2.0  0.0  1.0  0.0];
+                      [0.0  1.0  0.0  2.0  0.0  1.0];
+                      [1.0  0.0  1.0  0.0  2.0  0.0];
+                      [0.0  1.0  0.0  1.0  0.0  2.0]]
+
+    M = zeros(6,6)
+
+    LinTrigInterp(N, dN, dNdx, J, ref_M, M)
 end
 get_allocated_N(i::LinTrigInterp) = i.N
 get_allocated_dN(i::LinTrigInterp) = i.dN
@@ -46,7 +59,7 @@ function dNmatrix(interp::LinTrigInterp, ::Point2)
     return get_allocated_dN(interp)
 end
 
-function Jmatrix(interp::LinTrigInterp, ::Point2,
+function Jmatrix(interp::LinTrigInterp,
                  vertices::Vertex3, nodes::Vector{FENode2},
                  ::Matrix{Float64})
 
@@ -73,9 +86,32 @@ function dNdxmatrix(interp::LinTrigInterp, local_coords::Point2,
                     vertices::Vertex3, nodes::Vector{FENode2})
 
         dN = dNmatrix(interp, local_coords)
-        J = Jmatrix(interp, local_coords, vertices, nodes, dN)
-        A_mul_B!(interp.dNdx, dN, inv2x2t!(J))
+        J = Jmatrix(interp, vertices, nodes, dN)
+        J = inv2x2t!(J)
+        A_mul_B!(interp.dNdx, dN, J)
         return interp.dNdx
+end
+
+
+function get_area(::LinTrigInterp, vertices::Vertex3, nodes::Vector{FENode2})
+
+    x1 =  nodes[vertices[1]].coords.x
+    x2 =  nodes[vertices[2]].coords.x
+    x3 =  nodes[vertices[3]].coords.x
+
+    y1 =  nodes[vertices[1]].coords.y
+    y2 =  nodes[vertices[2]].coords.y
+    y3 =  nodes[vertices[3]].coords.y
+
+    area = 0.5 * (x1*(y2 - y3) + x2*(-y1 + y3) + x3*(y1 - y2))
+    return area
+end
+
+function mass_matrix(interp::LinTrigInterp, vertices::Vertex3, nodes::Vector{FENode2})
+    fill!(interp.M, 0.0)
+    area = get_area(interp, vertices, nodes)
+    scale!(interp.M, interp.ref_M, area)
+    return interp.M
 end
 
 @inline function inv2x2t!(J::Matrix{Float64})
@@ -85,4 +121,8 @@ end
     return J
 end
 
-@inline det2x2(J::Matrix{Float64}) = J[1,1]*J[2,2] - J[1,2]*J[2,1]
+@inline function det2x2(J::Matrix{Float64})
+    d = J[1,1]*J[2,2] - J[1,2]*J[2,1]
+    return d
+end
+

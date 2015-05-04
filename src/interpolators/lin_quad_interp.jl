@@ -41,22 +41,22 @@ function dNmatrix(interp::LinQuadInterp, loc_coords::Point2)
 
     dN = get_allocated_dN(interp)
 
-   dN[1,1] =  (1 + η) * 0.25
-   dN[1,2] =  (1 + ξ) * 0.25
+    dN[1,1] =  (1 + η) * 0.25
+    dN[1,2] =  (1 + ξ) * 0.25
 
-   dN[2,1] = -(1 + η) * 0.25
-   dN[2,2] =  (1 - ξ) * 0.25
+    dN[2,1] = -(1 + η) * 0.25
+    dN[2,2] =  (1 - ξ) * 0.25
 
-   dN[3,1] = -(1 - η) * 0.25
-   dN[3,2] = -(1 - ξ) * 0.25
+    dN[3,1] = -(1 - η) * 0.25
+    dN[3,2] = -(1 - ξ) * 0.25
 
-   dN[4,1] =  (1 - η) * 0.25
-   dN[4,2] = -(1 + ξ) * 0.25
+    dN[4,1] =  (1 - η) * 0.25
+    dN[4,2] = -(1 + ξ) * 0.25
 
     return dN
 end
 
-function Jmatrix(interp::LinQuadInterp, local_coords::Point2,
+function Jmatrix(interp::LinQuadInterp,
                  vertices::Vertex4, nodes::Vector{FENode2},
                  dN::Matrix{Float64})
 
@@ -78,7 +78,7 @@ end
 function dNdxmatrix(interp::LinQuadInterp, local_coords::Point2,
                     vertices::Vertex4, nodes::Vector{FENode2})
         dN = dNmatrix(interp, local_coords)
-        J = Jmatrix(interp, local_coords, vertices, nodes, dN)
+        J = Jmatrix(interp, vertices, nodes, dN)
         A_mul_B!(interp.dNdx, dN, inv2x2t!(J))
         return interp.dNdx
 end

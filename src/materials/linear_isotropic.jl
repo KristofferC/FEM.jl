@@ -17,15 +17,6 @@ type LinearIsotropic <: AbstractMaterial
     σ::Vector{Float64}
 end
 
-
-#=
-function addmatstat!(mat::LinearIsotropic, i::Int)
-    push!(mat.matstats[i], create_matstat(typeof(mat)))
-    push!(mat.temp_matstats[i], create_matstat(typeof(mat)))
-end
-=#
-
-
 function LinearIsotropic(E, ν)
     G = E / (2 * (1 + ν))
     f = E / ((1.0 + ν) * (1.0 - 2.0 * ν))

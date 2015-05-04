@@ -42,7 +42,7 @@ end
 
 get_ref_area(::LinTrig) = 0.5
 get_geoelem(ele::LinTrig) = GeoTrig(ele.n, ele.vertices)
-get_geotype(ele::LinTrig) = GeoTrig
+get_geotype(::LinTrig) = GeoTrig
 
 createstorage(::Type{LinTrig}) = LinTrigStorage()
 createinterp(::Type{LinTrig}) = LinTrigInterp()
@@ -80,12 +80,6 @@ function Bmatrix(elem::LinTrig, gp::GaussPoint2, nodes::Vector{FENode2})
     B[4, 6] = dNdx[3, 1]
 
     return B
-end
-
-function weight(elem::LinTrig, gp::GaussPoint2, nodes::Vector{FENode2})
-    dN = dNmatrix(elem.interp, gp.local_coords)
-    J = Jmatrix(elem.interp, gp.local_coords, elem.vertices, nodes, dN)
-    return abs(det2x2(J)) * gp.weight
 end
 
 #get_cell_data(elem::LinTrig, field::Stress)

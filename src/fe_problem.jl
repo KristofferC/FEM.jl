@@ -10,8 +10,8 @@ type FEProblem
     n_fixed::Int
 end
 
-function FEProblem(name::ASCIIString, nodes::Vector{FENode2}, bcs::Vector{DirichletBC}=Array(DirichletBC, 0),
-                    loads::Vector{NodeLoad}=Array(NodeLoad, 0), sections=Array(FESection, 0))
+function FEProblem(name::ASCIIString, nodes::Vector{FENode2}, bcs::Vector{DirichletBC},
+                    loads, sections=Array(FESection, 0))
     node_doftype_bc = Dict{Int, Vector{DofType}}()
     node_doftypes = Dict{Int, Vector{DofType}}()
     FEProblem(name, nodes, bcs, loads, sections, node_doftypes, node_doftype_bc, 0, 0)
@@ -22,7 +22,8 @@ push!(fp::FEProblem, load::NodeLoad) = push!(fp.loads, load)
 push!(fp::FEProblem, section::FESection) = push!(fp.sections, section)
 
 
-function create_feproblem(name, geomesh, element_regions, material_regions, bcs, loads)
+function create_feproblem(name, geomesh, element_regions, material_regions,
+                              bcs::Vector{DirichletBC}, loads::Vector{NodeLoad}=Array(NodeLoad, 0))
 
     gps = Dict{DataType, Vector{GaussPoint2}} ()
     interps = Dict{DataType, AbstractInterpolator} ()
@@ -48,6 +49,8 @@ function create_feproblem(name, geomesh, element_regions, material_regions, bcs,
         for eleregion in element_regions
             ele_type = eleregion.element_type
             common = intersect(matregion.elements, eleregion.elements)
+            common = collect(common)
+            sort!(common)
             gps_ele = gps[ele_type]
             elem_storage = storage[ele_type]
             interp = interps[ele_type]
@@ -72,9 +75,9 @@ end
 function set_dof_types_section!{T<:FESection}(section::T,
                                        node_doftypes::Dict{Int, Vector{DofType}})
     for element in section.elements
-        for vertex in element.vertices
-            dof_types = doftypes(element, vertex)
-            node_doftypes[vertex] = dof_types
+        for (i, v) in enumerate(element.vertices)
+            dof_types = doftypes(element, i)
+            node_doftypes[v] = dof_types
         end
     end
 end
@@ -114,7 +117,7 @@ function createdofs(fp::FEProblem)
                 bc = fp.node_doftype_bc[(node.n, doftype)]
                 pres_n += 1
                 id += 1
-                push!(node.dofs, Dof(pres_n, id, false, bc.value, doftype))
+                push!(node.dofs, Dof(pres_n, id, false, 0.0, doftype))
             else
                 eq_n += 1
                 id += 1
@@ -142,6 +145,87 @@ function extload(fp::FEProblem)
     return f
 end
 
+
+function assembleK!(K::SparseMatrixCSC, fp::FEProblem, colptrs::Vector{Int})
+    fill!(K.nzval, 0.0)
+    z = 1
+    for section in fp.sections
+        z = assembleK!(K, colptrs, z, section, fp.nodes)
+    end
+    return K
+end
+
+
+function assembleK!(K::SparseMatrixCSC, colptrs::Vector{Int}, z::Int,
+                    section::FESection, nodes::Vector{FENode2})
+    mat = section.material
+    for element in section.elements
+        Ke = stiffness(element, nodes, mat)
+        dof1_n = 0
+        for vertex1 in element.vertices
+            for dof1 in nodes[vertex1].dofs
+                dof1_n += 1
+                if dof1.active
+                    dof2_n = 0
+                    for vertex2 in element.vertices
+                        for dof2 in nodes[vertex2].dofs
+                            dof2_n += 1
+                            if dof2.active
+                                K.nzval[colptrs[z]] += Ke[dof1_n, dof2_n]
+                                z+=1
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return z
+end
+
+# This is nicer but the activedofs iterators are too slow right now
+#=
+function assembleK!(K::SparseMatrixCSC, colptrs::Vector{Int}, z::Int,
+                    section::FESection, nodes::Vector{FENode2})
+    mat = section.material
+    for element in section.elements
+        Ke = stiffness(element, nodes, mat)
+        for (dof1, i) in activedofs(element, nodes)
+            for (dof2, j) in activedofs(element, nodes)
+                v = K[dof1.eq_n, dof2.eq_n]
+                K.nzval[colptrs[z]] += Ke[i, j]
+                z += 1
+            end
+        end
+    end
+    return z
+end
+=#
+
+
+
+
+function create_sparse_structure(fp::FEProblem)
+    dof_rows = Int[]
+    dof_cols = Int[]
+    for section in fp.sections
+        create_sparse_structure(section, fp.nodes, dof_rows, dof_cols)
+    end
+    # Using ones until we get a sparse structure initializer in base
+    return Base.sparse(dof_rows, dof_cols, ones(length(dof_rows)), fp.n_eqs, fp.n_eqs)
+end
+
+function create_sparse_structure(section::FESection, nodes::Vector{FENode2},
+                                dof_rows::Vector{Int}, dof_cols::Vector{Int})
+    for element in section.elements
+        for (dof1, _) in activedofs(element, nodes)
+            for (dof2, _) in activedofs(element, nodes)
+                push!(dof_rows, dof1.eq_n)
+                push!(dof_cols, dof2.eq_n)
+            end
+        end
+    end
+end
 
 function assembleK(fp::FEProblem)
     dof_rows = Array(Int, 0)
@@ -190,6 +274,14 @@ function assemble_intf(fp::FEProblem)
     return fint
 end
 
+function assemble_intf(fp::FEProblem)
+    fint = zeros(fp.n_eqs)
+    for section in fp.sections
+        assemble_intf_section(section, fint, fp.nodes)
+    end
+    return fint
+end
+
 function assemble_intf_section{T<:FESection}(section::T,
                                             int_forces::Vector{Float64},
                                             nodes::Vector{FENode2})
@@ -205,6 +297,7 @@ function assemble_intf_section{T<:FESection}(section::T,
                 i+=1
             end
         end
+
     end
 end
 
@@ -218,12 +311,88 @@ function updatedofs!(fp::FEProblem, du::Vector{Float64})
     end
 end
 
-
-function update_feproblem(fp::FEProblem)
-    for section in fp.sections
-        for element in section.elements
-            element.matstats = element.temp_matstats
+function updatebcs!(fp::FEProblem, t::Number)
+    for node in fp.nodes
+        for dof in node.dofs
+            if !dof.active
+                bc = fp.node_doftype_bc[(node.n, dof.dof_type)]
+                dof.value = bc.value * t
+            end
         end
     end
 end
 
+
+function update_feproblem(fp::FEProblem)
+    for section in fp.sections
+        for element in section.elements
+            for i in 1:length(element.matstats)
+                element.matstats[i] = copy(element.temp_matstats[i])
+            end
+        end
+    end
+end
+
+
+function FEProblem(name::ASCIIString, nodes::Vector{FENode2}, bcs,
+                    loads, sections=Array(FESection, 0))
+    node_doftype_bc = Dict{Int, Vector{DofType}}()
+    node_doftypes = Dict{Int, Vector{DofType}}()
+    FEProblem(name, nodes, bcs, loads, sections, node_doftypes, node_doftype_bc, 0, 0)
+end
+
+push!(fp::FEProblem, bc::DirichletBC) = push!(fp.bcs, bc)
+push!(fp::FEProblem, load::NodeLoad) = push!(fp.loads, load)
+push!(fp::FEProblem, section::FESection) = push!(fp.sections, section)
+
+
+function create_feproblem_grad(name, geomesh, element_regions, material_regions, bcs::Vector{DirichletBC}=Array(DirichletBC, 0), loads::Vector{NodeLoad}=Array(NodeLoad, 0))
+
+    gps = Dict{DataType, Vector{GaussPoint2}} ()
+    interps = Dict{DataType, AbstractInterpolator} ()
+    storage = Dict{DataType, ElemStorage} ()
+    elem_types = Array(DataType, 0)
+
+    for element_region in element_regions
+        elem_type = element_region.element_type
+        interps[elem_type] = createinterp(elem_type)
+        gps[elem_type] = creategps(elem_type)
+        storage[elem_type] = createstorage(elem_type)
+    end
+
+    interp_grad = LinTrigInterp()
+
+    nodes = Array(FENode2, 0)
+    for node in geomesh.nodes
+        push!(nodes, FENode2(node.n, node.coords))
+    end
+
+    sections = Array(FESection, 0)
+    for matregion in material_regions
+        material = matregion.material
+        matstat = create_matstat(typeof(material))
+        for eleregion in element_regions
+            ele_type = eleregion.element_type
+            common = intersect(matregion.elements, eleregion.elements)
+            common = collect(common)
+            sort!(common) # TODO: Remove?
+            gps_ele = gps[ele_type]
+            elem_storage = storage[ele_type]
+            interp = interps[ele_type]
+
+            section = FESection(material, ele_type, typeof(matstat))
+
+            for ele_id in common
+                vertices = geomesh.elements[ele_id].vertices
+                element = ele_type(vertices, ele_id, interp, interp_grad,
+                                   elem_storage, gps_ele, matstat)
+                push!(section, element)
+
+            end
+            push!(sections, section)
+        end
+    end
+    fe = FEProblem(name, nodes, bcs, loads, sections)
+    createdofs(fe)
+    return fe
+end

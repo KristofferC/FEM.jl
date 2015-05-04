@@ -9,7 +9,7 @@ function dNdxmatrix{T <: AbstractInterpolator}(interp::T, local_coords::Point2,
                     vertices::Vector{Int}, nodes::Vector{FENode2})
 
         dN = dNmatrix(interp, local_coords)
-        J = Jmatrix(interp, local_coords, vertices, nodes, dN)
+        J = Jmatrix(interp, vertices, nodes, dN)
         dNdx = dN * (inv(J)')
 
         return dNdx
@@ -17,7 +17,7 @@ end
 
 
 
-function Jmatrix{T <: AbstractInterpolator}(::T, local_coords::Point2,
+function Jmatrix{T <: AbstractInterpolator}(::T,
                  vertices::Vector{Int}, nodes::Vector{FENode2},
                  dN::Matrix{Float64})
 

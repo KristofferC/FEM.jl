@@ -46,7 +46,8 @@ VTKXMLBinaryCompressedWriter() = VTKXMLBinaryCompressedWriter(IOBuffer())
 function write_data!(vtkw::VTKXMLBinaryCompressedWriter, xmlele::XMLElement)
     uncompressed_size = vtkw.buffer.size
     buff = takebuf_array(vtkw.buffer)
-    compressed_data = encode(Zlib, buff)
+    #compressed_data = encode(Zlib, buff, 5)
+    compressed_data = compress(buff, 5)
     compressed_size = length(compressed_data)
     header = UInt32[1, uncompressed_size, uncompressed_size, compressed_size]
     header_binary = bytestring(encode(Base64, reinterpret(UInt8, header)))
@@ -93,7 +94,7 @@ end
 
 
 
-function write_data(fp::FEProblem, vtkexp::VTKExporter)
+function write_data(fp::FEProblem, vtkexp::VTKExporter, tstep::Int)
 
     if vtkexp.binary
         if vtkexp.compress
@@ -106,13 +107,13 @@ function write_data(fp::FEProblem, vtkexp::VTKExporter)
     end
 
     for section in fp.sections
-        _write_VTKXML_section(fp.name, fp.nodes, section, vtkexp, writer)
+        _write_VTKXML_section(fp.name, fp.nodes, section, vtkexp, writer, tstep)
     end
 end
 
 
 function _write_VTKXML_section(filename::ASCIIString, nodes::Vector{FENode2}, section::FESection,
-                               vtkexp:: VTKExporter, vtkw::AbstractVTKXMLWriter)
+                               vtkexp:: VTKExporter, vtkw::AbstractVTKXMLWriter, tstep::Int)
 
     if vtkexp.binary
         const VTK_FORMAT = "binary"
@@ -220,7 +221,11 @@ function _write_VTKXML_section(filename::ASCIIString, nodes::Vector{FENode2}, se
     end
     write_data!(vtkw, xdisp)
 
-    save_file(xdoc, string(filename, ".vtu"))
+    println("Finished writing data")
+
+    save_file(xdoc, string(filename, "_$(tstep).vtu"))
+
+    #free(xdoc) # Does this free everything?
 end
 
 function write_celldata_field!{T <: AbstractField}(xcellfield::XMLElement, field::Type{T},
@@ -229,18 +234,6 @@ function write_celldata_field!{T <: AbstractField}(xcellfield::XMLElement, field
     set_attribute(xcellfield, "Name", string(field))
     set_attribute(xcellfield, "type", "Float64")
     set_attribute(xcellfield, "format", VTK_FORMAT)
-    for elem in section.elements
-        add_data!(vtkw, get_cell_data(elem, field))
-    end
-    write_data!(vtkw, xcellfield)
-end
-
-function write_celldata_field!{T <: AbstractScalar}(xcelldata::XMLElement, field::Type{T},
-                               section::FESection, vtkw::AbstractVTKXMLWriter, VTK_FORMAT::ASCIIString)
-    xcol = new_child(xcell_data, "DataArray")
-    set_attribute(xcol, "Name", string(field))
-    set_attribute(xcol, "type", "Float64")
-    set_attribute(xcol, "format", VTK_FORMAT)
     for elem in section.elements
         add_data!(vtkw, get_cell_data(elem, field))
     end

@@ -24,9 +24,13 @@ getweight(gp::AbstractGaussPoint) = gp.weight
 @lintpragma("Ignore use of undeclared variable Du")
 @lintpragma("Ignore use of undeclared variable Dv")
 @lintpragma("Ignore use of undeclared variable Dw")
-@lintpragma("Ignore use of undeclared variable Pressure")
+@lintpragma("Ignore use of undeclared variable Gu1")
+@lintpragma("Ignore use of undeclared variable Gv1")
+@lintpragma("Ignore use of undeclared variable Gu2")
+@lintpragma("Ignore use of undeclared variable Gv2")
 
-@enum DofType Du Dv Dw Pressure
+@enum DofType Du Dv Dw Gu1 Gv1 Gu2 Gv2
+
 
 type Dof
     eq_n::Int
@@ -35,6 +39,7 @@ type Dof
     value::Float64
     dof_type::DofType # Not here
 end
+@inline isactive(dof::Dof) = dof.active
 
 
 #########
@@ -47,6 +52,10 @@ immutable FENode2 <: AbstractFENode
     coords::Point2
     dofs::Vector{Dof}
 end
+@inline get_dof(node::AbstractFENode, i::Int) = node.dofs[i]
+@inline get_dofs(node::AbstractFENode) = node.dofs
+
+
 
 #TODO: Dispatch on dimension
 FENode2(n::Int, c::Point2) = FENode2(n, c, Array(Dof, 0))
@@ -60,8 +69,8 @@ end
 # TODO: Move
 
 
-get_coord(node::FENode2) = Point3(node.coords[1], node.coords[2], 0.0)
-get_displacement(node::FENode2) = Point3(node.dofs[1].value, node.dofs[2].value, 0.0)
+@inline get_coord(node::FENode2) = Point3(node.coords[1], node.coords[2], 0.0)
+@inline get_displacement(node::FENode2) = Point3(node.dofs[1].value, node.dofs[2].value, 0.0)
 
 
 immutable FENode3 <: AbstractFENode
@@ -88,6 +97,17 @@ immutable DirichletBC
     dof_types::Vector{DofType}
     node_set::NodeSet
 end
+#=
+function DirichletBC(f::String, dof_types::Vector{DofType}, node_set::NodeSet)
+    prog = string("ff = @anon (x,y,z,t) -> ", f)
+    eval(parse(prog))
+    DirichletBC(ff, dof_types,  node_set)
+end
+function evaluate(dbc::DirichletBC, node::FENode2, t::Float64)
+    return dbc.func(node.x, node.y, 0.0, t)
+end
+=#
+
 
 immutable NodeLoad
     value::Float64
@@ -111,3 +131,12 @@ function fill_from_start!{T}(v1::AbstractArray{T}, v2::AbstractArray{T})
         v1[i] = v2[i]
     end
 end
+
+function assemble!{T <: Real}(A::Array, X::AbstractArray, I::AbstractVector{T})
+   count = 1
+   for i in I
+        A[count] = X[i]
+        count += 1
+   end
+end
+

@@ -75,14 +75,15 @@ function Bmatrix(elem::QuadTrig, gp::GaussPoint2, nodes::Vector{FENode2})
 end
 
 
-function weight(elem::QuadTrig, gp::GaussPoint2, nodes::Vector{FENode2})
-    dN = dNmatrix(elem.interp, gp.local_coords)
-    J = Jmatrix(elem.interp, gp.local_coords, elem.vertices, nodes, dN)
-    return abs(det2x2(J)) * gp.weight
-end
 
 # Get the stress/strain in gausspoint i
 get_field(elem::QuadTrig, ::Type{Stress}, i::Int) = elem.matstats[i].stress
 get_field(elem::QuadTrig, ::Type{Strain}, i::Int) = elem.matstats[i].strain
+function get_field(elem::AbstractFElement, ::Type{VonMises}, i::Int)
+    σ = elem.matstats[i].stress
+    m = (σ[1] + σ[2] + σ[3]) / 3
+    return [sqrt(3/2) * sqrt((σ[1] - m)^2 + (σ[2] - m)^2 + (σ[3] - m)^2 +
+                        2(σ[4]*σ[4]))]
+end
 
 
