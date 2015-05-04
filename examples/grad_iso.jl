@@ -1,15 +1,12 @@
 using FEM
-n_ele = 60
+n_ele = 2
 
 m = [[0.0; 0.0] [0.0; 1.0] [1.0; 1.0] [1.0; 0.0]]
-geomesh = meshquad(n_ele, n_ele, m, GeoQTrig)
-
-using FEM
-import FEM.write_data
-# Nodes
+geomesh = meshquad(n_ele, n_ele, m, GeoTrig)
 
 
-push!(geomesh, gennodeset(n->n.coords[2]>0.9999, "top", geomesh.nodes))
+
+push!(geomesh, gennodeset(n->n.coords[2]>0.9999 , "top", geomesh.nodes))
 push!(geomesh, gennodeset(n->n.coords[2]<0.0001, "bottom", geomesh.nodes))
 push!(geomesh, ElementSet("all", collect(1:length(geomesh.elements))))
 # Material section
@@ -19,7 +16,7 @@ mat_section = MaterialSection(LinearIsotropic(200000, 0.3))
 push!(mat_section, geomesh.element_sets["all"])
 
 # Element section
-ele_section = ElementSection(QuadTrig)
+ele_section = ElementSection(LinTrig)
 push!(ele_section, geomesh.element_sets["all"])
 
 # Boundary conditions
@@ -37,24 +34,26 @@ temp_matstat = elem.temp_matstats[1]
 
 int_f = FEM.assemble_intf(fp)
 
-#=
-for node in fp.nodes
-    for dof in node.dofs
-        if dof.active
-            println("n: $(node.n) type: $(dof.dof_type) val: $(int_f[dof.eq_n])")
+for elem in fp.sections[1].elements
+    println(" ")
+    for (dof, j) in activedofs(elem, fp.nodes)
+        println("$j, $dof")
+    end
+end
+
+println(" ")
+for element in fp.sections[1].elements
+    println(" ")
+    i = 1
+    for vertex in element.vertices
+        for dof in fp.nodes[vertex].dofs
+            if dof.active
+                println("$i, $dof")
+            end
+            i+=1
         end
     end
 end
-=#
-
-vtkexp = VTKExporter()
-set_binary!(vtkexp, false)
-push!(vtkexp, Stress)
-push!(vtkexp, Strain)
-push!(vtkexp, VonMises)
-solver = NRSolver(1e-1, 25)
-
-solve(solver, fp, vtkexp)
 
 
 #=

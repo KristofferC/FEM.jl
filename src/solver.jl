@@ -11,6 +11,7 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
     tstep = 0
     n_print = 0
 
+    #=
     gu1 = Array(Int, 0)
     gv1 = Array(Int, 0)
     gu2 = Array(Int, 0)
@@ -38,9 +39,12 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
     end
 
     dofferinos = [(Du, du), (Dv, dv), (Gu1, gu1), (Gv1, gv1), (Gu2, gu2), (Gv2, gv2)]
+    =#
 
+    @time K = create_sparse_structure(fp::FEProblem)
+    @time colptrs = get_colptrs(K, fp::FEProblem)
 
-    for t in [0:2.0/1000.0:2.0]
+    for t in 0:10
         println("Current time $t")
         iteration = 0
         tstep += 1
@@ -69,6 +73,7 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
 
             println("\n\t\tIteration $iteration, relative residual $residual")
 
+            #=
             println("\n Residual:")
             for dof in dofferinos
                 @printf("%s: %1.2e   \n", dof[1], norm(int_f[dof[2]]))
@@ -78,19 +83,19 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
                 println("Converged!")
                 break
             end
+            =#
+
+            @time assembleK!(K, fp, colptrs)
+
+            du = cholfact(Symmetric(K, :L)) \ force_imbalance
+
+            #du = K \ force_imbalance
 
 
-            K = assembleK(fp)
-
-            #du = cholfact(Symmetric(K, :L)) \ force_imbalance
-
-            du = K \ force_imbalance
-
-
-            println("\nUpdated:")
-            for dof in dofferinos
-                @printf("%s: %1.2e   \n", dof[1], norm(du[dof[2]]))
-            end
+       #     println("\nUpdated:")
+       #     for dof in dofferinos
+       #         @printf("%s: %1.2e   \n", dof[1], norm(du[dof[2]]))
+       #     end
 
             updatedofs!(fp, du)
 
@@ -98,10 +103,10 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
 
         update_feproblem(fp)
 
-        if (tstep % 5 == 0)
-            n_print += 1
-            write_data(fp, exporter, n_print)
-        end
+        #if (tstep % 5 == 0)
+        #    n_print += 1
+      #      write_data(fp, exporter, n_print)
+        #end
     end
 end
 

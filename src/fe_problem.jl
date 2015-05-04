@@ -151,6 +151,87 @@ function extload(fp::FEProblem)
 end
 
 
+function assembleK!(K::SparseMatrixCSC, fp::FEProblem, colptrs::Vector{Int})
+    fill!(K.nzval, 0.0)
+    z = 1
+    for section in fp.sections
+        z = assembleK!(K, colptrs, z, section, fp.nodes)
+    end
+    return K
+end
+
+
+function assembleK!(K::SparseMatrixCSC, colptrs::Vector{Int}, z::Int,
+                    section::FESection, nodes::Vector{FENode2})
+    mat = section.material
+    for element in section.elements
+        Ke = stiffness(element, nodes, mat)
+        dof1_n = 0
+        for vertex1 in element.vertices
+            for dof1 in nodes[vertex1].dofs
+                dof1_n += 1
+                if dof1.active
+                    dof2_n = 0
+                    for vertex2 in element.vertices
+                        for dof2 in nodes[vertex2].dofs
+                            dof2_n += 1
+                            if dof2.active
+                                K.nzval[colptrs[z]] += Ke[dof1_n, dof2_n]
+                                z+=1
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return z
+end
+
+# This is nicer but the activedofs iterators are too slow right now
+#=
+function assembleK!(K::SparseMatrixCSC, colptrs::Vector{Int}, z::Int,
+                    section::FESection, nodes::Vector{FENode2})
+    mat = section.material
+    for element in section.elements
+        Ke = stiffness(element, nodes, mat)
+        for (dof1, i) in activedofs(element, nodes)
+            for (dof2, j) in activedofs(element, nodes)
+                v = K[dof1.eq_n, dof2.eq_n]
+                K.nzval[colptrs[z]] += Ke[i, j]
+                z += 1
+            end
+        end
+    end
+    return z
+end
+=#
+
+
+
+
+function create_sparse_structure(fp::FEProblem)
+    dof_rows = Int[]
+    dof_cols = Int[]
+    for section in fp.sections
+        create_sparse_structure(section, fp.nodes, dof_rows, dof_cols)
+    end
+    # Using ones until we get a sparse structure initializer in base
+    return Base.sparse(dof_rows, dof_cols, ones(length(dof_rows)), fp.n_eqs, fp.n_eqs)
+end
+
+function create_sparse_structure(section::FESection, nodes::Vector{FENode2},
+                                dof_rows::Vector{Int}, dof_cols::Vector{Int})
+    for element in section.elements
+        for (dof1, _) in activedofs(element, nodes)
+            for (dof2, _) in activedofs(element, nodes)
+                push!(dof_rows, dof1.eq_n)
+                push!(dof_cols, dof2.eq_n)
+            end
+        end
+    end
+end
+
 function assembleK(fp::FEProblem)
     dof_rows = Array(Int, 0)
     dof_cols = Array(Int, 0)
@@ -198,6 +279,14 @@ function assemble_intf(fp::FEProblem)
     return fint
 end
 
+function assemble_intf(fp::FEProblem)
+    fint = zeros(fp.n_eqs)
+    for section in fp.sections
+        assemble_intf_section(section, fint, fp.nodes)
+    end
+    return fint
+end
+
 function assemble_intf_section{T<:FESection}(section::T,
                                             int_forces::Vector{Float64},
                                             nodes::Vector{FENode2})
@@ -227,7 +316,7 @@ function updatedofs!(fp::FEProblem, du::Vector{Float64})
     end
 end
 
-function updatebcs!(fp::FEProblem, t::Float64)
+function updatebcs!(fp::FEProblem, t::Number)
     for node in fp.nodes
         for dof in node.dofs
             if !dof.active

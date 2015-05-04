@@ -38,6 +38,7 @@ type Dof
     value::Float64
     dof_type::DofType # Not here
 end
+@inline isactive(dof::Dof) = dof.active
 
 
 #########
@@ -50,6 +51,10 @@ immutable FENode2 <: AbstractFENode
     coords::Point2
     dofs::Vector{Dof}
 end
+@inline get_dof(node::AbstractFENode, i::Int) = node.dofs[i]
+@inline get_dofs(node::AbstractFENode) = node.dofs
+
+
 
 #TODO: Dispatch on dimension
 FENode2(n::Int, c::Point2) = FENode2(n, c, Array(Dof, 0))
@@ -63,8 +68,8 @@ end
 # TODO: Move
 
 
-get_coord(node::FENode2) = Point3(node.coords[1], node.coords[2], 0.0)
-get_displacement(node::FENode2) = Point3(node.dofs[1].value, node.dofs[2].value, 0.0)
+@inline get_coord(node::FENode2) = Point3(node.coords[1], node.coords[2], 0.0)
+@inline get_displacement(node::FENode2) = Point3(node.dofs[1].value, node.dofs[2].value, 0.0)
 
 
 immutable FENode3 <: AbstractFENode

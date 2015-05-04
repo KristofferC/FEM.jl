@@ -17,8 +17,7 @@ using Zlib
 
 macro lintpragma(s) end
 
-include("geomesh.jl")
-include("core.jl")
+
 
 
 export NodeSet, gennodeset, ElementSet, DirichletBC, NodeLoad, Dof
@@ -26,7 +25,7 @@ export FENode2, FENode3
 export GeoMesh, GeoTrig, GeoQTrig, GeoQuad, GeoNode3, GeoNode2
 
 # Elements, interpolators, materials, materialstatuses
-export AbstractFElement, LinTrig, LinQuad, QuadTrig, GradTrig
+export AbstractFElement, LinTrig, LinQuad, QuadTrig, GradTrig, activedofs
 export AbstractInterpolator, LinTrigInterp, LinQuadInterp, QuadTrigInterp
 export AbstractMaterial, LinearIsotropic, GradMekh
 
@@ -42,6 +41,8 @@ using Logging
 
 @Logging.configure(level=CRITICAL, filename="log.log")
 
+include("geomesh.jl")
+include("core.jl")
 
 include("fields.jl")
 include("materials/material.jl")
@@ -50,8 +51,10 @@ include("elements/element.jl")
 include("sections.jl")
 include("fe_problem.jl")
 include("vtkexport_xml.jl")
+include("sparse_tools.jl")
 include("solver.jl")
 include("mesh_generators/quad_mesher.jl")
+
 #include("export/vtkexport_jul.jl")
 
 #include("vtkexport.jl")

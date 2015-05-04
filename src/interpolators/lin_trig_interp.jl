@@ -104,7 +104,6 @@ function get_area(::LinTrigInterp, vertices::Vertex3, nodes::Vector{FENode2})
     y3 =  nodes[vertices[3]].coords.y
 
     area = 0.5 * (x1*(y2 - y3) + x2*(-y1 + y3) + x3*(y1 - y2))
-    @assert area > 0.0
     return area
 end
 
@@ -124,7 +123,6 @@ end
 
 @inline function det2x2(J::Matrix{Float64})
     d = J[1,1]*J[2,2] - J[1,2]*J[2,1]
-    @assert d > 0.0
     return d
 end
 
