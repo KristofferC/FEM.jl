@@ -1,9 +1,18 @@
+
+FEM.lintriginterpmod()
+using FEM.LinTrigInterpMod
+
 module LinTrigMod
 
 using FEM
-import FEM: AbstractMaterialStatus, Vertex3, GaussPoint2, Du, Dv
 
-export LinTrig, creategps
+import FEM: dNdxmatrix, dNmatrix
+
+import FEM: AbstractMaterialStatus, Vertex3, Point2, GaussPoint2, Du, Dv, createstorage,
+       createinterp, creategps, get_field, Bmatrix, doftypes, get_ndofs, get_geotype,
+       get_ref_area
+
+export LinTrig
 
 type LinTrigStorage <: AbstractElemStorage
     B::Matrix{Float64}

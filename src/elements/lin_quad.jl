@@ -1,3 +1,9 @@
+module LinQuadMod
+
+using FEM
+FEM.linquadinterpmod()
+using FEM.LinQuadInterpMod
+
 type LinQuadStorage <: AbstractElemStorage
     B::Matrix{Float64}
     DeBe::Matrix{Float64}
@@ -94,3 +100,4 @@ function get_cell_data{T <: AbstractTensor}(elem::LinQuad, field::Type{T})
     return cellfield
 end
 
+end

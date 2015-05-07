@@ -2,10 +2,25 @@ abstract AbstractFElement{T <: AbstractMaterialStatus}
 
 abstract AbstractElemStorage
 
+
+
 @lazymod LinTrigMod "lin_trig.jl"
-include("lin_quad.jl")
-include("quad_trig.jl")
-include("grad_trig.jl")
+@lazymod LinQuadMod "lin_quad.jl"
+@lazymod QuadTrigMod "quad_trig.jl"
+
+createstorage() = error("Not Implemented")
+createinterp() = error("Not Implemented")
+Bmatrix() = error("Not Implemented")
+creategps() = error("Not Implemented")
+doftypes() = error("Not Implemented")
+get_ndofs() = error("Not Implemented")
+get_geotype() = error("Not Implemented")
+get_ref_area() = error("Not Implemented")
+get_field() = error("Not Implemented")
+
+
+
+#include("grad_trig.jl")
 
 getindex{T <: AbstractFElement}(elem::T, i0::Int) = getindex(elem.vertices, i0)
 vertices(elem::AbstractFElement) = elem.vertices

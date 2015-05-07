@@ -1,3 +1,9 @@
+module QuadQuadInterpMod
+
+import FEM: AbstractInterpolator, FEM.Point2, FEM.FENode2, Vertex3, inv2x2t!, det2x2
+       dNmatrix, Jmatrix, dNdxmatrix
+export QuadQuadInterp, Nvec, dNmatrix, Jmatrix, dNdxmatrix
+
 immutable QuadQuadInterp <: AbstractInterpolator
     N::Vector{Float64}
     dN::Matrix{Float64}
@@ -101,5 +107,4 @@ function dNdxmatrix(interp::QuadQuadInterp, local_coords::Point2,
         return interp.dNdx
 end
 
-
-
+end # module

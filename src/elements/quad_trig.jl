@@ -1,3 +1,18 @@
+FEM.linquadinterpmod()
+using FEM.LinQuadInterpMod
+println("Rand this shit")
+
+module QuadTrigMod
+
+using FEM
+FEM.quadtriginterpmod()
+using FEM.QuadTrigInterpMod
+
+import FEM: AbstractMaterialStatus, Vertex6, Point2, GaussPoint2, Du, Dv, createstorage,
+       createinterp, creategps, get_field, Bmatrix, doftypes, get_ndofs
+
+export QuadTrig
+
 type QuadTrigStorage <: AbstractElemStorage
     B::Matrix{Float64}
     DeBe::Matrix{Float64}
@@ -86,4 +101,4 @@ function get_field(elem::AbstractFElement, ::Type{VonMises}, i::Int)
                         2(σ[4]*σ[4]))]
 end
 
-
+end # module

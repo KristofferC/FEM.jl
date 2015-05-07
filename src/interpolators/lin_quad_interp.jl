@@ -1,3 +1,9 @@
+module LinQuadInterpMod
+
+import FEM: AbstractInterpolator, FEM.Point2, FEM.FENode2, Vertex4, inv2x2t!, det2x2,
+       dNmatrix, Jmatrix, dNdxmatrix
+export LinQuadInterp, Nvec
+
 immutable LinQuadInterp <: AbstractInterpolator
     N::Vector{Float64}
     dN::Matrix{Float64}
@@ -83,5 +89,4 @@ function dNdxmatrix(interp::LinQuadInterp, local_coords::Point2,
         return interp.dNdx
 end
 
-
-
+end # module

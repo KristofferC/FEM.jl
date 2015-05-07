@@ -1,16 +1,20 @@
 using FEM
 
-FEM.vtkexport()
-using FEM.VTKExport
+
+FEM.lintrigmod()
+using FEM.LinTrigMod
+
+FEM.vtkexportmod()
+using FEM.VTKExportMod
 
 
 # Nodes
-#=
+
 # Generates a mesh of the shape known as the "Cook membrane"
 # Possible mesh elements are GeoTrig for 3 node triangles,
 # GeoQTrig for 6 node triangles and GeoQuad for 4 node quadraterials
 n_ele = 5
-geomesh = gencook(n_ele, n_ele, GeoQTrig)
+geomesh = gencook(n_ele, n_ele, GeoTrig)
 
 
 # We create two node sets, one on the right edge and one on the left.
@@ -30,16 +34,15 @@ push!(mat_section, geomesh.element_sets["all"])
 
 # We create an element section and assign it to all the
 # elements.
-ele_section = ElementSection(QuadTrig)
+ele_section = ElementSection(LinTrig)
 push!(ele_section, geomesh.element_sets["all"])
 
 # Apply Dirichlet BC to the left side in both x (Du) and y (Dv)
 bcs = [DirichletBC("0.0", [FEM.Du], geomesh.node_sets["left"]),
        DirichletBC("0.0", [FEM.Dv], geomesh.node_sets["left"])]
-println(bcs)
 # Since we currently don't have edge load we give a nodal load
 # on the right node set.
-loads = [NodeLoad(1/(n_ele+1), [FEM.Dv], geomesh.node_sets["right"])]
+loads = NodeLoad[NodeLoad("1/($n_ele+1)", [FEM.Dv], geomesh.node_sets["right"])]
 
 
 # Create the fe problem
@@ -62,4 +65,3 @@ solver = FEM.LinSolver(1e-9, 2)
 # Solve the fe problem using the solver and using the vtk exporter.
 solve(solver, fp, vtkexp)
 
-=#
