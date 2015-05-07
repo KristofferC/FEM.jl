@@ -22,7 +22,7 @@ push!(fp::FEProblem, load::NodeLoad) = push!(fp.loads, load)
 push!(fp::FEProblem, section::FESection) = push!(fp.sections, section)
 
 
-function create_feproblem_grad(name, geomesh, element_regions, material_regions, bcs::Vector{DirichletBC}=Array(DirichletBC, 0), loads::Vector{NodeLoad}=Array(NodeLoad, 0))
+function create_feproblem(name, geomesh, element_regions, material_regions, bcs::Vector{DirichletBC}=Array(DirichletBC, 0), loads::Vector{NodeLoad}=Array(NodeLoad, 0))
 
     gps = Dict{DataType, Vector{GaussPoint2}} ()
     interps = Dict{DataType, AbstractInterpolator} ()
@@ -323,9 +323,10 @@ function updatebcs!(fp::FEProblem, t::Number)
     end
 end
 
-function updatebc!{F}(bc::DirichletBC{F}, dof::Dof, node::FENode2, t::Number)
+function updatebc!{f}(bc::DirichletBC{f}, dof::Dof, node::FENode2, t::Number)
   #  println(node.coords)
    # println(t)
+   #dof.value = bc.value * t
     dof.value = evaluate(bc, node, t)
 #    println(dof.value)
 end

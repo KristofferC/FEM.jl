@@ -8,14 +8,13 @@ import Base.copy
 using Base.LinAlg
 
 using Compat
-using FixedSizeArrays
-
-using Devectorize
-using FastAnonymous
+using FixedSizeArrays # 0.5 seconds
+using Devectorize # 0.8 seconds
+using FastAnonymous # 0.04 seconds
+using Requires # 0.08 seconds
+using Logging # 0.20 seconds
 
 macro lintpragma(s) end
-
-
 
 
 export NodeSet, gennodeset, ElementSet, DirichletBC, NodeLoad, Dof
@@ -31,11 +30,13 @@ export FESection, MaterialSection, ElementSection
 export FEProblem
 export Stress, Strain, InvFp, KAlpha, VonMises
 export Solver, NRSolver, solve
-export meshquad, gencook
+export meshquad, gencook, read_mphtxt
 export create_feproblem
-export write_data, VTKExporter, set_binary!, set_compress!
+export AbstractDataExporter, AbstractField
+#export write_data, VTKExporter, set_binary!, set_compress!
+export write_data
 
-using Logging
+abstract AbstractDataExporter
 
 @Logging.configure(level=CRITICAL, filename="log.log")
 
@@ -48,11 +49,14 @@ include("interpolators/interpolator.jl")
 include("elements/element.jl")
 include("sections.jl")
 include("fe_problem.jl")
-include("vtkexport_xml.jl")
+
 include("sparse_tools.jl")
 include("solver.jl")
-include("mesh_generators/quad_mesher.jl")
+include("mesh/quad_mesher.jl")
+include("mesh/read_mphtxt.jl")
+include("mesh/mesh_conversions.jl")
 
+@lazymod VTKExport "vtkexport_xml.jl"
 #include("export/vtkexport_jul.jl")
 
 #include("vtkexport.jl")

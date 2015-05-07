@@ -98,6 +98,7 @@ create_matstat(::Type{GradMekh}) = GradMekhMS()
 #TODO:
 
 
+const STRESS_BUFFER = zeros(9)
 function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS, kappas::Vector{Float64}, F::Matrix{Float64})
     ɛ = temp_matstat.strain
 
@@ -119,7 +120,7 @@ function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS, ka
    state_new = temp_matstat.state
 
 
-   stressz = zeros(9)
+
    kappa_nl = kappas
 
  #  println("kappas $kappas")
@@ -143,7 +144,7 @@ function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS, ka
                 &length(mat.para), mat.para, &length(state_old),
                 state_old, state_old, &dtime, F1,
                 &NSLIP, kappa_nl, mat.s_x_m,
-                state_new, stressz, LKONV)
+                state_new, STRESS_BUFFER, LKONV)
 
     if LKONV[1] != 1
       println("F: $F1")
@@ -153,14 +154,14 @@ function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS, ka
       println("invFP: $(state_old[1:9])")
       println("state_new $state_new")
       println("kappas: $kappas")
-      println("stress: $stressz")
+      println("stress: $STRESS_BUFFER")
       exit()
     end
 
   #  println("stress: $stressz")
 
 
-   return stressz
+   return STRESS_BUFFER
 
 
 end

@@ -1,5 +1,7 @@
 abstract Solver
 
+include("linsolver.jl")
+
 immutable NRSolver <: Solver
     tol::Float64
     max_iters::Int
@@ -46,7 +48,7 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
     @time K = create_sparse_structure(fp::FEProblem)
     @time colptrs = get_colptrs(K, fp::FEProblem)
 
-    for t in [0:2.0/1000.0:2.0]
+    for t in [0:2.0/1000.0:1.0]
         println("Current time $t")
         iteration = 0
         tstep += 1
@@ -93,10 +95,9 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
                 break
             end
 
-
-
-
-              assembleK!(K, fp, colptrs)
+           # if (tstep - 2) % 5 == 0 || iteration % 5 == 0
+                assembleK!(K, fp, colptrs)
+           # end
 
 
             #du = cholfact(Symmetric(K, :L)) \ force_imbalance

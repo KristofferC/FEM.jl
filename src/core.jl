@@ -91,7 +91,13 @@ end
 
 # TODO: Add more sets
 # Only constant loads right now
-
+#=
+immutable DirichletBC
+    value::Float64
+    dof_types::Vector{DofType}
+    node_set::NodeSet
+end
+=#
 immutable DirichletBC{f}
     func::f
     dof_types::Vector{DofType}

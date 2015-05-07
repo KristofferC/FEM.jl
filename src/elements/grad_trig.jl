@@ -1,4 +1,5 @@
 const NSLIP = 2
+const STRESS_INDEX = [1,2,3,4,5,6]
 
 function get_u_dof_idxs(nunodes::Int, nuvars::Int, ngradnodes::Int, ngradvars::Int)
     idxs = Array(Int, nunodes * nuvars)
@@ -48,7 +49,7 @@ type GradTrigStorage <: ElemStorage
     DeBe::Matrix{Float64}
     Ke::Matrix{Float64}
     ɛ::Vector{Float64}
-    u_tot::Vector{Float64}
+    u_field::Vector{Float64}
     u_u::Vector{Float64}
     u_grad::Vector{Float64}
     u_grad_plane::Vector{Float64}
@@ -58,7 +59,8 @@ type GradTrigStorage <: ElemStorage
     f_grad_plane::Vector{Float64}
     dofs_idx_u::Vector{Int}
     dofs_idx_grad::Vector{Int}
-    dofs_slip_plane::Matrix{Int}
+    kappas::Vector{Float64}
+    dofs_slip_plane::Vector{Vector{Int}}
 end
 
 function GradTrigStorage()
@@ -67,7 +69,7 @@ function GradTrigStorage()
     DeBe = zeros(4,12)
     Ke = zeros(12 + 2*3*NSLIP, 12 + 2*3*NSLIP)
     ɛ = zeros(4)
-    u_tot = zeros(12 + 2*NSLIP)
+    u_field = zeros(12 + 2*3*NSLIP)
     u_u = zeros(12)
     u_grad = zeros(2 * 3 * NSLIP)
     u_grad_plane = zeros(6)
@@ -77,14 +79,16 @@ function GradTrigStorage()
     f_grad_plane = zeros(6)
     dofs_idx_u = get_u_dof_idxs(6, 2, 3, 2*NSLIP)
     dofs_idx_grad = get_grad_dof_idxs(6, 2, 3, 2*NSLIP)
+    kappas = zeros(NSLIP)
 
-    dofs_slip_plane = zeros(Int, 3 * 2, NSLIP)
+    dofs_slip_plane = Array(Vector{Int}, NSLIP)
     for i = 1:NSLIP
-        dofs_slip_plane[:, i] = get_grad_idxs_plane(3, i)
+        dofs_slip_plane[i] = get_grad_idxs_plane(3, i)
     end
 
-   GradTrigStorage(B, Bdiv, DeBe, Ke, ɛ, u_tot, u_u, u_grad, u_grad_plane, f, f_u, f_grad, f_grad_plane,
-                   dofs_idx_u, dofs_idx_grad, dofs_slip_plane)
+   GradTrigStorage(B, Bdiv, DeBe, Ke, ɛ, u_field, u_u, u_grad, u_grad_plane,
+                   f, f_u, f_grad, f_grad_plane,
+                   dofs_idx_u, dofs_idx_grad, kappas, dofs_slip_plane)
 end
 
 
@@ -99,7 +103,7 @@ type GradTrig{T <: AbstractMaterialStatus} <: AbstractFElement{T}
     temp_matstats::Vector{T}
 end
 gausspoints(elem::GradTrig) = elem.gps
-get_dofs_slipplane(elem, i::Int) = sub(elem.storage.dofs_slip_plane,:, i)
+get_dofs_slipplane(elem, i::Int) = elem.storage.dofs_slip_plane[i]
 
 # Constructor
 function GradTrig{T <: AbstractMaterialStatus}(vertices::Vertex6, n, interp_u::QuadTrigInterp,
@@ -169,12 +173,11 @@ function compute_hardening(elem::GradTrig, nodes::Vector{FENode2})
     assemble!(elem.storage.u_grad, u, elem.storage.dofs_idx_grad)
     vertslin = Vertex3(elem.vertices[1],elem.vertices[2], elem.vertices[3])
     # Dummy gp
+
     dNdx = dNdxmatrix(elem.interp_grad, elem.gps[1].local_coords, vertslin, nodes)
-    hessian = zeros(NDIM, NDIM);
-    kappas = zeros(NSLIP)
+    kappas = elem.storage.kappas
     B = Bdiv(elem, elem.gps[1], nodes)
     for i = 1:NSLIP
-        fill!(hessian, 0.0)
         slips = get_dofs_slipplane(elem, i)
         assemble!(elem.storage.u_grad_plane, elem.storage.u_grad, slips)
         kappas[i] = Hg * l * l * factor * dot(B, elem.storage.u_grad_plane)
@@ -205,7 +208,7 @@ function stiffness{P <: AbstractMaterial}(elem::GradTrig,
             dof.value += H
             f_pert = intf(elem, material, nodes)
             # Numeric derivative
-            @devec Ke[:, col] = (f_pert .- ff) ./ H
+            @inbounds @devec Ke[:, col] = (f_pert .- ff) ./ H
             dof.value -= H
             col += 1
         end
@@ -253,13 +256,13 @@ function intf_u{P <: AbstractMaterial}(elem::GradTrig, mat::P, nodes::Vector{FEN
         σ = stress(mat, elem.matstats[i], elem.temp_matstats[i], kappas, F)
 
         #@debug("σ = $σ")
-        fill_from_start!(elem.temp_matstats[i].stress, σ[[1,2,3,4,5,6]])
+        fill_from_start!(elem.temp_matstats[i].stress, σ[STRESS_INDEX])
 
         dV = weight(elem, gp, nodes)
         fe = zeros(12)
-        for i = 1:6
-            fe[2*i-1] += (σ[1]*dNdx[i,1]+σ[8]*dNdx[i,2] );
-            fe[2*i]   += (σ[4]*dNdx[i,1]+σ[2]*dNdx[i,2] );
+        @inbounds for i = 1:6
+            fe[2*i-1] += (σ[1]*dNdx[i,1]+σ[8]*dNdx[i,2] )
+            fe[2*i]   += (σ[4]*dNdx[i,1]+σ[2]*dNdx[i,2] )
         end
         #println("fe $fe")
         @devec elem.storage.f_u[:] += fe .* dV
@@ -323,8 +326,8 @@ function intf{P <: AbstractMaterial}(elem::GradTrig, mat::P, nodes::Vector{FENod
   f_u = intf_u(elem, mat, nodes)
   f_grad = intf_grad(elem, mat, nodes)
 
-  elem.storage.f[elem.storage.dofs_idx_u] = f_u
-  elem.storage.f[elem.storage.dofs_idx_grad] = f_grad
+  @devec elem.storage.f[elem.storage.dofs_idx_u] = f_u
+  @devec elem.storage.f[elem.storage.dofs_idx_grad] = f_grad
   return elem.storage.f
 end
 

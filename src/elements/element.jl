@@ -35,8 +35,8 @@ end
 
 
 function get_field{T <: AbstractFElement}(elem::T, nodes::Vector{FENode2})
-    #u = elem.storage.u_field
-    u = zeros(get_ndofs(elem))
+    u = elem.storage.u_field
+    #u = zeros(get_ndofs(elem))
     i = 1
     @inbounds for vert in elem.vertices
         for dof in nodes[vert].dofs

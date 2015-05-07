@@ -1,17 +1,22 @@
 using FEM
-import FEM.write_data
-# Nodes
 
+FEM.vtkexport()
+using FEM.VTKExport
+
+
+# Nodes
+#=
 # Generates a mesh of the shape known as the "Cook membrane"
 # Possible mesh elements are GeoTrig for 3 node triangles,
 # GeoQTrig for 6 node triangles and GeoQuad for 4 node quadraterials
-n_ele = 100
+n_ele = 5
 geomesh = gencook(n_ele, n_ele, GeoQTrig)
 
 
 # We create two node sets, one on the right edge and one on the left.
 # This is done by giving an anonymous function that is satisfied by
 # the edges.
+
 push!(geomesh, gennodeset(n->n.coords[1]>47.999999, "right", geomesh.nodes))
 push!(geomesh, gennodeset(n->n.coords[1]<0.00001, "left", geomesh.nodes))
 
@@ -29,8 +34,9 @@ ele_section = ElementSection(QuadTrig)
 push!(ele_section, geomesh.element_sets["all"])
 
 # Apply Dirichlet BC to the left side in both x (Du) and y (Dv)
-bcs = [DirichletBC("0.0", [FEM.Du, FEM.Dv], geomesh.node_sets["left"])]
-
+bcs = [DirichletBC("0.0", [FEM.Du], geomesh.node_sets["left"]),
+       DirichletBC("0.0", [FEM.Dv], geomesh.node_sets["left"])]
+println(bcs)
 # Since we currently don't have edge load we give a nodal load
 # on the right node set.
 loads = [NodeLoad(1/(n_ele+1), [FEM.Dv], geomesh.node_sets["right"])]
@@ -51,8 +57,9 @@ push!(vtkexp, VonMises)
 set_binary!(vtkexp, false)
 
 
-solver = NRSolver(1e-9, 2)
+solver = FEM.LinSolver(1e-9, 2)
 
 # Solve the fe problem using the solver and using the vtk exporter.
 solve(solver, fp, vtkexp)
 
+=#

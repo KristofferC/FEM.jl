@@ -1,8 +1,14 @@
+module VTKExport
+
+using FEM
+
 using Zlib
 using LightXML
 using Codecs
 
-abstract AbstractDataExporter
+export VTKExporter, write_data, set_binary!, set_compress!
+
+
 
 type VTKExporter <: AbstractDataExporter
     fields::Vector{DataType}
@@ -240,3 +246,5 @@ function write_celldata_field!{T <: AbstractField}(xcellfield::XMLElement, field
     end
     write_data!(vtkw, xcellfield)
 end
+
+end # module

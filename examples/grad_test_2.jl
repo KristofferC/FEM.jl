@@ -65,7 +65,7 @@ push!(geomesh, ElementSet("all", collect(1:length(geomesh.elements))))
 # Boundary conditions
 bcs = [DirichletBC("0.0", [FEM.Du, FEM.Dv], geomesh.node_sets["bottom"]),
        DirichletBC("0.0", [FEM.Dv], geomesh.node_sets["top"]),
-        DirichletBC("0.004*t", [FEM.Du], geomesh.node_sets["top"])]
+        DirichletBC("2.806425e-5/(0.002)*t", [FEM.Du], geomesh.node_sets["top"])]
 
 
 
@@ -97,7 +97,7 @@ push!(ele_section, geomesh.element_sets["all"])
 
 
 # Create the fe problem
-fp = FEM.create_feproblem_grad("grad", geomesh, [ele_section], [mat_section], bcs)
+fp = FEM.create_feproblem_grad("grad2", geomesh, [ele_section], [mat_section], bcs)
 
 vtkexp = VTKExporter()
 set_binary!(vtkexp, false)
