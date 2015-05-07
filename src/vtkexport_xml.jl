@@ -6,7 +6,7 @@ using Zlib
 using LightXML
 using Codecs
 
-export VTKExporter, write_data, set_binary!, set_compress!
+export VTKExporter, write_data, set_binary!, set_compress!, push!
 
 
 

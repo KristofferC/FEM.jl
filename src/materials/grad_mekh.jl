@@ -1,20 +1,14 @@
-
-
 type GradMekhMS <:AbstractMaterialStatus
     state::Vector{Float64}
     strain::Vector{Float64}
     stress::Vector{Float64}
 end
 
-
 function GradMekhMS()
   state = zeros(9 + 2*NSLIP + 1)
   state[1:3] = 1.0
   GradMekhMS(state, zeros(6), zeros(6))
 end
-
-copyy(matstat::GradMekhMS) = GradMekhMS(copy(matstat.state), copy(matstat.strain), copy(matstat.stress))
-
 
 copy(matstat::GradMekhMS) = GradMekhMS(copy(matstat.state), copy(matstat.strain), copy(matstat.stress))
 get_kalpha(ms::GradMekhMS, i::Int) = ms.state[9 + i]
@@ -95,41 +89,20 @@ function GradMekh(E, nu, n, l , kinf, lambda_0, Hg, Hl, m, factor,
 end
 
 create_matstat(::Type{GradMekh}) = GradMekhMS()
-#TODO:
-
 
 const STRESS_BUFFER = zeros(9)
 function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS, kappas::Vector{Float64}, F::Matrix{Float64})
     ɛ = temp_matstat.strain
 
-
-  #  F = [ɛ[1] + 1.0, ɛ[2] + 1.0, 1.0,
-  #      0.5*ɛ[4], 0.0, 0.0, 0.0, 0.5*ɛ[4], 0.0]
-
-
   F1 = M_2_V9(F)
- # println(F1)
 
-      #  println("F: $F")
-
-   dtime = 2.000000000000000e-003
+   dtime = 2.000000000000000e-003 #TODO: Fix
    LKONV = [1]
    npara = length(mat.para)
 
    state_old = matstat.state
    state_new = temp_matstat.state
-
-
-
    kappa_nl = kappas
-
- #  println("kappas $kappas")
- #  println("para $(mat.para)")
-
-
-    #@warn("F: $F")
-    #@warn("invFP: $state_old[1:9]")
-    #@warn("kappas: $kappas")
 
     ccall(mat.libmekh,
                Void,
@@ -158,10 +131,5 @@ function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS, ka
       exit()
     end
 
-  #  println("stress: $stressz")
-
-
    return STRESS_BUFFER
-
-
 end

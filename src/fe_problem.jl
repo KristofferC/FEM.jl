@@ -318,7 +318,7 @@ function updatedofs!(fp::FEProblem, du::Vector{Float64})
     end
 end
 
-function updatebcs!(fp::FEProblem, t::Number)
+function updatebcs!(fp::FEProblem, t::Number=0.0)
     for node in fp.nodes
         for dof in node.dofs
             if !dof.active
@@ -361,7 +361,7 @@ function create_feproblem_grad(name, geomesh, element_regions, material_regions,
 
     gps = Dict{DataType, Vector{GaussPoint2}} ()
     interps = Dict{DataType, AbstractInterpolator} ()
-    storage = Dict{DataType, ElemStorage} ()
+    storage = Dict{DataType, AbstractElemStorage} ()
     elem_types = Array(DataType, 0)
 
     for element_region in element_regions

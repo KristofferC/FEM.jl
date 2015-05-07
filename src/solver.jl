@@ -3,9 +3,15 @@ abstract Solver
 include("linsolver.jl")
 
 immutable NRSolver <: Solver
-    tol::Float64
+    rel_tol::Float64
+    abs_tol::Float64
     max_iters::Int
+    err_on_nonconv::Bool
 end
+
+NRSolver(;rel_tol=0.0::Float64, abs_tol=0.0::Float64,
+          max_iters=10::Int, err_on_nonconv=true::Bool) =
+    NRSolver(rel_tol, abs_tol, max_iters, err_on_nonconv)
 
 function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
     println("Starting Newton-Raphson solver..")
@@ -57,6 +63,9 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
             iteration += 1
             if iteration > solver.max_iters
                 warn("Max iterations hit.")
+                if solver.err_on_nonconv
+                    @goto err
+                end
                 break
             end
 
@@ -120,5 +129,7 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
             write_data(fp, exporter, n_print)
         end
     end
+
+    @label err
 end
 
