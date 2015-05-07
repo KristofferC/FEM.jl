@@ -132,19 +132,25 @@ function createdofs(fp::FEProblem)
 end
 
 
-function extload(fp::FEProblem)
+function extload(fp::FEProblem, t::Number=0.0)
     f = zeros(fp.n_eqs)
     for load in fp.loads
         for node_id in load.node_set.node_ids
             for dof in fp.nodes[node_id].dofs
                 if dof.dof_type in load.dof_types
-                    f[dof.eq_n] += load.value
+                     extload(f, load, dof, fp.nodes[node_id], t)
                 end
             end
         end
     end
     return f
 end
+
+@inline function extload{T}(f::Vector{Float64}, load::NodeLoad{T},
+                            dof::Dof, node::FENode2, t::Number)
+    f[dof.eq_n] += evaluate(load, node, t)
+end
+
 
 
 function assembleK!(K::SparseMatrixCSC, fp::FEProblem, colptrs::Vector{Int})
@@ -323,12 +329,8 @@ function updatebcs!(fp::FEProblem, t::Number)
     end
 end
 
-function updatebc!{f}(bc::DirichletBC{f}, dof::Dof, node::FENode2, t::Number)
-  #  println(node.coords)
-   # println(t)
-   #dof.value = bc.value * t
+@inline function updatebc!{f}(bc::DirichletBC{f}, dof::Dof, node::FENode2, t::Number)
     dof.value = evaluate(bc, node, t)
-#    println(dof.value)
 end
 
 

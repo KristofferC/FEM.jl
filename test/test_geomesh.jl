@@ -45,7 +45,7 @@ push!(mesh, top_set)
 
 node_s = gennodeset(x->x.coords[1] > 0.5, "test", mesh.nodes)
 @fact node_s.name =>"test"
-@fact node_s.node_ids => [2, 3]
+@fact node_s.node_ids => Set{Int64}([2, 3])
 
 end # context
 

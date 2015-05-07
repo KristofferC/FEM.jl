@@ -127,16 +127,21 @@ get_vtk_num(::Type{GeoTetra}) = 10
 # Sets #
 ########
 immutable ElementSet
-    name::String
-    element_ids::Vector{Int}
+    name::ASCIIString
+    element_ids::Set{Int}
 end
-Base.append!(es1::ElementSet, es2::ElementSet) = append!(es1.element_ids, ne2.element_ids)
+ElementSet(s::ASCIIString, elems) = ElementSet(s, Set{Int64}(elems))
+Base.append!(ns1::ElementSet, elems) = union!(ns1.element_ids, Set{Int64}(element_ids))
+Base.append!(es1::ElementSet, es2::ElementSet) = union!(es1.element_ids, ne2.element_ids)
 
 
 immutable NodeSet
-    name::String
+    name::ASCIIString
     node_ids::Set{Int}
 end
+NodeSet(s, nodes) = NodeSet(s, Set{Int64}(nodes))
+
+Base.append!(ns1::NodeSet, nodes) = union!(ns1.node_ids, Set{Int64}(nodes))
 Base.append!(ns1::NodeSet, ns2::NodeSet) = union!(ns1.node_ids, ns2.node_ids)
 
 
@@ -152,6 +157,7 @@ immutable SurfaceSet
     # (Element_id, surface_id) tuple
     surfaces::Vector{(Int, Int)}
 end
+
 
 
 ###########
@@ -180,7 +186,7 @@ push!(mesh::GeoMesh, node::AbstractGeoNode) = push!(mesh.nodes, node)
 
 function push!(mesh::GeoMesh, nodes::Vector{GeoNode2})
     for n in nodes
-        addnode!(mesh, n)
+        push!(mesh, n)
     end
 end
 

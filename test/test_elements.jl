@@ -3,6 +3,7 @@ import FEM.Bmatrix
 import FEM.creategps
 import FEM.createinterp
 import FEM.createstorage
+import FEM.create_matstat
 import FEM.Vertex3
 import FEM.Vertex4
 facts("FEM.Element") do
@@ -18,8 +19,9 @@ context("FEM.Element.LinTrig") do
     gps = creategps(LinTrig)
     interp = createinterp(LinTrig)
     storage = createstorage(LinTrig)
-    elem = LinTrig(Vertex3(1, 2, 3), gps, 1, interp, storage)
     mat = LinearIsotropic(200e9, 0.3)
+    ms = create_matstat(typeof(mat))
+    elem = LinTrig(Vertex3(1, 2, 3), 1, interp, storage, gps, ms)
 
     Ke = stiffness(elem, nodes, mat)
 
@@ -44,12 +46,9 @@ context("FEM.Element.LinQuad") do
     gps = creategps(LinQuad)
     interp = createinterp(LinQuad)
     storage = createstorage(LinQuad)
-    elem = LinQuad(Vertex4(1, 2, 3, 4), gps, 1, interp, storage)
     mat = LinearIsotropic(200e9, 0.3)
-
-
-
-    elem = LinQuad(Vertex4(1, 2, 3, 4), gps, 1, interp, storage)
+    ms = create_matstat(typeof(mat))
+    elem = LinQuad(Vertex4(1, 2, 3, 4), 1, interp, storage, gps, ms)
 
     Ke = stiffness(elem, nodes, mat)
 
@@ -65,8 +64,6 @@ context("FEM.Element.LinQuad") do
     [ 0.087970540098200  -0.372340425531915   0.562602291325696  -0.699672667757774   0.014320785597381  -0.261865793780687  -0.664893617021277   1.333878887070377]]
 
     @fact norm(Ke - Ke_calfem) / norm(Ke) => roughly(0.0, 10.0^(-15))
-
-
 
 end # context
 

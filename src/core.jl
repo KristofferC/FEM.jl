@@ -98,7 +98,10 @@ immutable DirichletBC
     node_set::NodeSet
 end
 =#
-immutable DirichletBC{f}
+
+
+
+immutable DirichletBC{f <: FastAnonymous.Fun}
     func::f
     dof_types::Vector{DofType}
     node_set::NodeSet
@@ -109,18 +112,25 @@ function DirichletBC(f::String, dof_types::Vector{DofType}, node_set::NodeSet)
     DirichletBC(ff, dof_types,  node_set)
 end
 
-
-function evaluate(dbc::DirichletBC, node::FENode2, t::Float64)
-    return dbc.func(node.coords.x, node.coords.y, 0.0, t)
-end
-
-
-
-immutable NodeLoad
-    value::Float64
+immutable NodeLoad{f <: FastAnonymous.Fun}
+    func::f
     dof_types::Vector{DofType}
     node_set::NodeSet
 end
+
+function NodeLoad(f::String, dof_types::Vector{DofType}, node_set::NodeSet)
+    prog = string("ff = @anon (x,y,z,t) -> ", f)
+    eval(parse(prog))
+    NodeLoad(ff, dof_types,  node_set)
+end
+
+
+
+
+function evaluate(bc::Union(DirichletBC, NodeLoad), node::FENode2, t::Float64)
+    return bc.func(node.coords.x, node.coords.y, 0.0, t)
+end
+
 
 immutable EdgeLoad
     value::Float64

@@ -1,6 +1,5 @@
-import FEM.createdofs
 import FEM.extload
-import FEM.assembleK
+import FEM.assembleK!
 import FEM.intf
 import FEM.assemble_intf
 import FEM.updatedofs!
@@ -8,44 +7,49 @@ import FEM.updatedofs!
 facts("FEM.FEProblem") do
 
 # Setup a FEProblem
-mesh = Mesh()
+mesh = GeoMesh()
 
-nodes = [Node2([0, 0], 1), Node2([1, 1], 2), Node2([1, 2], 3), Node2([0, 1], 4)]
-addnodes!(mesh, nodes)
+nodes = [GeoNode2(1, [0, 0]), GeoNode2(2, [1, 1]), GeoNode2(3, [1, 2]), GeoNode2(4, [0, 1])]
 
-addelem!(mesh, LinTrig([1, 2, 3], 1))
-addelem!(mesh, LinTrig([1, 2, 4], 2))
+
+push!(mesh, nodes)
+
+push!(mesh, GeoTrig(1, [1, 2, 3]))
+push!(mesh, GeoTrig(2, [1, 2, 4]))
+
 
 bottom_set = NodeSet("y0", [1])
 top_set = NodeSet("x0", [2, 3])
-addnodeset!(mesh, bottom_set)
-addnodeset!(mesh, top_set)
+push!(mesh, bottom_set)
+push!(mesh, top_set)
 
 element_set = ElementSet("all", [1, 2])
+push!(mesh, element_set)
 
-addelemset!(mesh, element_set)
+bcs =  DirichletBC[DirichletBC("0.1", [FEM.Du, FEM.Dv], mesh.node_sets["x0"])]
+loads =  NodeLoad[NodeLoad("10e5", [FEM.Dv], mesh.node_sets["y0"])]
 
-bcs =  [DirichletBC(0.1, [Du, Dv], mesh.node_sets["x0"])]
-loads =  [NodeLoad(10e5, [Dv], mesh.node_sets["y0"])]
+
 
 
 # Element set
-mat = LinearIsotropic(250e9, 0.3)
-section = Section(mat)
-addelemset!(section, mesh.element_sets["all"])
+mat_section = MaterialSection(LinearIsotropic(250e9, 0.3))
+push!(mat_section, mesh.element_sets["all"])
 
-fp = FEProblem(mesh, bcs, loads, [section])
+ele_section = ElementSection(LinTrig)
+push!(ele_section, mesh.element_sets["all"])
 
-context("FEM.FEProblem.") do
-    createdofs(fp) #TODO: Test this properly
 
-    solver = NRSolver(1e-7, 5)
-    solve(solver, fp)
+fp = create_feproblem("cook_example_quad", mesh, [ele_section], [mat_section], bcs, loads)
+
+context("FEM.FEProblem") do
+    K = FEM.create_sparse_structure(fp::FEProblem)
+    colptrs = FEM.get_colptrs(K, fp::FEProblem)
 
     load = extload(fp)
 
     int_f = assemble_intf(fp)
-    K = assembleK(fp)
+    assembleK!(K, fp, colptrs)
     du = K \ (load - int_f)
 
     updatedofs!(fp, du)
