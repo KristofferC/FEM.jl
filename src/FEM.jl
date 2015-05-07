@@ -1,7 +1,6 @@
 module FEM
 
 import Base.push!
-
 import Base.show
 import Base.copy
 
@@ -34,21 +33,37 @@ export meshquad, gencook, read_mphtxt
 export create_feproblem
 export AbstractDataExporter, AbstractField
 #export write_data, VTKExporter, set_binary!, set_compress!
-export write_data
 
 abstract AbstractDataExporter
 
-@Logging.configure(level=CRITICAL, filename="log.log")
 
-include("geomesh.jl")
-include("core.jl")
+@Logging.configure(level=DEBUG, output = open("FEMlog.log", "w"))
 
-include("fields.jl")
-include("materials/material.jl")
-include("interpolators/interpolator.jl")
-include("elements/element.jl")
-include("sections.jl")
-include("fe_problem.jl")
+
+t = @elapsed include("geomesh.jl")
+@debug("Time to include geomesh.jl: $t s")
+
+t = @elapsed include("core.jl")
+@debug("Time to include core.jl: $t s")
+
+t = @elapsed include("fields.jl")
+@debug("Time to include fields.jl: $t s")
+
+t = @elapsed include("materials/material.jl")
+@debug("Time to include material.jl: $t s")
+
+t = @elapsed include("interpolators/interpolator.jl")
+@debug("Time to include interpolator.jl: $t s")
+
+t = @elapsed include("elements/element.jl")
+@debug("Time to include element.jl: $t s")
+
+t = @elapsed include("sections.jl")
+@debug("Time to include sections.jl: $t s")
+
+t = @elapsed include("fe_problem.jl")
+@debug("Time to include fe_problem.jl: $t s")
+
 
 include("sparse_tools.jl")
 include("solver.jl")
@@ -57,9 +72,4 @@ include("mesh/read_mphtxt.jl")
 include("mesh/mesh_conversions.jl")
 
 @lazymod VTKExport "vtkexport_xml.jl"
-#include("export/vtkexport_jul.jl")
-
-#include("vtkexport.jl")
-
-
 end
