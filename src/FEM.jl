@@ -25,6 +25,7 @@ export GeoMesh, GeoTrig, GeoQTrig, GeoQuad, GeoNode3, GeoNode2
 export AbstractFElement, LinTrig, LinQuad, QuadTrig, GradTrig, activedofs
 export AbstractInterpolator, LinTrigInterp, LinQuadInterp, QuadTrigInterp
 export AbstractMaterial, LinearIsotropic, GradMekh
+export AbstractElemStorage
 
 export FESection, MaterialSection, ElementSection
 export FEProblem

@@ -1,4 +1,4 @@
-type LinQuadStorage <: ElemStorage
+type LinQuadStorage <: AbstractElemStorage
     B::Matrix{Float64}
     DeBe::Matrix{Float64}
     Ke::Matrix{Float64}
@@ -93,3 +93,4 @@ function get_cell_data{T <: AbstractTensor}(elem::LinQuad, field::Type{T})
     end
     return cellfield
 end
+

@@ -1,6 +1,11 @@
+module LinTrigMod
 
+using FEM
+import FEM: AbstractMaterialStatus, Vertex3, GaussPoint2, Du, Dv
 
-type LinTrigStorage <: ElemStorage
+export LinTrig, creategps
+
+type LinTrigStorage <: AbstractElemStorage
     B::Matrix{Float64}
     DeBe::Matrix{Float64}
     Ke::Matrix{Float64}
@@ -85,3 +90,5 @@ end
 #get_cell_data(elem::LinTrig, field::Stress)
 get_field(elem::LinTrig, ::Type{Stress}, i::Int) = elem.matstats[i].stress
 get_field(elem::LinTrig, ::Type{Strain}, i::Int) = elem.matstats[i].strain
+
+end

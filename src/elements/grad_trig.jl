@@ -43,7 +43,7 @@ function get_grad_idxs_plane(ngradnodes::Int, alpha::Int)
 end
 
 
-type GradTrigStorage <: ElemStorage
+type GradTrigStorage <: AbstractElemStorage
     B::Matrix{Float64}
     Bdiv::Vector{Float64}
     DeBe::Matrix{Float64}

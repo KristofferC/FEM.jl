@@ -1,13 +1,13 @@
 abstract AbstractFElement{T <: AbstractMaterialStatus}
 
-abstract ElemStorage
+abstract AbstractElemStorage
 
-include("lin_trig.jl")
+@lazymod LinTrigMod "lin_trig.jl"
 include("lin_quad.jl")
 include("quad_trig.jl")
 include("grad_trig.jl")
 
-getindex{T <: AbstractFElement}(elem::T, i0::Real) = getindex(elem.vertices, i0)
+getindex{T <: AbstractFElement}(elem::T, i0::Int) = getindex(elem.vertices, i0)
 vertices(elem::AbstractFElement) = elem.vertices
 
 function show{T <: AbstractFElement}(io::IO,elem::T)

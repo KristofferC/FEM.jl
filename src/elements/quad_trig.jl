@@ -1,4 +1,4 @@
-type QuadTrigStorage <: ElemStorage
+type QuadTrigStorage <: AbstractElemStorage
     B::Matrix{Float64}
     DeBe::Matrix{Float64}
     Ke::Matrix{Float64}
