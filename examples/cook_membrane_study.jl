@@ -1,8 +1,8 @@
 using FEM
 
 
-FEM.lintrigmod()
-using FEM.LinTrigMod
+
+#using FEM.LinTrigMod
 
 FEM.vtkexportmod()
 using FEM.VTKExportMod
@@ -29,12 +29,12 @@ push!(geomesh, ElementSet("all", collect(1:length(geomesh.elements))))
 
 # We create a material section of a linear isotropic material
 # and assigns it to all the elements.
-mat_section = MaterialSection(LinearIsotropic(1, 0.3))
+mat_section = MaterialSection(FEM.linearisotropicmod().LinearIsotropic(1, 0.3))
 push!(mat_section, geomesh.element_sets["all"])
 
 # We create an element section and assign it to all the
 # elements.
-ele_section = ElementSection(LinTrig)
+ele_section = ElementSection(FEM.lintrigmod().LinTrig)
 push!(ele_section, geomesh.element_sets["all"])
 
 # Apply Dirichlet BC to the left side in both x (Du) and y (Dv)

@@ -2,5 +2,10 @@ abstract AbstractMaterial
 
 abstract AbstractMaterialStatus
 
-include("linear_isotropic.jl")
-#include("grad_mekh.jl")
+
+stiffness() = error("Not implemented")
+create_matstat() = error("Not implemented")
+stress() = error("Not implemented")
+
+@lazymod LinearIsotropicMod "linear_isotropic.jl"
+@lazymod GradMekhMod "grad_mekh.jl"

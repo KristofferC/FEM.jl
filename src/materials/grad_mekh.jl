@@ -1,3 +1,10 @@
+module GradMekhMod
+
+# Function sto extend
+import FEM: create_matstat, stiffness, stress,
+
+# Types needed
+import FEM: AbstractMaterialStatus, AbstractMaterial, GaussPoint2
 
 
 type GradMekhMS <:AbstractMaterialStatus
@@ -163,5 +170,7 @@ function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS, ka
 
    return STRESS_BUFFER
 
+
+end
 
 end

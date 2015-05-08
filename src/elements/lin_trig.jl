@@ -7,7 +7,7 @@ module LinTrigMod
 
 using FEM
 
-import FEM: dNdxmatrix, dNmatrix
+using FEM.LinTrigInterpMod
 
 import FEM: AbstractMaterialStatus, Vertex3, Point2, GaussPoint2, Du, Dv, createstorage,
        createinterp, creategps, get_field, Bmatrix, doftypes, get_ndofs, get_geotype,
@@ -98,7 +98,5 @@ function Bmatrix(elem::LinTrig, gp::GaussPoint2, nodes::Vector{FENode2})
 end
 
 #get_cell_data(elem::LinTrig, field::Stress)
-get_field(elem::LinTrig, ::Type{Stress}, i::Int) = elem.matstats[i].stress
-get_field(elem::LinTrig, ::Type{Strain}, i::Int) = elem.matstats[i].strain
 
 end

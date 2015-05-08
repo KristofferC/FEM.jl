@@ -115,6 +115,15 @@ immutable ActiveDofsIterator{T <: AbstractFElement}
     ele::T
 end
 
+get_field(elem::AbstractFElement, ::Type{Stress}, i::Int) = elem.matstats[i].stress
+get_field(elem::AbstractFElement, ::Type{Strain}, i::Int) = elem.matstats[i].strain
+function get_field(elem::AbstractFElement, ::Type{VonMises}, i::Int)
+    σ = elem.matstats[i].stress
+    m = (σ[1] + σ[2] + σ[3]) / 3
+    return [sqrt(3/2) * sqrt((σ[1] - m)^2 + (σ[2] - m)^2 + (σ[3] - m)^2 +
+                        2(σ[4]*σ[4]))]
+end
+
 function activedofs(element::AbstractFElement, nodes::Vector{FENode2})
     ActiveDofsIterator(nodes, element)
 end

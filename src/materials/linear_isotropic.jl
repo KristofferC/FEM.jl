@@ -1,3 +1,15 @@
+module LinearIsotropicMod
+
+import Base.copy
+
+# Function sto extend
+import FEM: create_matstat, stiffness, stress,
+
+# Types needed
+import FEM: AbstractMaterialStatus, AbstractMaterial, GaussPoint2
+
+export LinearIsotropicMS, LinearIsotropic
+
 immutable LinearIsotropicMS <:AbstractMaterialStatus
     strain::Vector{Float64}
     stress::Vector{Float64}
@@ -42,4 +54,6 @@ function stress(mat::LinearIsotropic, ɛ::Vector{Float64}, gp::GaussPoint2)
     # TODO: Unroll this matrix multiplication
     A_mul_B!(mat.σ, D, ɛ)
     return mat.σ
+end
+
 end
