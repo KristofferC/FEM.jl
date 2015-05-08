@@ -64,7 +64,7 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
             if iteration > solver.max_iters
                 warn("Max iterations hit.")
                 if solver.err_on_nonconv
-                    @goto err
+                    error("Did not converge")
                 end
                 break
             end
@@ -94,7 +94,7 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
 
 
 
-            if residual < solver.tol
+            if residual < solver.abs_tol
                 println("Converged!")
                 break
             end
@@ -130,6 +130,5 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
         end
     end
 
-    @label err
 end
 

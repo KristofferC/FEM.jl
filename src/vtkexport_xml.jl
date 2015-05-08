@@ -1,3 +1,5 @@
+write_data() = error("Not def")
+
 module VTKExport
 
 using FEM
@@ -6,7 +8,11 @@ using Zlib
 using LightXML
 using Codecs
 
-export VTKExporter, write_data, set_binary!, set_compress!, push!
+import Base.push!
+import FEM: write_data, get_coord, get_displacement, get_geotype, get_ncomponents, get_vtk_num,
+      get_cell_data
+
+export VTKExporter, write_data, set_binary!, set_compress!, get_cell_data
 
 
 

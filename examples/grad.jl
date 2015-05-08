@@ -1,12 +1,16 @@
 using FEM
 
-#n_ele = 15
+FEM.vtkexport()
+using FEM.VTKExport
 
-#m = [[0.0; 0.0] [0.0; 10.0] [10.0; 10.0] [10.0; 0.0]]
-#geomesh = meshquad(n_ele, n_ele, m, GeoQTrig)
-geomesh = FEM.read_mphtxt("/home/kristoffer/Dokument/meshtest.mphtxt")
 
-geomesh = FEM.lintrig2quadtrig(geomesh)
+n_ele = 25
+
+m = [[0.0; 0.0] [0.0; 10.0] [10.0; 10.0] [10.0; 0.0]]
+geomesh = meshquad(n_ele, n_ele, m, GeoQTrig)
+#geomesh = FEM.read_mphtxt("/home/kristoffer/Dokument/meshtest.mphtxt")
+
+#geomesh = FEM.lintrig2quadtrig(geomesh)
 
 using FEM
 import FEM.write_data
@@ -59,7 +63,7 @@ push!(ele_section, geomesh.element_sets["all"])
 bcs = [DirichletBC("$(γ)*y*t", [FEM.Du], geomesh.node_sets["boundary"]),
        DirichletBC("0.0", [FEM.Dv], geomesh.node_sets["boundary"])]
 
-fp = FEM.create_feproblem_grad("grad_sq_big", geomesh, [ele_section], [mat_section], bcs)
+fp = FEM.create_feproblem_grad("grad_coarse", geomesh, [ele_section], [mat_section], bcs)
 
 
 vtkexp = VTKExporter()
@@ -71,6 +75,6 @@ push!(vtkexp, VonMises)
 push!(vtkexp, KAlpha)
 
 
-solver = NRSolver(1e-2, 20)
+solver = NRSolver(abs_tol = 1e-2, max_iters = 20)
 
 solve(solver, fp, vtkexp)
