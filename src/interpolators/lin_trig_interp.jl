@@ -3,7 +3,7 @@ module LinTrigInterpMod
 using FEM
 
 import FEM: AbstractInterpolator, Point2, FENode2, Vertex3, inv2x2t!, det2x2,
-       dNmatrix, Jmatrix, dNdxmatrix, Nvec, get_area
+       dNmatrix, Jmatrix, dNdxmatrix, Nvec, get_area, mass_matrix, get_area
 
 export LinTrigInterp
 

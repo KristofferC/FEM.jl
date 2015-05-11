@@ -5,7 +5,8 @@ import FEM.Point2
 facts("FEM.AbstractMaterial") do
 
 context("FEM.Material.LinearIsotropic") do
-    mat = LinearIsotropic(200e9, 0.3)
+
+    mat = FEM.linearisotropicmod().LinearIsotropic(200e9, 0.3)
     gp = GaussPoint2(Point2(0.0, 0.0), 0.0)
     context("FEM.Material.LinearIsotropic.stiffness") do
 

@@ -91,9 +91,6 @@ end
 
 
 
-# Get the stress/strain in gausspoint i
-get_field(elem::QuadTrig, ::Type{Stress}, i::Int) = elem.matstats[i].stress
-get_field(elem::QuadTrig, ::Type{Strain}, i::Int) = elem.matstats[i].strain
 
 
 end # module

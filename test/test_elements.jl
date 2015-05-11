@@ -8,12 +8,18 @@ import FEM.Vertex3
 import FEM.Vertex4
 facts("FEM.Element") do
 
+
 FEM.lintrigmod()
 using FEM.LinTrigMod
 
+FEM.linquadmod()
+using FEM.LinQuadMod
+
+FEM.linearisotropicmod()
+using FEM.LinearIsotropicMod
+
 
 context("FEM.Element.LinTrig") do
-
 
     nodes = [FENode2(1, [0, 0]), FENode2(2, [1, 1]), FENode2(3, [1, 2])]
 

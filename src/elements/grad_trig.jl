@@ -1,3 +1,27 @@
+# Load the Interpolator in the FEM module
+FEM.lintriginterpmod()
+using FEM.LinTrigInterpMod
+
+FEM.quadtriginterpmod()
+using FEM.QuadTrigInterpMod
+
+module GradTrigMod
+
+using Devectorize
+
+using FEM.LinTrigInterpMod
+using FEM.QuadTrigInterpMod
+
+
+import FEM: createinterp, creategps, createstorage, get_field,
+            Bmatrix, doftypes, get_ndofs, get_geotype, get_ref_area, get_kalpha, stiffness
+
+import FEM: dNdxmatrix, intf, assemble!, fill_from_start!, stress, weight, mass_matrix, get_area
+import FEM: AbstractMaterialStatus, AbstractElemStorage, AbstractFElement, AbstractMaterial, FENode2
+import FEM: Vertex3, Vertex6, Point2, GaussPoint2, Du, Dv, Gu1, Gv1, Gu2, Gv2, GeoQTrig, InvFp, KAlpha
+
+export GradTrig
+
 const NSLIP = 2
 const STRESS_INDEX = [1,2,3,4,5,6]
 
@@ -53,7 +77,7 @@ type GradTrigStorage <: AbstractElemStorage
     u_u::Vector{Float64}
     u_grad::Vector{Float64}
     u_grad_plane::Vector{Float64}
-    f::Vector{Float64}
+    f_int::Vector{Float64}
     f_u::Vector{Float64}
     f_grad::Vector{Float64}
     f_grad_plane::Vector{Float64}
@@ -120,10 +144,10 @@ function GradTrig{T <: AbstractMaterialStatus}(vertices::Vertex6, n, interp_u::Q
              matstats, temp_matstats)
 end
 
-@inline get_ndofs(::GradTrig) = 12 + 2*3*NSLIP
+get_ndofs(::GradTrig) = 12 + 2*3*NSLIP
 get_geoelem(ele::GradTrig) = GeoQTrig(ele.n, ele.vertices)
 get_geotype(::GradTrig) = GeoQTrig
-@inline get_ref_area(::GradTrig) = 0.5
+get_ref_area(::GradTrig) = 0.5
 createstorage(::Type{GradTrig}) = GradTrigStorage()
 createinterp(::Type{GradTrig}) = QuadTrigInterp()
 
@@ -189,9 +213,9 @@ function compute_hardening(elem::GradTrig, nodes::Vector{FENode2})
 end
 
 
-function stiffness{P <: AbstractMaterial}(elem::GradTrig,
-                                          nodes::Vector{FENode2},
-                                          material::P)
+function stiffness(elem::GradTrig,
+                  nodes::Vector{FENode2},
+                  material::AbstractMaterial)
    const H = 1e-7
     Ke = elem.storage.Ke
     fill!(Ke, 0.0)
@@ -218,7 +242,7 @@ function stiffness{P <: AbstractMaterial}(elem::GradTrig,
 end
 
 
-function intf_u{P <: AbstractMaterial}(elem::GradTrig, mat::P, nodes::Vector{FENode2})
+function intf_u(elem::GradTrig, mat::AbstractMaterial, nodes::Vector{FENode2})
     u = get_field(elem, nodes)
 
     assemble!(elem.storage.u_u, u, elem.storage.dofs_idx_u) # 12 dofs
@@ -276,7 +300,7 @@ function intf_u{P <: AbstractMaterial}(elem::GradTrig, mat::P, nodes::Vector{FEN
 end
 
 
-function intf_grad{P <: AbstractMaterial}(elem::GradTrig, mat::P, nodes::Vector{FENode2})
+function intf_grad(elem::GradTrig, mat::AbstractMaterial, nodes::Vector{FENode2})
     fill!(elem.storage.f_grad, 0.0)
     u = get_field(elem, nodes)
 
@@ -322,13 +346,13 @@ function intf_grad{P <: AbstractMaterial}(elem::GradTrig, mat::P, nodes::Vector{
 end
 
 
-function intf{P <: AbstractMaterial}(elem::GradTrig, mat::P, nodes::Vector{FENode2})
+function intf(elem::GradTrig, mat::AbstractMaterial, nodes::Vector{FENode2})
   f_u = intf_u(elem, mat, nodes)
   f_grad = intf_grad(elem, mat, nodes)
 
-  @devec elem.storage.f[elem.storage.dofs_idx_u] = f_u
-  @devec elem.storage.f[elem.storage.dofs_idx_grad] = f_grad
-  return elem.storage.f
+  @devec elem.storage.f_int[elem.storage.dofs_idx_u] = f_u
+  @devec elem.storage.f_int[elem.storage.dofs_idx_grad] = f_grad
+  return elem.storage.f_int
 end
 
 
@@ -360,11 +384,8 @@ function Bmatrix(elem::GradTrig, gp::GaussPoint2, nodes::Vector{FENode2})
 end
 
 
-
 # Get the stress/strain in gausspoint i
-get_field(elem::GradTrig, ::Type{Stress}, i::Int) = elem.matstats[i].stress
-get_field(elem::GradTrig, ::Type{Strain}, i::Int) = elem.matstats[i].strain
 get_field(elem::GradTrig, ::Type{InvFp}, i::Int) = (invfp=elem.matstats[i].state[1:9]; invfp[1:3] -= 1.0; invfp)
 get_field(elem::GradTrig, ::Type{KAlpha}, i::Int) = elem.matstats[i].state[10:11]
 
-
+end # module

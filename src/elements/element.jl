@@ -5,7 +5,9 @@ abstract AbstractElemStorage
 @lazymod LinTrigMod "lin_trig.jl"
 @lazymod LinQuadMod "lin_quad.jl"
 @lazymod QuadTrigMod "quad_trig.jl"
+@lazymod GradTrigMod "grad_trig.jl"
 
+# Interface for a FE-element
 createstorage() = error("Not Implemented")
 createinterp() = error("Not Implemented")
 Bmatrix() = error("Not Implemented")
@@ -15,9 +17,6 @@ get_ndofs() = error("Not Implemented")
 get_geotype() = error("Not Implemented")
 get_ref_area() = error("Not Implemented")
 
-
-
-#include("grad_trig.jl")
 
 getindex{T <: AbstractFElement}(elem::T, i0::Int) = getindex(elem.vertices, i0)
 vertices(elem::AbstractFElement) = elem.vertices
@@ -114,6 +113,7 @@ end
 
 get_field(elem::AbstractFElement, ::Type{Stress}, i::Int) = elem.matstats[i].stress
 get_field(elem::AbstractFElement, ::Type{Strain}, i::Int) = elem.matstats[i].strain
+
 function get_field(elem::AbstractFElement, ::Type{VonMises}, i::Int)
     σ = elem.matstats[i].stress
     m = (σ[1] + σ[2] + σ[3]) / 3

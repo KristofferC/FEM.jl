@@ -11,9 +11,8 @@ import FEM: createinterp, creategps, createstorage, get_field,
 
 import FEM: dNdxmatrix
 
-import FEM: AbstractMaterialStatus, AbstractElemStorage, AbstractFElement, FENode2, Vertex3
+import FEM: AbstractMaterialStatus, AbstractElemStorage, AbstractFElement, FENode2
 import FEM: Vertex3, Point2, GaussPoint2, Du, Dv, GeoTrig
-
 
 export LinTrig
 

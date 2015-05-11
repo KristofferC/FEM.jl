@@ -1,8 +1,17 @@
-module LinQuadMod
-
-using FEM
 FEM.linquadinterpmod()
 using FEM.LinQuadInterpMod
+
+module LinQuadMod
+
+using FEM.LinQuadInterpMod
+
+import FEM: createinterp, creategps, createstorage, get_field,
+            Bmatrix, doftypes, get_ndofs, get_geotype, get_ref_area, dNdxmatrix
+import FEM: AbstractMaterialStatus, AbstractElemStorage, AbstractFElement, FENode2
+import FEM: Vertex4, Point2, GaussPoint2, Du, Dv, GeoTrig
+
+export LinQuad
+
 
 type LinQuadStorage <: AbstractElemStorage
     B::Matrix{Float64}
@@ -28,7 +37,6 @@ type LinQuad{T <: AbstractMaterialStatus} <: AbstractFElement{T}
 end
 
 
-
 # Constructors
 function LinQuad{T <: AbstractMaterialStatus}(vertices::Vertex4, n, interp::LinQuadInterp,
                  storage::LinQuadStorage, gps::Vector{GaussPoint2}, matstat::T)
@@ -47,6 +55,7 @@ function LinQuadv(v::Vector{Int}, n, interp::LinQuadInterp,
 end
 
 get_ref_area(::LinQuad) = 4.0
+get_ndofs(::LinQuad) = 8
 get_geoelem(ele::LinQuad) = GeoQuad(ele.n, ele.vertices)
 get_geotype(::LinQuad) = GeoQuad
 
@@ -61,9 +70,6 @@ function creategps(::Type{LinQuad})
      GaussPoint2(Point2(-p,  p), 1.0)]
 end
 
-@inline function get_ndofs(::LinQuad)
-    return 8
-end
 
 # Avoids allocation (remove?)
 const LINTRIG_DOFTYPES = [Du, Dv]
@@ -84,20 +90,5 @@ function Bmatrix(elem::LinQuad, gp::GaussPoint2, nodes::Vector{FENode2})
     return B
 end
 
-
-
-
-# Get the stress in gausspoint i
-get_field(elem::LinQuad, ::Type{Stress}, i::Int) = [elem.matstats[i].stress, 0, 0]
-get_field(elem::LinQuad, ::Type{Strain}, i::Int) = [elem.matstats[i].strain, 0, 0]
-
-function get_cell_data{T <: AbstractTensor}(elem::LinQuad, field::Type{T})
-    cellfield = zeros(get_ncomponents(field))
-    for (i, gp) in enumerate(gausspoints(elem))
-        gpfield = get_field(elem, field, i)
-        axpy!(getweight(gp)/4.0, gpfield, cellfield)
-    end
-    return cellfield
-end
 
 end

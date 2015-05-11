@@ -1,9 +1,10 @@
 module GradMekhMod
 
+using Devectorize
 import Base.copy
 
 # Function sto extend
-import FEM: create_matstat, stiffness, stress,
+import FEM: create_matstat, stiffness, stress, get_kalpha
 
 # Types needed
 import FEM: AbstractMaterialStatus, AbstractMaterial, GaussPoint2
@@ -16,6 +17,7 @@ type GradMekhMS <:AbstractMaterialStatus
     stress::Vector{Float64}
 end
 
+const NSLIP = 2
 
 function GradMekhMS()
   state = zeros(9 + 2*NSLIP + 1)
@@ -80,7 +82,6 @@ function GradMekh(E, nu, n, l , kinf, lambda_0, Hg, Hl, m, factor,
         push!(para, angle)
     end
 
-    @debug("para: $para")
 
     s_x_m = zeros(9, nslip)
     @devec angles[:] = angles[:] .* pi ./ 180.0
@@ -91,7 +92,6 @@ function GradMekh(E, nu, n, l , kinf, lambda_0, Hg, Hl, m, factor,
         sxm_mat = s * mm'
         s_x_m[:, i] = M_2_V9(sxm_mat)
     end
-    @debug("s_x_m: $s_x_m")
 
     mekh_lib = Libdl.dlopen("combined_material", Libdl.RTLD_GLOBAL)
     mekh_mat = Libdl.dlsym(mekh_lib, "__material_module_MOD_const_solve_dam_se_lem")
@@ -102,8 +102,6 @@ function GradMekh(E, nu, n, l , kinf, lambda_0, Hg, Hl, m, factor,
 end
 
 create_matstat(::Type{GradMekh}) = GradMekhMS()
-#TODO:
-
 
 const STRESS_BUFFER = zeros(9)
 function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS, kappas::Vector{Float64}, F::Matrix{Float64})
