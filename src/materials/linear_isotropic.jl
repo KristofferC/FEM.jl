@@ -3,7 +3,7 @@ module LinearIsotropicMod
 import Base.copy
 
 # Function sto extend
-import FEM: create_matstat, stiffness, stress,
+import FEM: create_matstat, stiffness, stress
 
 # Types needed
 import FEM: AbstractMaterialStatus, AbstractMaterial, GaussPoint2

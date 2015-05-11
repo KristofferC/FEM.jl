@@ -9,6 +9,9 @@ export AbstractInterpolator
 dNmatrix() = error("Not implemented")
 dNdxmatrix() = error("Not implemented")
 Jmatrix() = error("Not implemented")
+Nvec() = error("Not implemented")
+get_area() = error("Not implemented")
+mass_matrix() = error("Not implemented")
 
 @inline function inv2x2t!(J::Matrix{Float64})
     d = det2x2(J)

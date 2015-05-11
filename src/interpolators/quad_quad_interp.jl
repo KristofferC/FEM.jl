@@ -1,8 +1,9 @@
 module QuadQuadInterpMod
 
-import FEM: AbstractInterpolator, FEM.Point2, FEM.FENode2, Vertex3, inv2x2t!, det2x2
-       dNmatrix, Jmatrix, dNdxmatrix
-export QuadQuadInterp, Nvec, dNmatrix, Jmatrix, dNdxmatrix
+import FEM: AbstractInterpolator, Point2, FENode2, Vertex6, inv2x2t!, det2x2,
+       dNmatrix, Jmatrix, dNdxmatrix, Nvec, get_area
+
+export QuadQuadInterp
 
 immutable QuadQuadInterp <: AbstractInterpolator
     N::Vector{Float64}

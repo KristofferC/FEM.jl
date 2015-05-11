@@ -1,8 +1,9 @@
 module LinQuadInterpMod
 
-import FEM: AbstractInterpolator, FEM.Point2, FEM.FENode2, Vertex4, inv2x2t!, det2x2,
-       dNmatrix, Jmatrix, dNdxmatrix
-export LinQuadInterp, Nvec
+import FEM: AbstractInterpolator, Point2, FENode2, Vertex4, inv2x2t!, det2x2,
+       dNmatrix, Jmatrix, dNdxmatrix, Nvec, get_area
+
+export LinQuadInterp
 
 immutable LinQuadInterp <: AbstractInterpolator
     N::Vector{Float64}

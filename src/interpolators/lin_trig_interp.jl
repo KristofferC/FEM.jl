@@ -2,11 +2,10 @@ module LinTrigInterpMod
 
 using FEM
 
+import FEM: AbstractInterpolator, Point2, FENode2, Vertex3, inv2x2t!, det2x2,
+       dNmatrix, Jmatrix, dNdxmatrix, Nvec, get_area
 
-import FEM: AbstractInterpolator, FEM.Point2, FEM.FENode2, Vertex3, inv2x2t!, det2x2,
-       dNmatrix, Jmatrix, dNdxmatrix
-
-export LinTrigInterp, Nvec, Jmatrix, dNdxmatrix, get_area, mass_matrix
+export LinTrigInterp
 
 immutable LinTrigInterp <: AbstractInterpolator
     N::Vector{Float64}

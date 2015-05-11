@@ -1,8 +1,9 @@
 module QuadTrigInterpMod
 
-import FEM: AbstractInterpolator, FEM.Point2, FEM.FENode2, Vertex6, inv2x2t!, det2x2
-       dNmatrix, Jmatrix, dNdxmatrix
-export QuadTrigInterp, Nvec
+import FEM: AbstractInterpolator, Point2, FENode2, Vertex6, inv2x2t!, det2x2,
+       dNmatrix, Jmatrix, dNdxmatrix, Nvec, get_area
+
+export QuadTrigInterp
 
 
 immutable QuadTrigInterp <: AbstractInterpolator

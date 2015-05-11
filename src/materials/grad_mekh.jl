@@ -1,11 +1,14 @@
 module GradMekhMod
 
+import Base.copy
+
 # Function sto extend
 import FEM: create_matstat, stiffness, stress,
 
 # Types needed
 import FEM: AbstractMaterialStatus, AbstractMaterial, GaussPoint2
 
+export GradMekhMS, GradMekh
 
 type GradMekhMS <:AbstractMaterialStatus
     state::Vector{Float64}
@@ -19,9 +22,6 @@ function GradMekhMS()
   state[1:3] = 1.0
   GradMekhMS(state, zeros(6), zeros(6))
 end
-
-copyy(matstat::GradMekhMS) = GradMekhMS(copy(matstat.state), copy(matstat.strain), copy(matstat.stress))
-
 
 copy(matstat::GradMekhMS) = GradMekhMS(copy(matstat.state), copy(matstat.strain), copy(matstat.stress))
 get_kalpha(ms::GradMekhMS, i::Int) = ms.state[9 + i]

@@ -2,8 +2,6 @@ abstract AbstractFElement{T <: AbstractMaterialStatus}
 
 abstract AbstractElemStorage
 
-
-
 @lazymod LinTrigMod "lin_trig.jl"
 @lazymod LinQuadMod "lin_quad.jl"
 @lazymod QuadTrigMod "quad_trig.jl"
@@ -16,7 +14,6 @@ doftypes() = error("Not Implemented")
 get_ndofs() = error("Not Implemented")
 get_geotype() = error("Not Implemented")
 get_ref_area() = error("Not Implemented")
-get_field() = error("Not Implemented")
 
 
 
@@ -24,17 +21,17 @@ get_field() = error("Not Implemented")
 
 getindex{T <: AbstractFElement}(elem::T, i0::Int) = getindex(elem.vertices, i0)
 vertices(elem::AbstractFElement) = elem.vertices
+gausspoints(elem::AbstractFElement) = elem.gps
+
 
 function show{T <: AbstractFElement}(io::IO,elem::T)
     print(io, string(typeof(elem), ":", elem.vertices))
 end
 
-gausspoints(elem::AbstractFElement) = elem.gps
 
-
-function stiffness{T <: AbstractFElement,  P <: AbstractMaterial}(elem::T,
-                                                                  nodes::Vector{FENode2},
-                                                                  material::P)
+function stiffness(elem::AbstractFElement,
+                  nodes::Vector{FENode2},
+                  material::AbstractMaterial)
     fill!(elem.storage.Ke, 0.0)
     for gp in elem.gps
         Be = Bmatrix(elem, gp, nodes)
@@ -49,7 +46,7 @@ function stiffness{T <: AbstractFElement,  P <: AbstractMaterial}(elem::T,
 end
 
 
-function get_field{T <: AbstractFElement}(elem::T, nodes::Vector{FENode2})
+function get_field(elem::AbstractFElement, nodes::Vector{FENode2})
     u = elem.storage.u_field
     #u = zeros(get_ndofs(elem))
     i = 1
@@ -63,7 +60,7 @@ function get_field{T <: AbstractFElement}(elem::T, nodes::Vector{FENode2})
 end
 
 
-function intf{T <: AbstractFElement, P <: AbstractMaterial}(elem::T, mat::P, nodes::Vector{FENode2})
+function intf(elem::AbstractFElement, mat::AbstractMaterial, nodes::Vector{FENode2})
     u = get_field(elem, nodes)
     ɛ = elem.storage.ɛ
     fill!(elem.storage.f_int, 0.0)
@@ -83,14 +80,20 @@ function intf{T <: AbstractFElement, P <: AbstractMaterial}(elem::T, mat::P, nod
     return elem.storage.f_int
 end
 
-#get_cell_data{T <: AbstractScalar}(::AbstractFElement, ::Type{T}) = 0.0
-#get_point_data{T <: AbstractScalar}(::AbstractFElement, ::Type{T}) = 0.0
+function weight(elem::AbstractFElement, gp::GaussPoint2, nodes::Vector{FENode2})
+    dN = dNmatrix(elem.interp, gp.local_coords)
+    J = Jmatrix(elem.interp, elem.vertices, nodes, dN)
+    return abs(det2x2(J)) * gp.weight
+end
 
-#get_cell_data{T <: AbstractTensor}(::AbstractFElement, ::Type{T}) = zeros(6)
-#get_point_data{T <: AbstractTensor}(::AbstractFElement, ::Type{T}) = zeros(6)
+get_cell_data{T <: AbstractScalar}(::AbstractFElement, ::Type{T}) = [0.0]
+get_point_data{T <: AbstractScalar}(::AbstractFElement, ::Type{T}) = [0.0]
 
-#get_cell_data{T <: AbstractVector}(::AbstractFElement, ::Type{T}) = zeros(3)
-#get_point_data{T <: AbstractVector}(::AbstractFElement, ::Type{T}) = zeros(3)
+get_cell_data{T <: AbstractTensor}(::AbstractFElement, ::Type{T}) = zeros(6)
+get_point_data{T <: AbstractTensor}(::AbstractFElement, ::Type{T}) = zeros(6)
+
+get_cell_data{T <: AbstractVector}(::AbstractFElement, ::Type{T}) = zeros(3)
+get_point_data{T <: AbstractVector}(::AbstractFElement, ::Type{T}) = zeros(3)
 
 
 function get_cell_data{T <: AbstractField}(elem::AbstractFElement, field::Type{T})
@@ -100,12 +103,6 @@ function get_cell_data{T <: AbstractField}(elem::AbstractFElement, field::Type{T
         axpy!(getweight(gp)/get_ref_area(elem), gpfield, cellfield)
     end
     return cellfield
-end
-
-function weight(elem::AbstractFElement, gp::GaussPoint2, nodes::Vector{FENode2})
-    dN = dNmatrix(elem.interp, gp.local_coords)
-    J = Jmatrix(elem.interp, elem.vertices, nodes, dN)
-    return abs(det2x2(J)) * gp.weight
 end
 
 
