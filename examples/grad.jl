@@ -1,8 +1,7 @@
 using FEM
 
-FEM.vtkexport()
-using FEM.VTKExport
-
+FEM.vtkexportmod()
+using FEM.VTKExportMod
 
 n_ele = 25
 
@@ -45,7 +44,7 @@ c_dam = 0.0
 angles = [45.0, 105.0]
 nslip = 2
 
-mat = GradMekh(E, nu, n, l, kinf, lambda_0,
+mat = FEM.gradmekhmod().GradMekh(E, nu, n, l, kinf, lambda_0,
                Hg, Hl, m, faktor, sy, tstar,
                c_dam, angles, nslip)
 
@@ -55,7 +54,7 @@ mat_section = MaterialSection(mat)
 push!(mat_section, geomesh.element_sets["all"])
 
 # Element section
-ele_section = ElementSection(GradTrig)
+ele_section = ElementSection(FEM.gradtrigmod().GradTrig)
 push!(ele_section, geomesh.element_sets["all"])
 
 # Boundary conditions
@@ -63,7 +62,11 @@ push!(ele_section, geomesh.element_sets["all"])
 bcs = [DirichletBC("$(γ)*y*t", [FEM.Du], geomesh.node_sets["boundary"]),
        DirichletBC("0.0", [FEM.Dv], geomesh.node_sets["boundary"])]
 
+<<<<<<< HEAD
 fp = FEM.create_feproblem_grad("grad_coarse", geomesh, [ele_section], [mat_section], bcs)
+=======
+fp = FEM.create_feproblem_grad("grad_sq_22", geomesh, [ele_section], [mat_section], bcs)
+>>>>>>> kc/modularize
 
 
 vtkexp = VTKExporter()

@@ -27,7 +27,7 @@ function create_feproblem(name, geomesh, element_regions, material_regions,
 
     gps = Dict{DataType, Vector{GaussPoint2}} ()
     interps = Dict{DataType, AbstractInterpolator} ()
-    storage = Dict{DataType, ElemStorage} ()
+    storage = Dict{DataType, AbstractElemStorage} ()
     elem_types = Array(DataType, 0)
 
     for element_region in element_regions
@@ -374,7 +374,7 @@ function create_feproblem_grad(name, geomesh, element_regions, material_regions,
 
     gps = Dict{DataType, Vector{GaussPoint2}} ()
     interps = Dict{DataType, AbstractInterpolator} ()
-    storage = Dict{DataType, ElemStorage} ()
+    storage = Dict{DataType, AbstractElemStorage} ()
     elem_types = Array(DataType, 0)
 
     for element_region in element_regions

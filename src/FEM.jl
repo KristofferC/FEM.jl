@@ -18,12 +18,13 @@ macro lintpragma(s) end
 
 export NodeSet, gennodeset, ElementSet, DirichletBC, NodeLoad, Dof
 export FENode2, FENode3
-export GeoMesh, GeoTrig, GeoQTrig, GeoQuad, GeoNode3, GeoNode2
+export GeoMesh, GeoTrig, GeoQTrig, GeoQuad, GeoTetra, GeoNode3, GeoNode2
 
 # Elements, interpolators, materials, materialstatuses
 export AbstractFElement, LinTrig, LinQuad, QuadTrig, GradTrig, activedofs
 export AbstractInterpolator, LinTrigInterp, LinQuadInterp, QuadTrigInterp
 export AbstractMaterial, LinearIsotropic, GradMekh
+export AbstractElemStorage
 
 export FESection, MaterialSection, ElementSection
 export FEProblem
@@ -32,9 +33,6 @@ export Solver, NRSolver, solve
 export meshquad, gencook, read_mphtxt
 export create_feproblem
 export AbstractDataExporter, AbstractField
-#export write_data, VTKExporter, set_binary!, set_compress!
-
-abstract AbstractDataExporter
 
 
 @Logging.configure(level=DEBUG, output = open("FEMlog.log", "w"))
@@ -66,10 +64,11 @@ t = @elapsed include("fe_problem.jl")
 
 
 include("sparse_tools.jl")
+
+include("export/export.jl")
 include("solver.jl")
 include("mesh/quad_mesher.jl")
 include("mesh/read_mphtxt.jl")
 include("mesh/mesh_conversions.jl")
 
-@lazymod VTKExport "vtkexport_xml.jl"
 end

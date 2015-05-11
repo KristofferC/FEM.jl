@@ -1,6 +1,4 @@
-write_data() = error("Not def")
-
-module VTKExport
+module VTKExportMod
 
 using FEM
 
@@ -9,10 +7,9 @@ using LightXML
 using Codecs
 
 import Base.push!
-import FEM: write_data, get_coord, get_displacement, get_geotype, get_ncomponents, get_vtk_num,
-      get_cell_data
-
-export VTKExporter, write_data, set_binary!, set_compress!, get_cell_data
+import FEM: write_data, get_coord, get_geotype, get_ncomponents, get_cell_data,
+            get_displacement, get_field
+export VTKExporter, set_binary!, set_compress!
 
 
 
@@ -105,6 +102,14 @@ function write_data!(vtkw::VTKXMLASCIIWriter, xmlele::XMLElement)
     add_text(xmlele, takebuf_string(vtkw.buffer))
 end
 
+get_vtk_num(::GeoTrig) = 5
+get_vtk_num(::Type{GeoTrig}) = 5
+get_vtk_num(::GeoQTrig) = 22
+get_vtk_num(::Type{GeoQTrig}) = 22
+get_vtk_num(::GeoQuad) = 9
+get_vtk_num(::Type{GeoQuad}) = 9
+get_vtk_num(::GeoTetra) = 10
+get_vtk_num(::Type{GeoTetra}) = 10
 
 
 function write_data(fp::FEProblem, vtkexp::VTKExporter, tstep::Int)

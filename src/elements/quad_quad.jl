@@ -1,3 +1,23 @@
+# Load the Interpolator in the FEM module
+FEM.quadquadinterpmod()
+using FEM.QuadQuadInterpMod
+
+module QuadQuadMod
+
+
+using FEM.LinTrigInterpMod
+
+import FEM: createinterp, creategps, createstorage, get_field,
+            Bmatrix, doftypes, get_ndofs, get_geotype, get_ref_area
+
+import FEM: dNdxmatrix
+
+import FEM: AbstractMaterialStatus, AbstractElemStorage, AbstractFElement, FENode2
+import FEM: Vertex6, Point2, GaussPoint2, Du, Dv, GeoTrig
+
+export QuadQuad
+
+
 type QuadQuadStorage <: ElemStorage
     B::Matrix{Float64}
     DeBe::Matrix{Float64}
@@ -66,8 +86,6 @@ function Bmatrix(elem::QuadQuad, gp::GaussPoint2, nodes::Vector{FENode2})
     end
     return B
 end
-
-
 
 
 # Get the stress/strain in gausspoint i

@@ -1,6 +1,22 @@
+# Load the Interpolator in the FEM module
+FEM.lintriginterpmod()
+using FEM.LinTrigInterpMod
 
+module LinTrigMod
 
-type LinTrigStorage <: ElemStorage
+using FEM.LinTrigInterpMod
+
+import FEM: createinterp, creategps, createstorage, get_field,
+            Bmatrix, doftypes, get_ndofs, get_geotype, get_ref_area
+
+import FEM: dNdxmatrix
+
+import FEM: AbstractMaterialStatus, AbstractElemStorage, AbstractFElement, FENode2
+import FEM: Vertex3, Point2, GaussPoint2, Du, Dv, GeoTrig
+
+export LinTrig
+
+type LinTrigStorage <: AbstractElemStorage
     B::Matrix{Float64}
     DeBe::Matrix{Float64}
     Ke::Matrix{Float64}
@@ -43,15 +59,10 @@ end
 get_ref_area(::LinTrig) = 0.5
 get_geoelem(ele::LinTrig) = GeoTrig(ele.n, ele.vertices)
 get_geotype(::LinTrig) = GeoTrig
-
 createstorage(::Type{LinTrig}) = LinTrigStorage()
 createinterp(::Type{LinTrig}) = LinTrigInterp()
 creategps(::Type{LinTrig}) = [GaussPoint2(Point2(1/3, 1/3), 0.5)]
-
-
-@inline function get_ndofs(::LinTrig)
-    return 6
-end
+get_ndofs(::LinTrig) = 6
 
 const dofsa = [Du, Dv]
 function doftypes(::LinTrig, ::Int)
@@ -82,6 +93,4 @@ function Bmatrix(elem::LinTrig, gp::GaussPoint2, nodes::Vector{FENode2})
     return B
 end
 
-#get_cell_data(elem::LinTrig, field::Stress)
-get_field(elem::LinTrig, ::Type{Stress}, i::Int) = elem.matstats[i].stress
-get_field(elem::LinTrig, ::Type{Strain}, i::Int) = elem.matstats[i].strain
+end # module

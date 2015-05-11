@@ -1,8 +1,30 @@
 abstract AbstractInterpolator
 
-include("lin_trig_interp.jl")
-include("lin_quad_interp.jl")
-include("quad_trig_interp.jl")
+export AbstractInterpolator
+
+@lazymod LinTrigInterpMod "lin_trig_interp.jl"
+@lazymod LinQuadInterpMod "lin_quad_interp.jl"
+@lazymod QuadTrigInterpMod "quad_trig_interp.jl"
+
+dNmatrix() = error("Not implemented")
+dNdxmatrix() = error("Not implemented")
+Jmatrix() = error("Not implemented")
+Nvec() = error("Not implemented")
+get_area() = error("Not implemented")
+mass_matrix() = error("Not implemented")
+
+@inline function inv2x2t!(J::Matrix{Float64})
+    d = det2x2(J)
+    J[1,1], J[2,2] = J[2,2]/d, J[1,1]/d
+    J[1,2], J[2,1] = -J[2,1]/d, -J[1,2]/d
+    return J
+end
+
+@inline function det2x2(J::Matrix{Float64})
+    d = J[1,1]*J[2,2] - J[1,2]*J[2,1]
+    return d
+end
+
 
 #=
 function dNdxmatrix{T <: AbstractInterpolator}(interp::T, local_coords::Point2,

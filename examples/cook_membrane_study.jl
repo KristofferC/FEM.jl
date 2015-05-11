@@ -1,15 +1,13 @@
 using FEM
 
-FEM.vtkexport()
-using FEM.VTKExport
 
-
-# Nodes
+FEM.vtkexportmod()
+using FEM.VTKExportMod
 
 # Generates a mesh of the shape known as the "Cook membrane"
 # Possible mesh elements are GeoTrig for 3 node triangles,
 # GeoQTrig for 6 node triangles and GeoQuad for 4 node quadraterials
-n_ele = 200
+n_ele = 5
 geomesh = gencook(n_ele, n_ele, GeoTrig)
 
 
@@ -25,12 +23,12 @@ push!(geomesh, ElementSet("all", collect(1:length(geomesh.elements))))
 
 # We create a material section of a linear isotropic material
 # and assigns it to all the elements.
-mat_section = MaterialSection(LinearIsotropic(1, 0.3))
+mat_section = MaterialSection(FEM.linearisotropicmod().LinearIsotropic(1, 0.3))
 push!(mat_section, geomesh.element_sets["all"])
 
 # We create an element section and assign it to all the
 # elements.
-ele_section = ElementSection(LinTrig)
+ele_section = ElementSection(FEM.lintrigmod().LinTrig)
 push!(ele_section, geomesh.element_sets["all"])
 
 # Apply Dirichlet BC to the left side in both x (Du) and y (Dv)
@@ -41,9 +39,8 @@ bcs = Any[DirichletBC("0.0", [FEM.Du], geomesh.node_sets["left"]),
 loads = Any[NodeLoad("1/($n_ele+1)", [FEM.Dv], geomesh.node_sets["right"])]
 
 
+
 # Create the fe problem
-
-
 fp = FEM.create_feproblem("cook_example_quad", geomesh, [ele_section], [mat_section], bcs, loads)
 
 # Output fields are added by pushing them into the exporter.

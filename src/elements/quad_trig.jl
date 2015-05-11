@@ -1,4 +1,19 @@
-type QuadTrigStorage <: ElemStorage
+FEM.linquadinterpmod()
+using FEM.LinQuadInterpMod
+println("Rand this shit")
+
+module QuadTrigMod
+
+using FEM
+FEM.quadtriginterpmod()
+using FEM.QuadTrigInterpMod
+
+import FEM: AbstractMaterialStatus, Vertex6, Point2, GaussPoint2, Du, Dv, createstorage,
+       createinterp, creategps, get_field, Bmatrix, doftypes, get_ndofs
+
+export QuadTrig
+
+type QuadTrigStorage <: AbstractElemStorage
     B::Matrix{Float64}
     DeBe::Matrix{Float64}
     Ke::Matrix{Float64}
@@ -76,14 +91,6 @@ end
 
 
 
-# Get the stress/strain in gausspoint i
-get_field(elem::QuadTrig, ::Type{Stress}, i::Int) = elem.matstats[i].stress
-get_field(elem::QuadTrig, ::Type{Strain}, i::Int) = elem.matstats[i].strain
-function get_field(elem::AbstractFElement, ::Type{VonMises}, i::Int)
-    σ = elem.matstats[i].stress
-    m = (σ[1] + σ[2] + σ[3]) / 3
-    return [sqrt(3/2) * sqrt((σ[1] - m)^2 + (σ[2] - m)^2 + (σ[3] - m)^2 +
-                        2(σ[4]*σ[4]))]
-end
 
 
+end # module

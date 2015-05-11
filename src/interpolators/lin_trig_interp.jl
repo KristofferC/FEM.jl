@@ -1,3 +1,12 @@
+module LinTrigInterpMod
+
+using FEM
+
+import FEM: AbstractInterpolator, Point2, FENode2, Vertex3, inv2x2t!, det2x2,
+       dNmatrix, Jmatrix, dNdxmatrix, Nvec, get_area, mass_matrix, get_area
+
+export LinTrigInterp
+
 immutable LinTrigInterp <: AbstractInterpolator
     N::Vector{Float64}
     dN::Matrix{Float64}
@@ -114,15 +123,4 @@ function mass_matrix(interp::LinTrigInterp, vertices::Vertex3, nodes::Vector{FEN
     return interp.M
 end
 
-@inline function inv2x2t!(J::Matrix{Float64})
-    d = det2x2(J)
-    J[1,1], J[2,2] = J[2,2]/d, J[1,1]/d
-    J[1,2], J[2,1] = -J[2,1]/d, -J[1,2]/d
-    return J
-end
-
-@inline function det2x2(J::Matrix{Float64})
-    d = J[1,1]*J[2,2] - J[1,2]*J[2,1]
-    return d
-end
-
+end # module
