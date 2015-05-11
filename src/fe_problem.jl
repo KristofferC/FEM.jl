@@ -22,7 +22,8 @@ push!(fp::FEProblem, load::NodeLoad) = push!(fp.loads, load)
 push!(fp::FEProblem, section::FESection) = push!(fp.sections, section)
 
 
-function create_feproblem(name, geomesh, element_regions, material_regions, bcs::Vector{DirichletBC}=Array(DirichletBC, 0), loads::Vector{NodeLoad}=Array(NodeLoad, 0))
+function create_feproblem(name, geomesh, element_regions, material_regions,
+                          bcs::Vector{Any}, loads::Vector{Any})
 
     gps = Dict{DataType, Vector{GaussPoint2}} ()
     interps = Dict{DataType, AbstractInterpolator} ()
@@ -225,10 +226,22 @@ end
 function create_sparse_structure(section::FESection, nodes::Vector{FENode2},
                                 dof_rows::Vector{Int}, dof_cols::Vector{Int})
     for element in section.elements
-        for (dof1, _) in activedofs(element, nodes)
-            for (dof2, _) in activedofs(element, nodes)
-                push!(dof_rows, dof1.eq_n)
-                push!(dof_cols, dof2.eq_n)
+                dof1_n = 0
+        for vertex1 in element.vertices
+            for dof1 in nodes[vertex1].dofs
+                dof1_n += 1
+                if dof1.active
+                    dof2_n = 0
+                    for vertex2 in element.vertices
+                        for dof2 in nodes[vertex2].dofs
+                            dof2_n += 1
+                            if dof2.active
+                                push!(dof_rows, dof1.eq_n)
+                                push!(dof_cols, dof2.eq_n)
+                             end
+                        end
+                    end
+                end
             end
         end
     end

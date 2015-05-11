@@ -24,15 +24,29 @@ end
 function get_colptrs(K::SparseMatrixCSC, z::Int, colptrs::Vector{Int},
                      section::FESection, nodes::Vector{FENode2})
     for element in section.elements
-        for (dof1, i) in activedofs(element, nodes)
-            for (dof2, j) in activedofs(element, nodes)
-                push!(colptrs, get_colptr_LUT(K, dof1.eq_n, dof2.eq_n))
-                #z += 1
+               dof1_n = 0
+        for vertex1 in element.vertices
+            for dof1 in nodes[vertex1].dofs
+                dof1_n += 1
+                if dof1.active
+                    dof2_n = 0
+                    for vertex2 in element.vertices
+                        for dof2 in nodes[vertex2].dofs
+                            dof2_n += 1
+                            if dof2.active
+                                push!(colptrs, get_colptr_LUT(K, dof1.eq_n, dof2.eq_n))
+                            end
+                        end
+                    end
+                end
             end
         end
     end
     return z
 end
+
+#Ke = stiffness(element, nodes, mat)
+
 
 #=using Base.Order
 

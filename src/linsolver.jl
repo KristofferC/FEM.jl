@@ -11,6 +11,7 @@ function solve(solver::LinSolver, fp::FEProblem, exporter::AbstractDataExporter)
 
     updatebcs!(fp)
 
+
     int_f = assemble_intf(fp)
     force_imbalance = - int_f
     @devec force_imbalance[:] = load .- int_f
@@ -25,7 +26,10 @@ function solve(solver::LinSolver, fp::FEProblem, exporter::AbstractDataExporter)
     int_f = assemble_intf(fp)
     update_feproblem(fp)
 
-    write_data(fp, exporter, n_print)
+    end
+
+
+  #  write_data(fp, exporter, n_print)
     println("Finished Lin solver..")
 end
 
