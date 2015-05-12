@@ -54,6 +54,7 @@ function get_field(elem::AbstractFElement, nodes::Vector{FENode2}, dof_vals::Vec
             i += 1
         end
     end
+    println(u)
     return u
 end
 
@@ -77,6 +78,7 @@ function intf(elem::AbstractFElement, mat::AbstractMaterial, nodes::Vector{FENod
     end
     return elem.storage.f_int
 end
+
 
 function weight(elem::AbstractFElement, gp::GaussPoint2, nodes::Vector{FENode2})
     dN = dNmatrix(elem.interp, gp.local_coords)
