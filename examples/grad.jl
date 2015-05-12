@@ -7,12 +7,8 @@ n_ele = 25
 
 m = [[0.0; 0.0] [0.0; 10.0] [10.0; 10.0] [10.0; 0.0]]
 geomesh = meshquad(n_ele, n_ele, m, GeoQTrig)
-#geomesh = FEM.read_mphtxt("/home/kristoffer/Dokument/meshtest.mphtxt")
 
-#geomesh = FEM.lintrig2quadtrig(geomesh)
 
-using FEM
-import FEM.write_data
 # Nodes
 
 

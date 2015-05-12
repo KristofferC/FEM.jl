@@ -1,3 +1,6 @@
+
+
+
 type FEProblem
     name::ASCIIString
     nodes::Vector{FENode2}
@@ -6,7 +9,7 @@ type FEProblem
     sections::Vector{FESection}
     node_doftype_bc::Dict{(Int, DofType), DirichletBC}
     doftype_eqs::Dict{DofType, Vector{Int}}
-    dof_vals::Vector{Float64}
+    dof_vals::DofVals
     n_eqs::Int
     n_fixed::Int
 end
@@ -31,14 +34,14 @@ function FEProblem(name::ASCIIString, nodes::Vector{FENode2}, bcs,
                     loads, sections)
     node_doftype_bc = Dict{Int, Vector{DofType}}()
     doftype_eqs = Dict{DofType, Int}()
-    dof_vals = Array(Float64, 0)
+    dof_vals = DofVals()
     FEProblem(name, nodes, bcs, loads, sections, node_doftype_bc, doftype_eqs, dof_vals, 0, 0)
 end
 
 
 
 function create_feproblem(name, geomesh, element_regions, material_regions,
-                          bcs, loads)
+                          bcs, loads=NodeLoad[])
 
     gps = Dict{DataType, Vector{GaussPoint2}} ()
     interps = Dict{DataType, AbstractInterpolator} ()
@@ -136,12 +139,10 @@ function createdofs(fp::FEProblem)
             if haskey(fp.node_doftype_bc, (node.n, doftype))
                 bc = fp.node_doftype_bc[(node.n, doftype)]
                 pres_n += 1
-                id += 1
-                push!(node.dofs, Dof(pres_n, doftype, false, id))
+                push!(node.dofs, Dof(pres_n, doftype, false))
             else
                 eq_n += 1
-                id += 1
-                push!(node.dofs, Dof(eq_n, doftype, true, id))
+                push!(node.dofs, Dof(eq_n, doftype, true))
                 try
                     fp.doftype_eqs[doftype]
                 catch KeyError
@@ -152,8 +153,10 @@ function createdofs(fp::FEProblem)
         end
     end
     #TODO: Make these have same name
-    resize!(fp.dof_vals, eq_n)
-    fill!(fp.dof_vals, 0.0)
+    resize!(fp.dof_vals.free_dof_values, eq_n)
+    fill!(fp.dof_vals.free_dof_values, 0.0)
+    resize!(fp.dof_vals.presc_dof_values, pres_n)
+    fill!(fp.dof_vals.presc_dof_values, 0.0)
     fp.n_eqs = eq_n
     fp.n_fixed = pres_n
 end
@@ -323,7 +326,7 @@ end
 function assemble_intf_section{T<:FESection}(section::T,
                                             int_forces::Vector{Float64},
                                             nodes::Vector{FENode2},
-                                            dof_vals::Vector{Float64})
+                                            dof_vals::DofVals)
     mat = section.material
     for element in section.elements
         finte = intf(element, mat, nodes, dof_vals)
@@ -341,9 +344,7 @@ function assemble_intf_section{T<:FESection}(section::T,
 end
 
 function updatedofs!(fp::FEProblem, du::Vector{Float64})
-    println(du)
-    fp.dof_vals += du
-    println(fp.dof_vals)
+    @devec fp.dof_vals.free_dof_values[:] += du
 end
 
 function updatebcs!(fp::FEProblem, t::Number=0.0)
@@ -357,8 +358,8 @@ function updatebcs!(fp::FEProblem, t::Number=0.0)
     end
 end
 
-@inline function updatebc!{f}(bc::DirichletBC{f}, dof_vals::Vector{Float64}, eq_n:: Int, node::FENode2, t::Number)
-    dof_vals[eq_n] = evaluate(bc, node, t)
+@inline function updatebc!{f}(bc::DirichletBC{f}, dof_vals::DofVals, eq_n:: Int, node::FENode2, t::Number)
+    dof_vals.presc_dof_values[eq_n] = evaluate(bc, node, t)
 end
 
 

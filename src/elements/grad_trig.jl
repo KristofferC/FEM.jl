@@ -8,7 +8,7 @@ using FEM.QuadTrigInterpMod
 module GradTrigMod
 
 using Devectorize
-
+using FEM
 using FEM.LinTrigInterpMod
 using FEM.QuadTrigInterpMod
 
@@ -16,7 +16,7 @@ using FEM.QuadTrigInterpMod
 import FEM: createinterp, creategps, createstorage, get_field,
             Bmatrix, doftypes, get_ndofs, get_geotype, get_ref_area, get_kalpha, stiffness
 
-import FEM: dNdxmatrix, intf, assemble!, fill_from_start!, stress, weight, mass_matrix, get_area
+import FEM: dNdxmatrix, intf, assemble!, fill_from_start!, stress, weight, mass_matrix, get_area, DofVals
 import FEM: AbstractMaterialStatus, AbstractElemStorage, AbstractFElement, AbstractMaterial, FENode2
 import FEM: Vertex3, Vertex6, Point2, GaussPoint2, Du, Dv, Gu1, Gv1, Gu2, Gv2, GeoQTrig, InvFp, KAlpha
 
@@ -185,7 +185,7 @@ function doftypes(::GradTrig, v::Int)
 end
 
 
-function compute_hardening(elem::GradTrig, nodes::Vector{FENode2})
+function compute_hardening(elem::GradTrig, nodes::Vector{FENode2}, dof_vals::DofVals)
 
     NDIM = 2
 
@@ -193,7 +193,7 @@ function compute_hardening(elem::GradTrig, nodes::Vector{FENode2})
     Hg = 4e7
     factor = 1
 
-    u = get_field(elem, nodes)
+    u = get_field(elem, nodes, dof_vals)
     assemble!(elem.storage.u_grad, u, elem.storage.dofs_idx_grad)
     vertslin = Vertex3(elem.vertices[1],elem.vertices[2], elem.vertices[3])
     # Dummy gp
@@ -230,7 +230,7 @@ function stiffness(elem::GradTrig,
         node = nodes[v]
         for dof in node.dofs
             dof.value += H
-            f_pert = intf(elem, material, nodes)
+            f_pert = intf(elem, material, nodes, dof_vals)
             # Numeric derivative
             @inbounds @devec Ke[:, col] = (f_pert .- ff) ./ H
             dof.value -= H
@@ -242,8 +242,8 @@ function stiffness(elem::GradTrig,
 end
 
 
-function intf_u(elem::GradTrig, mat::AbstractMaterial, nodes::Vector{FENode2})
-    u = get_field(elem, nodes)
+function intf_u(elem::GradTrig, mat::AbstractMaterial, nodes::Vector{FENode2}, dof_vals::DofVals)
+    u = get_field(elem, nodes, dof_vals)
 
     assemble!(elem.storage.u_u, u, elem.storage.dofs_idx_u) # 12 dofs
     uu = elem.storage.u_u
@@ -257,7 +257,7 @@ function intf_u(elem::GradTrig, mat::AbstractMaterial, nodes::Vector{FENode2})
         fill_from_start!(elem.temp_matstats[i].strain, ɛ)
 
         # TODO:
-        kappas = compute_hardening(elem, nodes)
+        kappas = compute_hardening(elem, nodes, dof_vals)
 
         dNdx = dNdxmatrix(elem.interp, gp.local_coords, elem.vertices, nodes)
         fill!(F, 0.0)
@@ -300,9 +300,9 @@ function intf_u(elem::GradTrig, mat::AbstractMaterial, nodes::Vector{FENode2})
 end
 
 
-function intf_grad(elem::GradTrig, mat::AbstractMaterial, nodes::Vector{FENode2})
+function intf_grad(elem::GradTrig, mat::AbstractMaterial, nodes::Vector{FENode2}, dof_vals::DofVals)
     fill!(elem.storage.f_grad, 0.0)
-    u = get_field(elem, nodes)
+    u = get_field(elem, nodes, dof_vals)
 
     assemble!(elem.storage.u_grad, u, elem.storage.dofs_idx_grad)
 
@@ -346,9 +346,9 @@ function intf_grad(elem::GradTrig, mat::AbstractMaterial, nodes::Vector{FENode2}
 end
 
 
-function intf(elem::GradTrig, mat::AbstractMaterial, nodes::Vector{FENode2})
-  f_u = intf_u(elem, mat, nodes)
-  f_grad = intf_grad(elem, mat, nodes)
+function FEM.intf(elem::GradTrig, mat::AbstractMaterial, nodes::Vector{FENode2}, dof_vals::DofVals)
+  f_u = intf_u(elem, mat, nodes, dof_vals)
+  f_grad = intf_grad(elem, mat, nodes, dof_vals)
 
   @devec elem.storage.f_int[elem.storage.dofs_idx_u] = f_u
   @devec elem.storage.f_int[elem.storage.dofs_idx_grad] = f_grad

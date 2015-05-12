@@ -36,7 +36,6 @@ immutable Dof
     eq_n::Int
     dof_type::DofType # Not here
     active::Bool
-    id::Int
 end
 @inline isactive(dof::Dof) = dof.active
 
@@ -98,6 +97,24 @@ immutable DirichletBC
     node_set::NodeSet
 end
 =#
+
+immutable DofVals
+    free_dof_values::Vector{Float64}
+    presc_dof_values::Vector{Float64}
+end
+DofVals() = DofVals(zeros(0), zeros(0))
+
+function get_value(dv::DofVals, dof::Dof)
+    if isactive(dof)
+        return dv.free_dof_values[dof.eq_n]
+    else
+        return dv.presc_dof_values[dof.eq_n]
+    end
+end
+
+
+
+
 
 
 

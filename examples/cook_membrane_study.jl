@@ -7,7 +7,7 @@ using FEM.VTKExportMod
 # Generates a mesh of the shape known as the "Cook membrane"
 # Possible mesh elements are GeoTrig for 3 node triangles,
 # GeoQTrig for 6 node triangles and GeoQuad for 4 node quadraterials
-n_ele = 5
+n_ele = 100
 geomesh = gencook(n_ele, n_ele, GeoTrig)
 
 
@@ -33,15 +33,16 @@ push!(ele_section, geomesh.element_sets["all"])
 
 # Apply Dirichlet BC to the left side in both x (Du) and y (Dv)
 bcs = Any[DirichletBC("0.0", [FEM.Du], geomesh.node_sets["left"]),
-       DirichletBC("0.0", [FEM.Dv], geomesh.node_sets["left"])]
+       DirichletBC("0.0", [FEM.Dv], geomesh.node_sets["left"]),
+       DirichletBC("1.0*t", [FEM.Dv], geomesh.node_sets["right"])]
 # Since we currently don't have edge load we give a nodal load
 # on the right node set.
-loads = Any[NodeLoad("1/($n_ele+1)", [FEM.Dv], geomesh.node_sets["right"])]
+#loads = Any[NodeLoad("1/($n_ele+1)*(t+1)", [FEM.Dv], geomesh.node_sets["right"])]
 
 
 
 # Create the fe problem
-fp = FEM.create_feproblem("cook_example_quad", geomesh, [ele_section], [mat_section], bcs, loads)
+fp = FEM.create_feproblem("cook_example_quad", geomesh, [ele_section], [mat_section], bcs) #, loads)
 
 # Output fields are added by pushing them into the exporter.
 # We want to export the stress and strain so push them.

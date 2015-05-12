@@ -22,10 +22,10 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
     n_print = 0
 
 
-    @time K = create_sparse_structure(fp::FEProblem)
-    @time colptrs = get_colptrs(K, fp::FEProblem)
+    K = create_sparse_structure(fp::FEProblem)
+    colptrs = get_colptrs(K, fp::FEProblem)
 
-    for t in [0]
+    for t in [0:2.0/1000.0:1.0]
         println("Current time $t")
         iteration = 0
         tstep += 1
@@ -46,25 +46,25 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
 
             #
             #residual = norm(force_imbalance) / norm(load)
-           # if norm(load) < 1.00^(-15)
-            #residual = norm(int_f)
-           # else
+            if norm(load) < 1.00^(-15)
+                residual = norm(int_f)
+            else
                residual = norm(force_imbalance) / norm(load)
-           # end
+            end
 
 
-            println("\n\t\tIteration $iteration, relative residual $residual")
+            println("\n\tIteration $iteration, relative total residual $residual")
 
 
-            println("\n Residual:")
+            print("\n\tDofType residuals:\n \t\t")
             for (dof_type, eqs) in fp.doftype_eqs
                 @devec r = sum(sqr(int_f[eqs]))
-                @printf("%s: %1.2e   \n", dof_type, sqrt(r))
+                @printf("%s: %1.2e   \t", dof_type, sqrt(r))
             end
 
 
             if residual < solver.abs_tol
-                println("Converged!")
+                println("\nConverged!")
                 break
             end
 
@@ -73,21 +73,16 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
                 break
             end
 
-            println("assemble")
 
-           # if (tstep - 2) % 5 == 0 || iteration % 5 == 0
-                assembleK!(K, fp, colptrs)
-           # end
+            assembleK!(K, fp, colptrs)
 
+            du = cholfact(Symmetric(K, :L)) \ force_imbalance
+           # du = K \ force_imbalance
 
-            #du = cholfact(Symmetric(K, :L)) \ force_imbalance
-
-            du = K \ force_imbalance
-
-            println("\nUpdated:")
+            print("\n\tDofType updates:\n \t\t")
             for (dof_type, eqs) in fp.doftype_eqs
                 @devec r = sum(sqr(du[eqs]))
-                @printf("%s: %1.2e   \n", dof_type, sqrt(r))
+                @printf("%s: %1.2e   \t", dof_type, sqrt(r))
             end
             updatedofs!(fp, du)
 

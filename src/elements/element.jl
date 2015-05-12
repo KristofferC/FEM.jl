@@ -45,21 +45,20 @@ function stiffness(elem::AbstractFElement,
 end
 
 
-function get_field(elem::AbstractFElement, nodes::Vector{FENode2}, dof_vals::Vector{Float64})
+function get_field(elem::AbstractFElement, nodes::Vector{FENode2}, dof_vals::DofVals)
     u = elem.storage.u_field
     i = 1
     @inbounds for vert in elem.vertices
         for dof in nodes[vert].dofs
-            u[i] = dof_vals[dof.eq_n]
+            u[i] = get_value(dof_vals, dof)
             i += 1
         end
     end
-    println(u)
     return u
 end
 
 
-function intf(elem::AbstractFElement, mat::AbstractMaterial, nodes::Vector{FENode2}, dof_vals::Vector{Float64})
+function intf(elem::AbstractFElement, mat::AbstractMaterial, nodes::Vector{FENode2}, dof_vals::DofVals)
     u = get_field(elem, nodes, dof_vals)
     ɛ = elem.storage.ɛ
     fill!(elem.storage.f_int, 0.0)
