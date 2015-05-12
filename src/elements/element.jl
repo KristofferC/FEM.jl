@@ -47,7 +47,6 @@ end
 
 function get_field(elem::AbstractFElement, nodes::Vector{FENode2})
     u = elem.storage.u_field
-    #u = zeros(get_ndofs(elem))
     i = 1
     @inbounds for vert in elem.vertices
         for dof in nodes[vert].dofs
@@ -85,15 +84,12 @@ function weight(elem::AbstractFElement, gp::GaussPoint2, nodes::Vector{FENode2})
     return abs(det2x2(J)) * gp.weight
 end
 
-get_cell_data{T <: AbstractScalar}(::AbstractFElement, ::Type{T}) = [0.0]
-get_point_data{T <: AbstractScalar}(::AbstractFElement, ::Type{T}) = [0.0]
-
-get_cell_data{T <: AbstractTensor}(::AbstractFElement, ::Type{T}) = zeros(6)
-get_point_data{T <: AbstractTensor}(::AbstractFElement, ::Type{T}) = zeros(6)
-
-get_cell_data{T <: AbstractVector}(::AbstractFElement, ::Type{T}) = zeros(3)
-get_point_data{T <: AbstractVector}(::AbstractFElement, ::Type{T}) = zeros(3)
-
+const ZERO_SCALAR = zeros(1)
+const ZERO_VECTOR = zeros(3)
+const ZERO_TENSOR = zeros(9)
+get_field(elem::AbstractFElement, field::Type{AbstractScalar}, ::Int) = ZERO_SCALAR
+get_field(elem::AbstractFElement, field::Type{AbstractVector}, ::Int) = ZERO_VECTOR
+get_field(elem::AbstractFElement, field::Type{AbstractTensor}, ::Int) = ZERO_TENSOR
 
 function get_cell_data{T <: AbstractField}(elem::AbstractFElement, field::Type{T})
     cellfield = zeros(get_ncomponents(field))

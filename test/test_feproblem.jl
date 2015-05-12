@@ -26,8 +26,8 @@ push!(mesh, top_set)
 element_set = ElementSet("all", [1, 2])
 push!(mesh, element_set)
 
-bcs =  DirichletBC[DirichletBC("0.1", [FEM.Du, FEM.Dv], mesh.node_sets["x0"])]
-loads =  NodeLoad[NodeLoad("10e5", [FEM.Dv], mesh.node_sets["y0"])]
+bcs =  Any[DirichletBC("0.1", [FEM.Du, FEM.Dv], mesh.node_sets["x0"])]
+loads =  Any[NodeLoad("10e5", [FEM.Dv], mesh.node_sets["y0"])]
 
 
 
