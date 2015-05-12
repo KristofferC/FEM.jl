@@ -2,28 +2,41 @@ type FEProblem
     name::ASCIIString
     nodes::Vector{FENode2}
     bcs::Vector{DirichletBC}
-    loads::Vector{NodeLoad}
+    loads::Vector{NodalLoad}
     sections::Vector{FESection}
-    node_doftypes::Dict{Int, Vector{DofType}}
     node_doftype_bc::Dict{(Int, DofType), DirichletBC}
+    dof_vals::Vector{Float64}
     n_eqs::Int
     n_fixed::Int
 end
 
-function FEProblem(name::ASCIIString, nodes::Vector{FENode2}, bcs::Vector{DirichletBC},
-                    loads, sections=Array(FESection, 0))
-    node_doftype_bc = Dict{Int, Vector{DofType}}()
-    node_doftypes = Dict{Int, Vector{DofType}}()
-    FEProblem(name, nodes, bcs, loads, sections, node_doftypes, node_doftype_bc, 0, 0)
+#=
+function FEProblem(name::ASCIIString, geomesh)
+    nodes::Vector{FENode2}(0)
+    bcs::Vector{DirichletBC}(0)
+    loads::Vector{NodalLoad}(0)
+    sections::Vector{FESection}(0)
+    node_doftype_bc::Dict{(Int, DofType), DirichletBC}()
+    dof_vals::Vector{Float64}(0)
+    n_eqs=0
+    n_fixed=0
 end
+=#
 
 push!(fp::FEProblem, bc::DirichletBC) = push!(fp.bcs, bc)
 push!(fp::FEProblem, load::NodeLoad) = push!(fp.loads, load)
-push!(fp::FEProblem, section::FESection) = push!(fp.sections, section)
+
+function FEProblem(name::ASCIIString, nodes::Vector{FENode2}, bcs,
+                    loads, sections)
+    node_doftype_bc = Dict{Int, Vector{DofType}}()
+    dof_vals = Array(Float64, 0)
+    FEProblem(name, nodes, bcs, loads, sections, node_doftype_bc, dof_vals, 0, 0)
+end
+
 
 
 function create_feproblem(name, geomesh, element_regions, material_regions,
-                          bcs::Vector{Any}, loads::Vector{Any})
+                          bcs, loads)
 
     gps = Dict{DataType, Vector{GaussPoint2}} ()
     interps = Dict{DataType, AbstractInterpolator} ()
@@ -87,11 +100,12 @@ end
 
 function createdofs(fp::FEProblem)
 
+    node_doftypes = Dict{Int, Vector{DofType}}()
     # Create a dictionary between a node_id to
     # what dof types are in that node.
     eq_n = 1
     for section in fp.sections
-        set_dof_types_section!(section, fp.node_doftypes)
+        set_dof_types_section!(section, node_doftypes)
     end
 
     # Create a dictionary between a tuple of node_id
@@ -114,20 +128,21 @@ function createdofs(fp::FEProblem)
 
     # TODO: Optimize
     for node in fp.nodes
-        for doftype in fp.node_doftypes[node.n]
+        for doftype in node_doftypes[node.n]
             if haskey(fp.node_doftype_bc, (node.n, doftype))
                 bc = fp.node_doftype_bc[(node.n, doftype)]
                 pres_n += 1
                 id += 1
-                push!(node.dofs, Dof(pres_n, id, false, 0.0, doftype))
+                push!(node.dofs, Dof(pres_n, doftype, false, id))
             else
                 eq_n += 1
                 id += 1
-                push!(node.dofs, Dof(eq_n, id, true, 0.0, doftype))
+                push!(node.dofs, Dof(eq_n, doftype, true, id))
             end
         end
     end
     #TODO: Make these have same name
+    resize!(fp.dof_vals, eq_n)
     fp.n_eqs = eq_n
     fp.n_fixed = pres_n
 end
@@ -289,25 +304,18 @@ end
 function assemble_intf(fp::FEProblem)
     fint = zeros(fp.n_eqs)
     for section in fp.sections
-        assemble_intf_section(section, fint, fp.nodes)
-    end
-    return fint
-end
-
-function assemble_intf(fp::FEProblem)
-    fint = zeros(fp.n_eqs)
-    for section in fp.sections
-        assemble_intf_section(section, fint, fp.nodes)
+        assemble_intf_section(section, fint, fp.nodes, fp.dof_vals)
     end
     return fint
 end
 
 function assemble_intf_section{T<:FESection}(section::T,
                                             int_forces::Vector{Float64},
-                                            nodes::Vector{FENode2})
+                                            nodes::Vector{FENode2},
+                                            dof_vals::Vector{Float64})
     mat = section.material
     for element in section.elements
-        finte = intf(element, mat, nodes)
+        finte = intf(element, mat, nodes, dof_vals)
         i = 1
         for vertex in element.vertices
             for dof in nodes[vertex].dofs
@@ -322,13 +330,7 @@ function assemble_intf_section{T<:FESection}(section::T,
 end
 
 function updatedofs!(fp::FEProblem, du::Vector{Float64})
-    for node in fp.nodes
-        for dof in node.dofs
-            if dof.active
-                dof.value += du[dof.eq_n]
-            end
-        end
-    end
+    fp.dof_vals += du
 end
 
 function updatebcs!(fp::FEProblem, t::Number=0.0)
@@ -336,14 +338,14 @@ function updatebcs!(fp::FEProblem, t::Number=0.0)
         for dof in node.dofs
             if !dof.active
                 bc = fp.node_doftype_bc[(node.n, dof.dof_type)]
-                updatebc!(bc, dof, node, t)
+                updatebc!(bc, fp.dof_vals, dof.eq_n, node, t)
             end
         end
     end
 end
 
-@inline function updatebc!{f}(bc::DirichletBC{f}, dof::Dof, node::FENode2, t::Number)
-    dof.value = evaluate(bc, node, t)
+@inline function updatebc!{f}(bc::DirichletBC{f}, dof_vals::Vector{Float64}, eq_n:: Int, node::FENode2, t::Number)
+    dof_vals[eq_n] = evaluate(bc, node, t)
 end
 
 
@@ -356,19 +358,6 @@ function update_feproblem(fp::FEProblem)
         end
     end
 end
-
-
-function FEProblem(name::ASCIIString, nodes::Vector{FENode2}, bcs,
-                    loads, sections=Array(FESection, 0))
-    node_doftype_bc = Dict{Int, Vector{DofType}}()
-    node_doftypes = Dict{Int, Vector{DofType}}()
-    FEProblem(name, nodes, bcs, loads, sections, node_doftypes, node_doftype_bc, 0, 0)
-end
-
-push!(fp::FEProblem, bc::DirichletBC) = push!(fp.bcs, bc)
-push!(fp::FEProblem, load::NodeLoad) = push!(fp.loads, load)
-push!(fp::FEProblem, section::FESection) = push!(fp.sections, section)
-
 
 function create_feproblem_grad(name, geomesh, element_regions, material_regions, bcs::Vector{DirichletBC}=Array(DirichletBC, 0), loads::Vector{NodeLoad}=Array(NodeLoad, 0))
 

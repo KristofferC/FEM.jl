@@ -32,12 +32,11 @@ getweight(gp::AbstractGaussPoint) = gp.weight
 @enum DofType Du Dv Dw Gu1 Gv1 Gu2 Gv2
 
 
-type Dof
+immutable Dof
     eq_n::Int
-    id::Int
-    active::Bool
-    value::Float64
     dof_type::DofType # Not here
+    active::Bool
+    id::Int
 end
 @inline isactive(dof::Dof) = dof.active
 
@@ -70,7 +69,8 @@ end
 
 
 @inline get_coord(node::FENode2) = Point3(node.coords[1], node.coords[2], 0.0)
-@inline get_displacement(node::FENode2) = Point3(node.dofs[1].value, node.dofs[2].value, 0.0)
+
+#@inline get_displacement(node::FENode2) = Point3(node.dofs[1].value, node.dofs[2].value, 0.0)
 
 
 immutable FENode3 <: AbstractFENode
