@@ -53,7 +53,9 @@ push!(vtkexp, VonMises)
 set_binary!(vtkexp, false)
 
 
-solver = FEM.LinSolver()
+#solver = FEM.LinSolver()
+
+solver = NRSolver(abs_tol = 1e-2, max_iters = 20)
 
 # Solve the fe problem using the solver and using the vtk exporter.
 solve(solver, fp, vtkexp)

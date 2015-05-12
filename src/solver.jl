@@ -22,39 +22,10 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
     n_print = 0
 
 
-    gu1 = Array(Int, 0)
-    gv1 = Array(Int, 0)
-    gu2 = Array(Int, 0)
-    gv2 = Array(Int, 0)
-    du = Array(Int, 0)
-    dv = Array(Int, 0)
-    for node in fp.nodes
-        for dof in node.dofs
-            if dof.active
-                if dof.dof_type == Du
-                    push!(du, dof.eq_n)
-                elseif dof.dof_type == Dv
-                    push!(dv, dof.eq_n)
-                elseif dof.dof_type == Gu1
-                    push!(gu1, dof.eq_n)
-                elseif dof.dof_type == Gv1
-                    push!(gv1, dof.eq_n)
-                elseif dof.dof_type == Gu2
-                    push!(gu2, dof.eq_n)
-                elseif dof.dof_type == Gv2
-                    push!(gv2, dof.eq_n)
-                end
-            end
-        end
-    end
-
-    dofferinos = [(Du, du), (Dv, dv), (Gu1, gu1), (Gv1, gv1), (Gu2, gu2), (Gv2, gv2)]
-
-
     @time K = create_sparse_structure(fp::FEProblem)
     @time colptrs = get_colptrs(K, fp::FEProblem)
 
-    for t in 0:2.0/1000.0:1.0
+    for t in 1:5
         println("Current time $t")
         iteration = 0
         tstep += 1
@@ -71,15 +42,14 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
 
             int_f = assemble_intf(fp)
             force_imbalance = - int_f
-            #@devec force_imbalance[:] = load .- int_f
+            @devec force_imbalance[:] = load .- int_f
 
-            #display(force_imbalance)
-
+            #
             #residual = norm(force_imbalance) / norm(load)
            # if norm(load) < 1.00^(-15)
-                residual = norm(int_f)
+            #residual = norm(int_f)
            # else
-           #     residual = norm(force_imbalance) / norm(load)
+               residual = norm(force_imbalance) / norm(load)
            # end
 
 
@@ -87,11 +57,10 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
 
 
             println("\n Residual:")
-            for dof in dofferinos
-                @printf("%s: %1.2e   \n", dof[1], norm(int_f[dof[2]]))
+            for (dof_type, eqs) in fp.doftype_eqs
+                @devec r = sum(sqr(int_f[eqs]))
+                @printf("%s: %1.2e   \n", dof_type, sqrt(r))
             end
-
-
 
 
             if residual < solver.abs_tol
@@ -104,6 +73,8 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
                 break
             end
 
+            println("assemble")
+
            # if (tstep - 2) % 5 == 0 || iteration % 5 == 0
                 assembleK!(K, fp, colptrs)
            # end
@@ -114,8 +85,9 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
             du = K \ force_imbalance
 
             println("\nUpdated:")
-            for dof in dofferinos
-                @printf("%s: %1.2e   \n", dof[1], norm(du[dof[2]]))
+            for (dof_type, eqs) in fp.doftype_eqs
+                @devec r = sum(sqr(du[eqs]))
+                @printf("%s: %1.2e   \n", dof_type, sqrt(r))
             end
             updatedofs!(fp, du)
 
@@ -124,10 +96,10 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
         end
         update_feproblem(fp)
 
-        if (tstep % 5 == 0)
-            n_print += 1
-            write_data(fp, exporter, n_print)
-        end
+       # if (tstep % 5 == 0)
+       #     n_print += 1
+       #     write_data(fp, exporter, n_print)
+       # end
     end
 
 end

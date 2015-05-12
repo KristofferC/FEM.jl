@@ -62,11 +62,9 @@ push!(ele_section, geomesh.element_sets["all"])
 bcs = [DirichletBC("$(γ)*y*t", [FEM.Du], geomesh.node_sets["boundary"]),
        DirichletBC("0.0", [FEM.Dv], geomesh.node_sets["boundary"])]
 
-<<<<<<< HEAD
+
 fp = FEM.create_feproblem_grad("grad_coarse", geomesh, [ele_section], [mat_section], bcs)
-=======
-fp = FEM.create_feproblem_grad("grad_sq_22", geomesh, [ele_section], [mat_section], bcs)
->>>>>>> kc/modularize
+
 
 
 vtkexp = VTKExporter()

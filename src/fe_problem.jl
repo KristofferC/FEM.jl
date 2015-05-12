@@ -2,9 +2,10 @@ type FEProblem
     name::ASCIIString
     nodes::Vector{FENode2}
     bcs::Vector{DirichletBC}
-    loads::Vector{NodalLoad}
+    loads::Vector{NodeLoad}
     sections::Vector{FESection}
     node_doftype_bc::Dict{(Int, DofType), DirichletBC}
+    doftype_eqs::Dict{DofType, Vector{Int}}
     dof_vals::Vector{Float64}
     n_eqs::Int
     n_fixed::Int
@@ -29,8 +30,9 @@ push!(fp::FEProblem, load::NodeLoad) = push!(fp.loads, load)
 function FEProblem(name::ASCIIString, nodes::Vector{FENode2}, bcs,
                     loads, sections)
     node_doftype_bc = Dict{Int, Vector{DofType}}()
+    doftype_eqs = Dict{DofType, Int}()
     dof_vals = Array(Float64, 0)
-    FEProblem(name, nodes, bcs, loads, sections, node_doftype_bc, dof_vals, 0, 0)
+    FEProblem(name, nodes, bcs, loads, sections, node_doftype_bc, doftype_eqs, dof_vals, 0, 0)
 end
 
 
@@ -126,6 +128,8 @@ function createdofs(fp::FEProblem)
     id = 0
     dofs = Array(Dof, 0)
 
+
+
     # TODO: Optimize
     for node in fp.nodes
         for doftype in node_doftypes[node.n]
@@ -138,11 +142,18 @@ function createdofs(fp::FEProblem)
                 eq_n += 1
                 id += 1
                 push!(node.dofs, Dof(eq_n, doftype, true, id))
+                try
+                    fp.doftype_eqs[doftype]
+                catch KeyError
+                    fp.doftype_eqs[doftype] = Vector{Int}(0)
+                end
+                push!(fp.doftype_eqs[doftype], eq_n)
             end
         end
     end
     #TODO: Make these have same name
     resize!(fp.dof_vals, eq_n)
+    fill!(fp.dof_vals, 0.0)
     fp.n_eqs = eq_n
     fp.n_fixed = pres_n
 end
@@ -330,7 +341,9 @@ function assemble_intf_section{T<:FESection}(section::T,
 end
 
 function updatedofs!(fp::FEProblem, du::Vector{Float64})
+    println(du)
     fp.dof_vals += du
+    println(fp.dof_vals)
 end
 
 function updatebcs!(fp::FEProblem, t::Number=0.0)

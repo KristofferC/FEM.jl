@@ -126,8 +126,7 @@ end
 
 
 
-
-function evaluate(bc::Union(DirichletBC, NodeLoad), node::FENode2, t::Float64)
+function evaluate(bc::Union(DirichletBC, NodeLoad), node::FENode2, t::Number)
     return bc.func(node.coords.x, node.coords.y, 0.0, t)
 end
 
