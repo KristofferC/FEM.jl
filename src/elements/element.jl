@@ -30,7 +30,8 @@ end
 
 function stiffness(elem::AbstractFElement,
                   nodes::Vector{FENode2},
-                  material::AbstractMaterial)
+                  material::AbstractMaterial,
+                  ::DofVals)
     fill!(elem.storage.Ke, 0.0)
     for gp in elem.gps
         Be = Bmatrix(elem, gp, nodes)

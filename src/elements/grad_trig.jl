@@ -11,10 +11,11 @@ using Devectorize
 using FEM
 using FEM.LinTrigInterpMod
 using FEM.QuadTrigInterpMod
+import Base.AddFun
 
-
+import FEM: SubFun
 import FEM: createinterp, creategps, createstorage, get_field,
-            Bmatrix, doftypes, get_ndofs, get_geotype, get_ref_area, get_kalpha, stiffness
+            Bmatrix, doftypes, get_ndofs, get_geotype, get_ref_area, get_kalpha, stiffness, mod_value
 
 import FEM: dNdxmatrix, intf, assemble!, fill_from_start!, stress, weight, mass_matrix, get_area, DofVals
 import FEM: AbstractMaterialStatus, AbstractElemStorage, AbstractFElement, AbstractMaterial, FENode2
@@ -215,11 +216,12 @@ end
 
 function stiffness(elem::GradTrig,
                   nodes::Vector{FENode2},
-                  material::AbstractMaterial)
+                  material::AbstractMaterial,
+                  dofvals::DofVals)
    const H = 1e-7
     Ke = elem.storage.Ke
     fill!(Ke, 0.0)
-    f = intf(elem, material, nodes)
+    f = intf(elem, material, nodes, dofvals)
 
     # Need to copy because intf returns a reference
     # which will be overwritten on subseq call to intf
@@ -229,15 +231,15 @@ function stiffness(elem::GradTrig,
     for v in elem.vertices
         node = nodes[v]
         for dof in node.dofs
-            dof.value += H
-            f_pert = intf(elem, material, nodes, dof_vals)
+            mod_value(dofvals, dof, AddFun(), H)
+            f_pert = intf(elem, material, nodes, dofvals)
             # Numeric derivative
             @inbounds @devec Ke[:, col] = (f_pert .- ff) ./ H
-            dof.value -= H
+            mod_value(dofvals, dof, SubFun(), H)
             col += 1
         end
     end
-    intf(elem, material, nodes)
+    intf(elem, material, nodes, dofvals)
     return Ke
 end
 
@@ -346,7 +348,7 @@ function intf_grad(elem::GradTrig, mat::AbstractMaterial, nodes::Vector{FENode2}
 end
 
 
-function FEM.intf(elem::GradTrig, mat::AbstractMaterial, nodes::Vector{FENode2}, dof_vals::DofVals)
+function intf(elem::GradTrig, mat::AbstractMaterial, nodes::Vector{FENode2}, dof_vals::DofVals)
   f_u = intf_u(elem, mat, nodes, dof_vals)
   f_grad = intf_grad(elem, mat, nodes, dof_vals)
 

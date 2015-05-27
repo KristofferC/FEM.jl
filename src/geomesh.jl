@@ -143,13 +143,13 @@ Base.append!(ns1::NodeSet, ns2::NodeSet) = union!(ns1.node_ids, ns2.node_ids)
 immutable EdgeSet
     name::String
     # (Element_id, edge_id) tuple
-    edges::Vector{(Int, Int)}
+    edges::Vector{Tuple{Int, Int}}
 end
 
 immutable SurfaceSet
     name::String
     # (Element_id, surface_id) tuple
-    surfaces::Vector{(Int, Int)}
+    surfaces::Vector{Tuple{Int, Int}}
 end
 
 

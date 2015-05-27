@@ -8,7 +8,7 @@ using Codecs
 
 import Base.push!
 import FEM: write_data, get_coord, get_geotype, get_ncomponents, get_cell_data,
-            get_displacement, get_field
+            get_displacement, get_field, DofVals
 export VTKExporter, set_binary!, set_compress!
 
 
@@ -125,13 +125,13 @@ function write_data(fp::FEProblem, vtkexp::VTKExporter, tstep::Int)
     end
 
     for section in fp.sections
-        _write_VTKXML_section(fp.name, fp.nodes, section, vtkexp, writer, tstep)
+        _write_VTKXML_section(fp.name, fp.nodes, fp.dof_vals, section, vtkexp, writer, tstep)
     end
 end
 
 
-function _write_VTKXML_section(filename::ASCIIString, nodes::Vector{FENode2}, section::FESection,
-                               vtkexp:: VTKExporter, vtkw::AbstractVTKXMLWriter, tstep::Int)
+function _write_VTKXML_section(filename::ASCIIString, nodes::Vector{FENode2}, dof_vals::DofVals,
+                               section::FESection, vtkexp:: VTKExporter, vtkw::AbstractVTKXMLWriter, tstep::Int)
 
     if vtkexp.binary
         const VTK_FORMAT = "binary"
@@ -232,7 +232,7 @@ function _write_VTKXML_section(filename::ASCIIString, nodes::Vector{FENode2}, se
     set_attribute(xdisp, "type", "Float64")
     set_attribute(xdisp, "format", VTK_FORMAT)
     for node in nodes
-        disp = get_displacement(node)
+        disp = get_displacement(node, dof_vals)
         for i in disp
             add_data!(vtkw, i)
         end

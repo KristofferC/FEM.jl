@@ -3,7 +3,7 @@ using FEM
 FEM.vtkexportmod()
 using FEM.VTKExportMod
 
-n_ele = 25
+n_ele = 10
 
 m = [[0.0; 0.0] [0.0; 10.0] [10.0; 10.0] [10.0; 0.0]]
 geomesh = meshquad(n_ele, n_ele, m, GeoQTrig)

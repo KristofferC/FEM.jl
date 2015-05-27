@@ -3,7 +3,10 @@
 #typealias Mat2 Matrix2x2{Float64}
 #typealias Mat3 Matrix3x3{Float64}
 
+import Base: Func, AddFun
 
+immutable SubFun <: Func{2} end
+call(::SubFun, x, y) = x - y
 
 abstract AbstractGaussPoint
 
@@ -39,6 +42,38 @@ immutable Dof
 end
 @inline isactive(dof::Dof) = dof.active
 
+immutable DofVals
+    free_dof_values::Vector{Float64}
+    presc_dof_values::Vector{Float64}
+end
+DofVals() = DofVals(zeros(0), zeros(0))
+
+function get_value(dv::DofVals, dof::Dof)
+    if isactive(dof)
+        return dv.free_dof_values[dof.eq_n]
+    else
+        return dv.presc_dof_values[dof.eq_n]
+    end
+end
+
+function mod_value(dv::DofVals, dof::Dof, f::Func, val)
+    if isactive(dof)
+        dv.free_dof_values[dof.eq_n] = f(dv.free_dof_values[dof.eq_n], val)
+    else
+        dv.presc_dof_values[dof.eq_n] =  f(dv.presc_dof_values[dof.eq_n] , val)
+    end
+end
+
+
+
+type TimeStepper{T <: Range}
+    timesteps::T
+    t::Float64
+    dt::Float64
+end
+
+
+
 
 #########
 # Nodes #
@@ -65,11 +100,10 @@ function FENode2{T <: Number}(n::Int, c::Vector{T})
 end
 
 # TODO: Move
-
-
 @inline get_coord(node::FENode2) = Point3(node.coords[1], node.coords[2], 0.0)
-
-#@inline get_displacement(node::FENode2) = Point3(node.dofs[1].value, node.dofs[2].value, 0.0)
+@inline get_displacement(node::FENode2, dv::DofVals) = Point3(get_value(dv, node.dofs[1]),
+                                                              get_value(dv, node.dofs[2]),
+                                                              0.0)
 
 
 immutable FENode3 <: AbstractFENode
@@ -97,20 +131,6 @@ immutable DirichletBC
     node_set::NodeSet
 end
 =#
-
-immutable DofVals
-    free_dof_values::Vector{Float64}
-    presc_dof_values::Vector{Float64}
-end
-DofVals() = DofVals(zeros(0), zeros(0))
-
-function get_value(dv::DofVals, dof::Dof)
-    if isactive(dof)
-        return dv.free_dof_values[dof.eq_n]
-    else
-        return dv.presc_dof_values[dof.eq_n]
-    end
-end
 
 
 

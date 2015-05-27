@@ -1,13 +1,10 @@
-
-
-
 type FEProblem
     name::ASCIIString
     nodes::Vector{FENode2}
     bcs::Vector{DirichletBC}
     loads::Vector{NodeLoad}
     sections::Vector{FESection}
-    node_doftype_bc::Dict{(Int, DofType), DirichletBC}
+    node_doftype_bc::Dict{Tuple{Int, DofType}, DirichletBC}
     doftype_eqs::Dict{DofType, Vector{Int}}
     dof_vals::DofVals
     n_eqs::Int
@@ -183,21 +180,21 @@ end
 
 
 
-function assembleK!(K::SparseMatrixCSC, fp::FEProblem, colptrs::Vector{Int})
+function assembleK!(K::SparseMatrixCSC, fp::FEProblem, colptrs::Vector{Int}, dofvals::DofVals)
     fill!(K.nzval, 0.0)
     z = 1
     for section in fp.sections
-        z = assembleK!(K, colptrs, z, section, fp.nodes)
+        z = assembleK!(K, colptrs, z, section, fp.nodes, dofvals)
     end
     return K
 end
 
 
 function assembleK!(K::SparseMatrixCSC, colptrs::Vector{Int}, z::Int,
-                    section::FESection, nodes::Vector{FENode2})
+                    section::FESection, nodes::Vector{FENode2}, dofvals::DofVals)
     mat = section.material
     for element in section.elements
-        Ke = stiffness(element, nodes, mat)
+        Ke = stiffness(element, nodes, mat, dofvals)
         dof1_n = 0
         for vertex1 in element.vertices
             for dof1 in nodes[vertex1].dofs
@@ -289,10 +286,10 @@ end
 
 function assemble_K_section{T<:FESection}(section::T, nodes::Vector{FENode2},
                                           dof_rows::Vector{Int}, dof_cols::Vector{Int},
-                                          k_values::Vector{Float64})
+                                          k_values::Vector{Float64}, dofvals::DofVals)
     mat = section.material
     for element in section.elements
-        Ke = stiffness(element, nodes, mat)
+        Ke = stiffness(element, nodes, mat, dofvals)
         dof1_n = 0
         for vertex1 in element.vertices
             for dof1 in nodes[vertex1].dofs

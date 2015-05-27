@@ -33,16 +33,12 @@ push!(ele_section, geomesh.element_sets["all"])
 
 # Apply Dirichlet BC to the left side in both x (Du) and y (Dv)
 bcs = Any[DirichletBC("0.0", [FEM.Du], geomesh.node_sets["left"]),
-       DirichletBC("0.0", [FEM.Dv], geomesh.node_sets["left"]),
-       DirichletBC("1.0*t", [FEM.Dv], geomesh.node_sets["right"])]
+          DirichletBC("0.0", [FEM.Dv], geomesh.node_sets["left"])]
 # Since we currently don't have edge load we give a nodal load
 # on the right node set.
-#loads = Any[NodeLoad("1/($n_ele+1)*(t+1)", [FEM.Dv], geomesh.node_sets["right"])]
-
-
-
+loads = Any[NodeLoad("1/($n_ele+1)", [FEM.Dv], geomesh.node_sets["right"])]
 # Create the fe problem
-fp = FEM.create_feproblem("cook_example_quad", geomesh, [ele_section], [mat_section], bcs) #, loads)
+fp = FEM.create_feproblem("cook_example_quad", geomesh, [ele_section], [mat_section], bcs, loads)
 
 # Output fields are added by pushing them into the exporter.
 # We want to export the stress and strain so push them.
@@ -53,10 +49,7 @@ push!(vtkexp, Strain)
 push!(vtkexp, VonMises)
 set_binary!(vtkexp, false)
 
-
-#solver = FEM.LinSolver()
-
-solver = NRSolver(abs_tol = 1e-2, max_iters = 2)
+solver = NRSolver(abs_tol = 1e-4, rel_tol = 1e-9, max_iters = 4)
 
 # Solve the fe problem using the solver and using the vtk exporter.
 solve(solver, fp, vtkexp)
