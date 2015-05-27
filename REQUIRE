@@ -1,4 +1,7 @@
-julia 0.3
+julia 0.4
 ArrayViews
+Codecs
+LightXML
+Zlib
 Compat
 Devectorize
