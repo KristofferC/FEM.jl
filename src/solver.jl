@@ -92,10 +92,10 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
         end
         update_feproblem(fp)
 
-       # if (tstep % 5 == 0)
-       #     n_print += 1
+     if (tstep % 5 == 0)
+            n_print += 1
             write_data(fp, exporter, n_print)
-       # end
+        end
     end
 
 end

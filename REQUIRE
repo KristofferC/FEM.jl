@@ -1,7 +1,9 @@
-julia 0.4
+julia 0.3
 ArrayViews
 Codecs
 LightXML
 Zlib
 Compat
 Devectorize
+FastAnonymous
+Logging
