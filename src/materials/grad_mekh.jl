@@ -106,7 +106,6 @@ create_matstat(::Type{GradMekh}) = GradMekhMS()
 
 const STRESS_BUFFER = zeros(9)
 function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS, kappas::Vector{Float64}, F::Matrix{Float64})
-    ɛ = temp_matstat.strain
 
   F1 = M_2_V9(F)
 

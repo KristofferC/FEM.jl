@@ -50,7 +50,7 @@ c_dam = 1.0
 angles = [45.0, 105.0]
 nslip = 2
 
-mat = FEM.gradmekhmod().GradMekh(E, nu, n, l, kinf, lambda_0,
+mat = FEM.gradmekhmodjl().GradMekh(E, nu, n, l, kinf, lambda_0,
                Hg, Hl, m, faktor, sy, tstar,
                c_dam, angles, nslip)
 
@@ -125,58 +125,33 @@ mod_value(fp.dof_vals, fp.nodes[elem.vertices[6]].dofs[1], AddFun(), ulem[11])
 mod_value(fp.dof_vals, fp.nodes[elem.vertices[6]].dofs[2], AddFun(), ulem[12])
 
 
-state_gp_1 = [
-  1.000000000000000
-  1.000000000000000
-  1.000000000000000
-  0.000000000000000
-  0.000000000000000
-  0.000000000000000
-  0.000000000000000
-  0.000000000000000
-  0.000000000000000
-  0.000000000000000
-  0.000000000000000
-  0.000000000000000
-  0.000000000000000
-  0.000000000000000]
+I = Float64[1,1,1,0,0,0,0,0,0]
 
+inv_nFpstate_gp_3 =
+[ 1+8.935443305939650e-004
+1+-8.935443305939650e-004
+1+0.000000000000000e+000
+2.394244780597564e-004
+0.000000000000000e+000
+0.000000000000000e+000
+0.000000000000000e+000
+-3.334752868526071e-003
+0.000000000000000e+000]
 
-state_gp_2 = [
-  1.000000000000000
-  1.000000000000000
-  1.000000000000000
-  0.000000000000000
-  0.000000000000000
-  0.000000000000000
-  0.000000000000000
-  0.000000000000000
-  0.000000000000000
-  0.000000000000000
-  0.000000000000000
-  0.000000000000000
-  0.000000000000000
-  0.000000000000000 ]
+n_k_alpha_gp_3 = [
+0.000000000000000e+000
+-3.564628423099781e-003 ]
 
- state_gp_3 =
- [ 1+8.935443305939650e-004
-  1+-8.935443305939650e-004
-  1+0.000000000000000e+000
-  2.394244780597564e-004
-  0.000000000000000e+000
-  0.000000000000000e+000
-  0.000000000000000e+000
- -3.334752868526071e-003
-  0.000000000000000e+000
-  0.000000000000000e+000
-  -3.564628423099781e-003
-  0.000000000000000e+000
-  2.147755004754846e-005
-  7.910158601032613e-003 ]
+n_lambda_alpha_gp_3 = [
+0.000000000000000e+000
+2.147755004754846e-0059 ]
 
-FEM.fill_from_start!(elem.matstats[1].state, state_gp_1)
-FEM.fill_from_start!(elem.matstats[2].state , state_gp_2)
-FEM.fill_from_start!(elem.matstats[3].state , state_gp_3)
+FEM.fill_from_start!(elem.matstats[1].n_invFp, I)
+FEM.fill_from_start!(elem.matstats[2].n_invFp, I)
+FEM.fill_from_start!(elem.matstats[3].n_invFp, inv_nFpstate_gp_3)
+FEM.fill_from_start!(elem.matstats[3].n_k_alpha, n_k_alpha_gp_3)
+FEM.fill_from_start!(elem.matstats[3].n_lambda_alpha, n_lambda_alpha_gp_3)
+
 
 fe = FEM.intf(elem, mat, fp.nodes, fp.dof_vals)
 println(fe)
@@ -184,7 +159,7 @@ println(fe)
     K = create_sparse_structure(fp::FEProblem)
     colptrs = get_colptrs(K, fp::FEProblem)
 
-assembleK!(K, fp, colptrs, fp.dof_vals)
+#assembleK!(K, fp, colptrs, fp.dof_vals)
 #println(full(K))
 
 
