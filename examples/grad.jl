@@ -3,7 +3,7 @@ using FEM
 FEM.vtkexportmod()
 using FEM.VTKExportMod
 
-n_ele = 10
+n_ele = 5
 
 m = [[0.0; 0.0] [0.0; 10.0] [10.0; 10.0] [10.0; 0.0]]
 geomesh = meshquad(n_ele, n_ele, m, GeoQTrig)
@@ -28,23 +28,22 @@ E = 200000.e0
 nu = 0.3e0
 n = 1.e0
 l = 1.e-2
-kinf = 1e+010
-lambda_0 = 4.e-2
 Hg = 4.e7
-Hl = 10_000.0
+Hl = 10_000.01
 m = 2.0
-faktor = 1
 sy = 1000.0
 tstar = 1000.0
-c_dam = 0.0
 angles = [45.0, 105.0]
 nslip = 2
 
-mat = FEM.gradmekhmod().GradMekh(E, nu, n, l, kinf, lambda_0,
-               Hg, Hl, m, faktor, sy, tstar,
-               c_dam, angles, nslip)
-
-#mat = LinearIsotropic(E, nu)
+ mat = FEM.gradmekhmodjlsmall().GradMekh(E, nu, n, l, Hg, Hl, m, sy, tstar, angles, nslip)
+#=
+faktor = 1
+kinf = 1e+010
+lambda_0 = 4.e-2
+c_dam = 0.0
+mat = FEM.gradmekhmod().GradMekh(E, nu, n, l, kinf, lambda_0,Hg, Hl, m, faktor, sy, tstar,c_dam, angles, nslip)
+=#
 
 mat_section = MaterialSection(mat)
 push!(mat_section, geomesh.element_sets["all"])
@@ -72,6 +71,6 @@ push!(vtkexp, VonMises)
 push!(vtkexp, KAlpha)
 
 
-solver = NRSolver(abs_tol = 1e-2, max_iters = 20)
+solver = NRSolver(abs_tol = 1e-2, max_iters = 6)
 
 solve(solver, fp, vtkexp)

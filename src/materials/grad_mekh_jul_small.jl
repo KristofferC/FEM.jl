@@ -5,7 +5,7 @@ using Devectorize
 import Base.copy
 
 # Function sto extend
-import FEM: create_matstat, stiffness, stress, get_kalpha
+import FEM: create_matstat, stiffness, stress, get_kalpha, get_kalphas
 
 # Types needed
 import FEM: AbstractMaterialStatus, AbstractMaterial, GaussPoint2
@@ -31,6 +31,7 @@ end
 copy(matstat::GradMekhMS) = GradMekhMS(copy(matstat.n_ε_p), copy(matstat.n_k), copy(matstat.n_∆λ),
                                        copy(matstat.strain), copy(matstat.stress))
 
+get_kalphas(ms::GradMekhMS) = ms.n_k
 get_kalpha(ms::GradMekhMS, i::Int) = ms.n_k[i]
 
 immutable GradMekh <: AbstractMaterial
@@ -149,24 +150,22 @@ const I = Float64[1,1,1,0,0,0,0,0,0]
 function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS,
                 κ_nl::Vector{Float64}, F1::Matrix{Float64})
 
+    dt = 2.000000000000000e-003 #TODO: Fix
+
     ε = sym_V9(M_2_V9(F1))
     ε[1] -= 1.0
     ε[2] -= 1.0
     ε[3] -= 1.0
 
-    println("ε $ε")
+   # println("ε $ε")
 
     E = mat.E
     ν = mat.ν
     s_x_m = mat.s_x_m
     tstar = mat.tstar
 
-    dt = 2.000000000000000e-003 #TODO: Fix
-
-    n_ε_p = matstat.n_ε_p
-      println("n_ε_p $n_ε_p ")
-
-    ε_e = ε - n_ε_p
+    @devec n_ε_p = matstat.n_ε_p[:]
+    @devec ε_e = ε .- n_ε_p
 
     G = E / (2*(1+ν))
     L = E*ν / ((1+ν)*(1-2*ν))
@@ -175,7 +174,7 @@ function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS,
     # determine the sign of s_alpha
     for α in 1:NSLIP
        sxm_α = s_x_m[α]
-       t = dot(Mbar, sxm_α)
+       t = dot(σ, sxm_α)
        if t < 0
           @devec sxm_α[:] = -sxm_α
        end
@@ -187,23 +186,27 @@ function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS,
     # Below could be used for guessing
     #n_k = matstat.n_k
     #n_∆λ = matstat.n_∆λ
-    @devec ε_p = n_ε_p
     k = zeros(NSLIP)
     ∆λ = zeros(NSLIP)
-
-    unbal = typemax(Float64)
-    niter = 0
     σ = zeros(9)
+    ε_p = zeros(9)
+    unbal = typemax(Float64)
+
+    niter = 0
+    max_niter = 8
     abstol = 1e-6
     H = 1e-7
-    max_niter = 8
     J = zeros(NSLIP, NSLIP)
     while true
+        if niter > max_niter
+            error("*** No convergence in const subroutine")
+        end
+
         # För ett givet ∆λ_α beräkning av obalanskrafter
-        R, k = compute_imbalance(mat, matstat, ∆λ, ε, κ_nl, dt)
-        println(R)
+        R, k, σ, ε_p = compute_imbalance(mat, matstat, ∆λ, ε, κ_nl, dt)
+        #println(R)
         if norm(R) < abstol * tstar
-            println("Converged in $niter iterations")
+        #     println("Converged in $niter iterations")
             break
         else
             for α in 1:NSLIP
@@ -212,15 +215,12 @@ function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS,
                 J[:, α] = (Rdiff - R) / H
                 ∆λ[α] -= H
             end
-            if niter > max_niter
-                 error("*** No convergence in const subroutine")
-            end
 
             d∆λ = J \ R
-             println("d∆λ $d∆λ")
+
             #Newton type of update, but dlambda never negative
             @devec ∆λ[:] = ∆λ - d∆λ
-             println("∆λ: $∆λ")
+
             for α=1:NSLIP
                 if ∆λ[α] < 0
                     ∆λ[α] = 1.e-10
@@ -231,9 +231,11 @@ function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS,
         end
     end  #end iteration on ∆λ
 
-    @devec temp_matstat.n_ε_p[:] = ε_p
-    @devec temp_matstat.n_k[:] = k
-    @devec temp_matstat.n_∆λ[:] = ∆λ
+
+    @devec temp_matstat.n_ε_p[:] = ε_p[:]
+    @devec temp_matstat.n_k[:] = k[:]
+    @devec temp_matstat.n_∆λ[:] = ∆λ[:]
+
 
     return σ
 end
@@ -252,10 +254,10 @@ function compute_imbalance(mat, matstat, ∆λ, ε, κ_nl, dt)
     Φ = zeros(NSLIP)
     k = zeros(NSLIP)
 
-    # εp = εp - Σ ∆λ_α s_α ⊗ m_α
-    @devec ε_p = n_ε_p
+    # εp = εp + Σ ∆λ_α s_α ⊗ m_α
+    @devec ε_p = n_ε_p[:]
     for α in 1:NSLIP
-        ε_p -= ∆λ[α] * s_x_m[α]
+        ε_p += ∆λ[α] * s_x_m[α]
     end
 
     ε_e = ε - ε_p
@@ -271,7 +273,8 @@ function compute_imbalance(mat, matstat, ∆λ, ε, κ_nl, dt)
         # Computation of R_\Delta_\lambda_\alpha
        R[α] = tstar*∆λ[α] - dt * max(0, Φ[α])^n
     end
-    return R, k
+
+    return R, k, σ, ε_p
 end
 
 

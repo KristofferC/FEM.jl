@@ -21,11 +21,13 @@ type GradMekhMS <: AbstractMaterialStatus
     strain::Vector{Float64}
     stress::Vector{Float64}
 end
+get_kalpha(ms::GradMekhMS) = ms.n_k_alpha
 
 const NSLIP = 2
 
 function GradMekhMS()
-  GradMekhMS(zeros(9), zeros(NSLIP), zeros(NSLIP), zeros(6), zeros(6))
+  n_invFp = Float64[1,1,1,0,0,0,0,0,0]
+  GradMekhMS(n_invFp , zeros(NSLIP), zeros(NSLIP), zeros(6), zeros(6))
 end
 
 copy(matstat::GradMekhMS) = GradMekhMS(copy(matstat.n_invFp), copy(matstat.n_k_alpha), copy(matstat.n_lambda_alpha),
@@ -37,23 +39,19 @@ immutable GradMekh <: AbstractMaterial
     nu::Float64
     nn::Float64
     l::Float64
-    kinf::Float64
-    lambda0::Float64
     Hg::Float64
     Hl::Float64
     m::Float64
-    factor::Float64
     sy::Float64
     tstar::Float64
-    c_dam::Float64
     angles::Vector{Float64}
     s_x_m::Vector{Vector{Float64}}
     NSLIP::Int
 end
 
 
-function GradMekh(E, nu, n, l , kinf, lambda_0, Hg, Hl, m, factor,
-                  sy, tstar, c_dam, angles, NSLIP)
+function GradMekh(E, nu, n, l, Hg, Hl, m,
+                  sy, tstar, angles, NSLIP)
 
     if length(angles) != NSLIP
         error("Need one angle per slip system")
@@ -69,8 +67,8 @@ function GradMekh(E, nu, n, l , kinf, lambda_0, Hg, Hl, m, factor,
         push!(s_x_m, M_2_V9(sxm_mat))
     end
 
-    GradMekh(E, nu, n, l, kinf, lambda_0, Hg, Hl, m,
-             factor, sy, tstar, c_dam, angles, s_x_m,
+    GradMekh(E, nu, n, l,Hg, Hl, m,
+              sy, tstar,angles, s_x_m,
              NSLIP)
 end
 
@@ -155,6 +153,7 @@ function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS,
                 kappa_nl::Vector{Float64}, F1::Matrix{Float64})
 
     F = M_2_V9(F1)
+   # println(F)
     E = mat.E
     ν = mat.nu
     s_x_m = mat.s_x_m
@@ -176,7 +175,7 @@ function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS,
 
     # Calculate Mandel stress
     Mbar = L * dot(I,Ee)*I + 2*G*Ee
-
+   # println("Mbar $Mbar")
     # determine the sign of s_alpha
     for i in 1:NSLIP
        sxm = s_x_m[i]
@@ -211,7 +210,7 @@ function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS,
 
         unbal_old = unbal
         unbal = norm(R)
-        println(unbal)
+        #println(unbal)
         nint=0
 
 #=
@@ -236,6 +235,7 @@ function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS,
           else
               XXold=XX
               dXX = Jacob \ R
+             println(Jacob)
 
               #Newton type of update, but dlambda never negative
               @devec XX[:] = XXold - dXX
@@ -278,7 +278,6 @@ function  const_unbal_dam_se_lem(mat, matstat, XX, F, kappa_nl, dt)
     phi = zeros(NSLIP)
     k_alpha = zeros(NSLIP)
 
-    lambda_0 = mat.lambda0
     m = mat.m
     Hl = mat.Hl
 
@@ -322,9 +321,9 @@ function  const_unbal_dam_se_lem(mat, matstat, XX, F, kappa_nl, dt)
         if phi[ii] > 0
              if ii == jj
                  Jakob[ii,jj] -= Hl
-                 Jakob[ii,jj] = tstar - dt*n*mclaur^(n-1) * Jakob[ii,jj]
+                 Jakob[ii,jj] = tstar - dt*n*phi[ii]^(n-1) * Jakob[ii,jj]
              else
-                 Jakob[ii,jj] = -dt*n * mclaur^(n-1) * Jakob[ii,jj]
+                 Jakob[ii,jj] = -dt*n * phi[ii]^(n-1) * Jakob[ii,jj]
              end
         else
             Jakob[ii,jj] = 0

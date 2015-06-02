@@ -364,6 +364,10 @@ function update_feproblem(fp::FEProblem)
     for section in fp.sections
         for element in section.elements
             for i in 1:length(element.matstats)
+                k = element.temp_matstats[i].n_k
+                if k[1] != 0 || k[2] != 0
+                    println(k)
+                end
                 element.matstats[i] = copy(element.temp_matstats[i])
             end
         end

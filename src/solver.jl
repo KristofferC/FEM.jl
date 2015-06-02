@@ -86,13 +86,10 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
             end
             updatedofs!(fp, du)
             print("\n\n")
-
-
-
         end
-        update_feproblem(fp)
+    update_feproblem(fp)
 
-     if (tstep % 5 == 0)
+     if (tstep % 1 == 0)
             n_print += 1
             write_data(fp, exporter, n_print)
         end

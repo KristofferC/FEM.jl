@@ -48,8 +48,8 @@ end
 
 
 function dNmatrix(interp::QuadTrigInterp, loc_coords::Point2)
-    ξ = loc_coords[1]
-    η = loc_coords[2]
+    ξ = loc_coords.(1)
+    η = loc_coords.(1)
     γ = 1 - ξ - η
 
 
@@ -76,6 +76,7 @@ function dNmatrix(interp::QuadTrigInterp, loc_coords::Point2)
     return dN
 end
 
+#const nfields = 6
 function Jmatrix(interp::QuadTrigInterp,
                  vertices::Vertex6, nodes::Vector{FENode2},
                  dN::Matrix{Float64})
@@ -83,8 +84,8 @@ function Jmatrix(interp::QuadTrigInterp,
     J = get_allocated_J(interp)
     fill!(J, 0.0)
     for row in 1:size(dN, 1)
-        x = nodes[vertices[row]].coords.x
-        y = nodes[vertices[row]].coords.y
+        x = nodes[vertices.(row)].coords.x
+        y = nodes[vertices.(row)].coords.y
 
         J[1, 1] += dN[row, 1] * x
         J[1, 2] += dN[row, 1] * y

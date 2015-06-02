@@ -15,7 +15,7 @@ import Base.AddFun
 
 import FEM: SubFun
 import FEM: createinterp, creategps, createstorage, get_field,
-            Bmatrix, doftypes, get_ndofs, get_geotype, get_ref_area, get_kalpha, stiffness, mod_value
+            Bmatrix, doftypes, get_ndofs, get_geotype, get_ref_area, get_kalpha, get_kalphas, stiffness, mod_value
 
 import FEM: dNdxmatrix, intf, assemble!, fill_from_start!, stress, weight, mass_matrix, get_area, DofVals
 import FEM: AbstractMaterialStatus, AbstractElemStorage, AbstractFElement, AbstractMaterial, FENode2
@@ -264,12 +264,12 @@ function intf_u(elem::GradTrig, mat::AbstractMaterial, nodes::Vector{FENode2}, d
         dNdx = dNdxmatrix(elem.interp, gp.local_coords, elem.vertices, nodes)
         fill!(F, 0.0)
         @devec F[1,1:2] = uu[1].*dNdx[1,1:2].+uu[3].*dNdx[2,1:2].+
-                 uu[5].*dNdx[3,1:2].+uu[7].*dNdx[4,1:2].+
-                 uu[9].*dNdx[5,1:2].+uu[11].*dNdx[6,1:2]
+                          uu[5].*dNdx[3,1:2].+uu[7].*dNdx[4,1:2].+
+                          uu[9].*dNdx[5,1:2].+uu[11].*dNdx[6,1:2]
 
         @devec F[2,1:2]=uu[2].*dNdx[1,1:2].+uu[4].*dNdx[2,1:2].+
-                 uu[6].*dNdx[3,1:2].+uu[8].*dNdx[4,1:2].+
-                 uu[10].*dNdx[5,1:2].+uu[12].*dNdx[6,1:2]
+                        uu[6].*dNdx[3,1:2].+uu[8].*dNdx[4,1:2].+
+                       uu[10].*dNdx[5,1:2].+uu[12].*dNdx[6,1:2]
 
         F[1,1] += 1
         F[2,2] += 1
@@ -280,6 +280,16 @@ function intf_u(elem::GradTrig, mat::AbstractMaterial, nodes::Vector{FENode2}, d
 
 
         σ = stress(mat, elem.matstats[i], elem.temp_matstats[i], kappas, F)
+
+        k = elem.temp_matstats[i].n_k
+        if (k[1] != 0 || k[2] != 0) && rand() > 0.99
+            println("ute")
+            println(k)
+            println("temp")
+            println(elem.temp_matstats[i].n_k)
+            println("not temp")
+            println(elem.matstats[i].n_k)
+        end
 
         #@debug("σ = $σ")
         fill_from_start!(elem.temp_matstats[i].stress, σ[STRESS_INDEX])
@@ -388,6 +398,6 @@ end
 
 # Get the stress/strain in gausspoint i
 get_field(elem::GradTrig, ::Type{InvFp}, i::Int) = (invfp=elem.matstats[i].state[1:9]; invfp[1:3] -= 1.0; invfp)
-get_field(elem::GradTrig, ::Type{KAlpha}, i::Int) = elem.matstats[i].state[10:11]
+get_field(elem::GradTrig, ::Type{KAlpha}, i::Int) = get_kalphas(elem.matstats[i])
 
 end # module
