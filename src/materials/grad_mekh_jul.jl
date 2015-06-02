@@ -5,7 +5,7 @@ using Devectorize
 import Base.copy
 
 # Function sto extend
-import FEM: create_matstat, stiffness, stress, get_kalpha
+import FEM: create_matstat, stiffness, stress, get_kalpha, get_kalphas
 
 # Types needed
 import FEM: AbstractMaterialStatus, AbstractMaterial, GaussPoint2
@@ -16,13 +16,13 @@ const NSLIP = 2
 
 type GradMekhMS <: AbstractMaterialStatus
     n_invFp::Vector{Float64}
-    n_k_alpha::Vector{Float64}
+    n_k::Vector{Float64}
     n_lambda_alpha::Vector{Float64}
     strain::Vector{Float64}
     stress::Vector{Float64}
 end
-get_kalpha(ms::GradMekhMS) = ms.n_k_alpha
-
+get_kalpha(ms::GradMekhMS, i) = ms.n_k[i]
+get_kalphas(ms::GradMekhMS) = ms.n_k
 const NSLIP = 2
 
 function GradMekhMS()
@@ -30,9 +30,9 @@ function GradMekhMS()
   GradMekhMS(n_invFp , zeros(NSLIP), zeros(NSLIP), zeros(6), zeros(6))
 end
 
-copy(matstat::GradMekhMS) = GradMekhMS(copy(matstat.n_invFp), copy(matstat.n_k_alpha), copy(matstat.n_lambda_alpha),
+copy(matstat::GradMekhMS) = GradMekhMS(copy(matstat.n_invFp), copy(matstat.n_k), copy(matstat.n_lambda_alpha),
                                        copy(matstat.strain), copy(matstat.stress))
-get_kalpha(ms::GradMekhMS, i::Int) = ms.n_k_alpha[i]
+get_kalpha(ms::GradMekhMS, i::Int) = ms.n_k[i]
 
 immutable GradMekh <: AbstractMaterial
     E::Float64
@@ -152,30 +152,24 @@ const I = Float64[1,1,1,0,0,0,0,0,0]
 function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS,
                 kappa_nl::Vector{Float64}, F1::Matrix{Float64})
 
+    dt = 2.000000000000000e-003 #TODO: Fix
+
     F = M_2_V9(F1)
-   # println(F)
+
     E = mat.E
     ν = mat.nu
     s_x_m = mat.s_x_m
     tstar = mat.tstar
 
-    dt = 2.000000000000000e-003 #TODO: Fix
-
-    lkonv = 1
-
     n_invFp    = matstat.n_invFp
-    n_k_alpha  = matstat.n_k_alpha
-    dlambda    = matstat.n_lambda_alpha
+    n_k  = matstat.n_k
 
     Ee = sym_V9(V9_d_V9(F, n_invFp) - I)
 
-
     G = E / (2*(1+ν))
     L = E*ν / ((1+ν)*(1-2*ν))
-
-    # Calculate Mandel stress
     Mbar = L * dot(I,Ee)*I + 2*G*Ee
-   # println("Mbar $Mbar")
+
     # determine the sign of s_alpha
     for i in 1:NSLIP
        sxm = s_x_m[i]
@@ -186,72 +180,59 @@ function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS,
     end
 
     #Solve nonlinear system of equations
-    #unknowns: invFp,dlambda(ii),phi(ii)
-    # initial guess:
-    @devec invFp = matstat.n_invFp
-    dlambda = 0.0
-    XX = zeros(NSLIP)
+    #unknowns: invFp,dlambda(ii),Φ(ii)
+
+    # Below could be used for guessing
+    #n_k = matstat.n_k
+    #n_∆λ = matstat.n_∆λ
+    k = zeros(NSLIP)
+    ∆λ = zeros(NSLIP)
+    invFp = zeros(9)
+    Tau = zeros(9)
 
     unbal = typemax(Float64)
     niter = 0
-    R = 0.0
-
-    k_alpha = zeros(NSLIP)
-    invFp = zeros(9)
-    XX = zeros(2)
-    Tau = zeros(9)
+    max_niter = 10
+    abstol = 1e-6
+    H = 1e-7
+    J = zeros(NSLIP, NSLIP)
     while true
-        # För ett givet XX beräkning av obalanskrafter
-        Rold = R
-        dR_dX = 0.0
-
-        Jacob, R, Tau, k_alpha, invFp = const_unbal_dam_se_lem(mat, matstat, XX, F, kappa_nl, dt)
-
-
-        unbal_old = unbal
-        unbal = norm(R)
-        #println(unbal)
-        nint=0
-
-#=
-        while unbal > unbal_old && niter > 5 && nint < 20
-            nint=nint+1
-            @devec dXX[:] = dXX ./ 2
-            @devec XX[:] = XXold .- dXX
-
-             const_unbal_dam_se_lem(XX,n_invFp,n_k_alpha, kappa_nl,
-                  invFp,R,Tau,k_alpha,ijacob)
-             unbal=norm(R)
-         end
-=#
-
-          if niter > 35
+        # För ett givet ∆λ beräkning av obalanskrafter
+        if niter > max_niter
              error("*** No convergence in const subroutine")
-          end
+        end
+
+        R, k, Tau, invFp = compute_imbalance(mat, matstat, ∆λ, F, kappa_nl, dt)
 
           #  if not convergence then update
-          if unbal < 1e-6 * tstar
+          if norm(R) < abstol * tstar
               break
           else
-              XXold=XX
-              dXX = Jacob \ R
-             println(Jacob)
+            for α in 1:NSLIP
+                ∆λ[α] += H
+                Rdiff, _ = compute_imbalance(mat, matstat, ∆λ, F, kappa_nl, dt)
+                J[:, α] = (Rdiff - R) / H
+                ∆λ[α] -= H
+            end
+              d∆λ = J \ R
+            # println(Jacob)
 
               #Newton type of update, but dlambda never negative
-              @devec XX[:] = XXold - dXX
+              @devec ∆λ[:] = ∆λ .- d∆λ
+
               for ii=1:NSLIP
-                  if XX[ii] < 0
-                      XX[ii]=1.d-10
+                  if ∆λ[ii] < 0
+                      ∆λ[ii]=1.d-10
                   end
              end
              niter=niter+1
        end
-  end  #end iteration on XX
+  end  #end iteration on ∆λ
 
 
   @devec temp_matstat.n_invFp[:] = invFp
-  @devec temp_matstat.n_k_alpha[:] = k_alpha
-  @devec temp_matstat.n_lambda_alpha[:] = XX
+  @devec temp_matstat.n_k[:] = k
+  @devec temp_matstat.n_lambda_alpha[:] = ∆λ
 
   #Computation of 2nd Piola Kirchhoff
   S=V9_d_V9( V9_d_V9(inv_V9(F),Tau),inv_V9(trans_V9(F)) )
@@ -260,30 +241,26 @@ function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS,
   return Piola
 end
 
-function  const_unbal_dam_se_lem(mat, matstat, XX, F, kappa_nl, dt)
+function compute_imbalance(mat, matstat, ∆λ, F, kappa_nl, dt)
 
     E = mat.E
     ν = mat.nu
     s_x_m = mat.s_x_m
     tstar = mat.tstar
+    n_invFp = matstat.n_invFp
+    n_k = matstat.n_k
     n = mat.m
 
-    n_invFp = matstat.n_invFp
-    n_k_alpha = matstat.n_k_alpha
-
-
-    n_Fp = inv_V9(n_invFp)
-    Jakob = zeros(NSLIP, NSLIP)
     R = zeros(NSLIP)
     phi = zeros(NSLIP)
     k_alpha = zeros(NSLIP)
 
-    m = mat.m
-    Hl = mat.Hl
+    n_Fp = inv_V9(n_invFp)
+
 
     invFp = I
     for ii in 1:NSLIP
-       invFp -= XX[ii] * s_x_m[ii]
+       invFp -= ∆λ[ii] * s_x_m[ii]
     end
 
     invFp = V9_d_V9(n_invFp,invFp)
@@ -301,12 +278,64 @@ function  const_unbal_dam_se_lem(mat, matstat, XX, F, kappa_nl, dt)
 
     mclaur = 0
     for ii=1:NSLIP
-       k_alpha[ii] = n_k_alpha[ii]-XX[ii]
+       k_alpha[ii] = n_k[ii]-∆λ[ii]
+       phi[ii] = dot(Mbar, s_x_m[ii]) - (-mat.Hl * k_alpha[ii] + kappa_nl[ii]) - mat.sy
+       mclaur = max(0, phi[ii])
+
+        # Computation of R_\Delta_\lambda_\alpha
+       R[ii] = tstar*∆λ[ii] - dt*mclaur^n
+    end
+
+    return R, k_alpha, Tau, invFp
+end
+
+function  const_unbal_dam_se_lem(mat, matstat, ∆λ, F, kappa_nl, dt)
+
+    E = mat.E
+    ν = mat.nu
+    s_x_m = mat.s_x_m
+    tstar = mat.tstar
+    n = mat.m
+
+    n_invFp = matstat.n_invFp
+    n_k = matstat.n_k
+
+
+    n_Fp = inv_V9(n_invFp)
+    Jakob = zeros(NSLIP, NSLIP)
+    R = zeros(NSLIP)
+    phi = zeros(NSLIP)
+    k_alpha = zeros(NSLIP)
+
+    m = mat.m
+    Hl = mat.Hl
+
+    invFp = I
+    for ii in 1:NSLIP
+       invFp -= ∆λ[ii] * s_x_m[ii]
+    end
+
+    invFp = V9_d_V9(n_invFp,invFp)
+    Fp = inv_V9(invFp)
+
+    Fe = V9_d_V9(F, invFp)
+    Ee = sym_V9(Fe - I)
+
+    G = E / (2*(1+ν))
+    L = E*ν / ((1+ν)*(1-2*ν))
+    # Calculate Mandel stress
+    Mbar = L * dot(I,Ee)*I + 2*G*Ee
+
+    Tau = Mbar
+
+    mclaur = 0
+    for ii=1:NSLIP
+       k_alpha[ii] = n_k[ii]-∆λ[ii]
        phi[ii] = dot(Mbar, s_x_m[ii]) - (-Hl * k_alpha[ii] + kappa_nl[ii]) - mat.sy
        mclaur = max(0, phi[ii])
 
         # Computation of R_\Delta_\lambda_\alpha
-       R[ii] = tstar*XX[ii] - dt*mclaur^n
+       R[ii] = tstar*∆λ[ii] - dt*mclaur^n
     end
 
     for ii = 1:NSLIP, jj = 1:NSLIP

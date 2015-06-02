@@ -164,8 +164,7 @@ function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS,
     s_x_m = mat.s_x_m
     tstar = mat.tstar
 
-    @devec n_ε_p = matstat.n_ε_p[:]
-    @devec ε_e = ε .- n_ε_p
+    ε_e = ε - matstat.n_ε_p
 
     G = E / (2*(1+ν))
     L = E*ν / ((1+ν)*(1-2*ν))
@@ -188,12 +187,12 @@ function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS,
     #n_∆λ = matstat.n_∆λ
     k = zeros(NSLIP)
     ∆λ = zeros(NSLIP)
-    σ = zeros(9)
     ε_p = zeros(9)
-    unbal = typemax(Float64)
+    σ = zeros(9)
 
+    unbal = typemax(Float64)
     niter = 0
-    max_niter = 8
+    max_niter = 10
     abstol = 1e-6
     H = 1e-7
     J = zeros(NSLIP, NSLIP)
@@ -202,11 +201,9 @@ function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS,
             error("*** No convergence in const subroutine")
         end
 
-        # För ett givet ∆λ_α beräkning av obalanskrafter
         R, k, σ, ε_p = compute_imbalance(mat, matstat, ∆λ, ε, κ_nl, dt)
-        #println(R)
+
         if norm(R) < abstol * tstar
-        #     println("Converged in $niter iterations")
             break
         else
             for α in 1:NSLIP
@@ -219,7 +216,7 @@ function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS,
             d∆λ = J \ R
 
             #Newton type of update, but dlambda never negative
-            @devec ∆λ[:] = ∆λ - d∆λ
+            @devec ∆λ[:] = ∆λ .- d∆λ
 
             for α=1:NSLIP
                 if ∆λ[α] < 0
@@ -232,15 +229,15 @@ function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS,
     end  #end iteration on ∆λ
 
 
-    @devec temp_matstat.n_ε_p[:] = ε_p[:]
-    @devec temp_matstat.n_k[:] = k[:]
-    @devec temp_matstat.n_∆λ[:] = ∆λ[:]
-
+    @devec temp_matstat.n_ε_p[:] = ε_p
+    @devec temp_matstat.n_k[:] = k
+    @devec temp_matstat.n_∆λ[:] = ∆λ
 
     return σ
 end
 
 function compute_imbalance(mat, matstat, ∆λ, ε, κ_nl, dt)
+
     E = mat.E
     ν = mat.ν
     s_x_m = mat.s_x_m
@@ -257,7 +254,7 @@ function compute_imbalance(mat, matstat, ∆λ, ε, κ_nl, dt)
     # εp = εp + Σ ∆λ_α s_α ⊗ m_α
     @devec ε_p = n_ε_p[:]
     for α in 1:NSLIP
-        ε_p += ∆λ[α] * s_x_m[α]
+        ε_p += ∆λ[α] * sym_V9(s_x_m[α])
     end
 
     ε_e = ε - ε_p

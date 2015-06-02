@@ -66,6 +66,7 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
             end
 
 
+
           # if iteration > 2 && norm(du) < 1e-6
           #      println("Converged with alt conv!")
           #      break

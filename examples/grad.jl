@@ -37,6 +37,7 @@ angles = [45.0, 105.0]
 nslip = 2
 
  mat = FEM.gradmekhmodjlsmall().GradMekh(E, nu, n, l, Hg, Hl, m, sy, tstar, angles, nslip)
+
 #=
 faktor = 1
 kinf = 1e+010
@@ -58,7 +59,7 @@ bcs = [DirichletBC("$(γ)*y*t", [FEM.Du], geomesh.node_sets["boundary"]),
        DirichletBC("0.0", [FEM.Dv], geomesh.node_sets["boundary"])]
 
 
-fp = FEM.create_feproblem_grad("grad_coarse", geomesh, [ele_section], [mat_section], bcs)
+fp = FEM.create_feproblem_grad("grad_jll", geomesh, [ele_section], [mat_section], bcs)
 
 
 
@@ -71,6 +72,6 @@ push!(vtkexp, VonMises)
 push!(vtkexp, KAlpha)
 
 
-solver = NRSolver(abs_tol = 1e-2, max_iters = 6)
+solver = NRSolver(abs_tol = 1e-2, max_iters = 10)
 
 solve(solver, fp, vtkexp)

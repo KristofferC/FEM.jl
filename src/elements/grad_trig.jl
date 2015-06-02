@@ -280,7 +280,7 @@ function intf_u(elem::GradTrig, mat::AbstractMaterial, nodes::Vector{FENode2}, d
 
 
         σ = stress(mat, elem.matstats[i], elem.temp_matstats[i], kappas, F)
-
+#=
         k = elem.temp_matstats[i].n_k
         if (k[1] != 0 || k[2] != 0) && rand() > 0.99
             println("ute")
@@ -290,7 +290,7 @@ function intf_u(elem::GradTrig, mat::AbstractMaterial, nodes::Vector{FENode2}, d
             println("not temp")
             println(elem.matstats[i].n_k)
         end
-
+=#
         #@debug("σ = $σ")
         fill_from_start!(elem.temp_matstats[i].stress, σ[STRESS_INDEX])
 

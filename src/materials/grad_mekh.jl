@@ -5,7 +5,7 @@ using Devectorize
 import Base.copy
 
 # Function sto extend
-import FEM: create_matstat, stiffness, stress, get_kalpha
+import FEM: create_matstat, stiffness, stress, get_kalpha, get_kalphas
 
 # Types needed
 import FEM: AbstractMaterialStatus, AbstractMaterial, GaussPoint2
@@ -28,6 +28,7 @@ end
 
 copy(matstat::GradMekhMS) = GradMekhMS(copy(matstat.state), copy(matstat.strain), copy(matstat.stress))
 get_kalpha(ms::GradMekhMS, i::Int) = ms.state[9 + i]
+get_kalphas(ms::GradMekhMS) = ms.state[10:10 + NSLIP-1]
 
 immutable GradMekh <: AbstractMaterial
     E::Float64
