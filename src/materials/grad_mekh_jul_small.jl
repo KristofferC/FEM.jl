@@ -212,7 +212,6 @@ function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS,
                 J[:, α] = (Rdiff - R) / H
                 ∆λ[α] -= H
             end
-
             d∆λ = J \ R
 
             #Newton type of update, but dlambda never negative
