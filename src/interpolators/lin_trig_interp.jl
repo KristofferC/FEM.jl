@@ -37,9 +37,14 @@ function LinTrigInterp()
                       [1.0  0.0  1.0  0.0  2.0  0.0];
                       [0.0  1.0  0.0  1.0  0.0  2.0]]
 
-    M = zeros(6,6)
+     ref_M2 = 1/12 *
+                     [2.0 1.0 1.0;
+                      1.0 2.0 1.0;
+                      1.0 1.0 2.0]
 
-    LinTrigInterp(N, dN, dNdx, J, ref_M, M)
+    M = zeros(3,3)
+
+    LinTrigInterp(N, dN, dNdx, J, ref_M2, M)
 end
 get_allocated_N(i::LinTrigInterp) = i.N
 get_allocated_dN(i::LinTrigInterp) = i.dN

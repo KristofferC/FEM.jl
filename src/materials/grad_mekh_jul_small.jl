@@ -37,7 +37,6 @@ get_kalpha(ms::GradMekhMS, i::Int) = ms.n_k[i]
 immutable GradMekh <: AbstractMaterial
     E::Float64
     ν::Float64
-    n::Float64
     l::Float64
     Hg::Float64
     Hl::Float64
@@ -46,11 +45,12 @@ immutable GradMekh <: AbstractMaterial
     tstar::Float64
     angles::Vector{Float64}
     s_x_m::Vector{Vector{Float64}}
+    s_x_m22::Vector{Vector{Float64}}
     NSLIP::Int
 end
 
 
-function GradMekh(E, ν, n, l, Hg, Hl, m,
+function GradMekh(E, ν, l, Hg, Hl, m,
                   σy, tstar, angles, NSLIP)
 
     if length(angles) != NSLIP
@@ -63,11 +63,14 @@ function GradMekh(E, ν, n, l, Hg, Hl, m,
         t = angles[α]
         s = [cos(t), sin(t), 0.0]
         mm = [cos(t + pi/2), sin(t + pi/2), 0.0]
+
+        s2 = [cos(t), sin(t), 0.0]
+        mm = [cos(t + pi/2), sin(t + pi/2), 0.0]
         sxm_mat = s * mm'
         push!(s_x_m, M_2_V9(sxm_mat))
     end
 
-    GradMekh(E, ν, n, l, Hg, Hl, m, σy, tstar, angles, s_x_m,
+    GradMekh(E, ν, l, Hg, Hl, m, σy, tstar, angles, s_x_m,
              NSLIP)
 end
 
@@ -145,7 +148,6 @@ end
 end
 
 
-const STRESS_BUFFER = zeros(9)
 const I = Float64[1,1,1,0,0,0,0,0,0]
 function stress(mat::GradMekh, matstat::GradMekhMS, temp_matstat::GradMekhMS,
                 κ_nl::Vector{Float64}, F1::Matrix{Float64})
@@ -243,7 +245,7 @@ function compute_imbalance(mat, matstat, ∆λ, ε, κ_nl, dt)
     tstar = mat.tstar
     n_ε_p = matstat.n_ε_p
     n_k = matstat.n_k
-    n = mat.m
+    m = mat.m
 
 
     R = zeros(NSLIP)
@@ -267,7 +269,7 @@ function compute_imbalance(mat, matstat, ∆λ, ε, κ_nl, dt)
        k[α] = n_k[α] - ∆λ[α]
        Φ[α] = dot(σ, s_x_m[α]) - (-mat.Hl * k[α] + κ_nl[α]) - mat.σy
         # Computation of R_\Delta_\lambda_\alpha
-       R[α] = tstar*∆λ[α] - dt * max(0, Φ[α])^n
+       R[α] = tstar*∆λ[α] - dt * max(0, Φ[α])^m
     end
 
     return R, k, σ, ε_p

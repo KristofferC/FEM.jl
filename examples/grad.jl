@@ -26,7 +26,6 @@ push!(geomesh, ElementSet("all", collect(1:length(geomesh.elements))))
 
 E = 200000.e0
 nu = 0.3e0
-n = 1.e0
 l = 1.e-2
 Hg = 4.e7
 Hl = 10_000.01
@@ -36,7 +35,7 @@ tstar = 1000.0
 angles = [45.0, 105.0]
 nslip = 2
 
- mat = FEM.gradmekhmodjlsmall().GradMekh(E, nu, n, l, Hg, Hl, m, sy, tstar, angles, nslip)
+ mat = FEM.gradmekhprimalmod().GradMekh(E, nu, l, Hg, Hl, m, sy, tstar, angles, nslip)
 
 #=
 faktor = 1
@@ -50,7 +49,7 @@ mat_section = MaterialSection(mat)
 push!(mat_section, geomesh.element_sets["all"])
 
 # Element section
-ele_section = ElementSection(FEM.gradtrigmod().GradTrig)
+ele_section = ElementSection(FEM.gradtrigprimalmod().GradTrig)
 push!(ele_section, geomesh.element_sets["all"])
 
 # Boundary conditions
@@ -69,7 +68,7 @@ push!(vtkexp, Stress)
 push!(vtkexp, Strain)
 push!(vtkexp, VonMises)
 #push!(vtkexp, InvFp)
-push!(vtkexp, KAlpha)
+#push!(vtkexp, KAlpha)
 
 
 solver = NRSolver(abs_tol = 1e-2, max_iters = 10)

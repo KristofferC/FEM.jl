@@ -6,6 +6,7 @@ abstract AbstractElemStorage
 @lazymod LinQuadMod "lin_quad.jl"
 @lazymod QuadTrigMod "quad_trig.jl"
 @lazymod GradTrigMod "grad_trig.jl"
+@lazymod GradTrigPrimalMod "grad_trig_prim.jl"
 
 # Interface for a FE-element
 createstorage() = error("Not Implemented")
