@@ -17,13 +17,13 @@ import FEM: SubFun
 import FEM: createinterp, creategps, createstorage, get_field,
             Bmatrix, doftypes, get_ndofs, get_geotype, get_ref_area, get_kalpha, get_kalphas, stiffness, mod_value
 
-import FEM: dNdxmatrix, intf, assemble!, fill_from_start!, stress, weight, mass_matrix, get_area, DofVals
+import FEM: dNdxmatrix, intf, assemble!, fill_from_start!, stress, weight, mass_matrix, mass_matrix_big, get_area, DofVals
 import FEM: AbstractMaterialStatus, AbstractElemStorage, AbstractFElement, AbstractMaterial, FENode2
-import FEM: Vertex3, Vertex6, Point2, GaussPoint2, Du, Dv, Gu1, Gv1, Gu2, Gv2, GeoQTrig, InvFp, KAlpha
+import FEM: Vertex3, Vertex6, Point2, GaussPoint2, Du, Dv, Gu1, Gv1, Gu2, Gv2, Gu3, Gv3, GeoQTrig, InvFp, KAlpha, Kappa
 
 export GradTrig
 
-const NSLIP = 2
+const NSLIP = 3
 const STRESS_INDEX = [1,2,3,4,5,6]
 
 function get_u_dof_idxs(nunodes::Int, nuvars::Int, ngradnodes::Int, ngradvars::Int)
@@ -43,7 +43,7 @@ function get_u_dof_idxs(nunodes::Int, nuvars::Int, ngradnodes::Int, ngradvars::I
 end
 
 function get_grad_dof_idxs(nunodes::Int, nuvars::Int, ngradnodes::Int, ngradvars::Int)
-    idxs = Array(Int, nunodes * nuvars)
+    idxs = Array(Int, ngradnodes * ngradvars)
     count = 1
     for i = 1:ngradnodes
         for j = 1:ngradvars
@@ -55,12 +55,12 @@ function get_grad_dof_idxs(nunodes::Int, nuvars::Int, ngradnodes::Int, ngradvars
 end
 
 function get_grad_idxs_plane(ngradnodes::Int, alpha::Int)
-    const NDIM = 2
-    idxs = Array(Int, NDIM * ngradnodes)
+    ngradvars = 2
+    idxs = Array(Int, ngradvars * ngradnodes)
     count = 1
     for i=1:ngradnodes
-        for j=1:NDIM
-            idxs[count] = (alpha - 1) * NDIM + (i - 1) * (NDIM * NSLIP) + j;
+        for j=1:ngradvars
+            idxs[count] = (alpha - 1) * ngradvars + (i - 1) * (ngradvars * NSLIP) + j;
             count += 1
         end
     end
@@ -167,7 +167,7 @@ end
 
 function doftypes(::GradTrig, v::Int)
     if v <= 3
-        return [Du, Dv, Gu1, Gv1, Gu2, Gv2] # TODO: Fix from arbitrary NSLIP
+        return [Du, Dv, Gu1, Gv1, Gu2, Gv2, Gu3, Gv3] # TODO: Fix from arbitrary NSLIP
     else
         return [Du, Dv]
     end
@@ -176,9 +176,8 @@ end
 
 function compute_hardening(elem::GradTrig, nodes::Vector{FENode2}, dof_vals::DofVals)
 
-    NDIM = 2
 
-    l = 1e-24
+    l = 1e-2
     Hg = 4e7
     factor = 1
 
@@ -246,6 +245,7 @@ function intf_u(elem::GradTrig, mat::AbstractMaterial, nodes::Vector{FENode2}, d
 
         # TODO:
         kappas = compute_hardening(elem, nodes, dof_vals)
+        fill_from_start!(elem.temp_matstats[i].κ, kappas)
 
         dNdx = dNdxmatrix(elem.interp, gp.local_coords, elem.vertices, nodes)
         fill!(F, 0.0)
@@ -288,7 +288,7 @@ function intf_grad(elem::GradTrig, mat::AbstractMaterial, nodes::Vector{FENode2}
     assemble!(elem.storage.u_grad, u, elem.storage.dofs_idx_grad)
 
     vertslin = Vertex3(elem.vertices[1],elem.vertices[2], elem.vertices[3])
-    M = mass_matrix(elem.interp_grad, vertslin, nodes)
+    M = mass_matrix_big(elem.interp_grad, vertslin, nodes)
 
     # Dummy gp, constant
     B = Bdiv(elem, elem.gps[1], nodes)
@@ -366,7 +366,9 @@ end
 
 
 # Get the stress/strain in gausspoint i
-get_field(elem::GradTrig, ::Type{InvFp}, i::Int) = (invfp=elem.matstats[i].state[1:9]; invfp[1:3] -= 1.0; invfp)
+
 get_field(elem::GradTrig, ::Type{KAlpha}, i::Int) = get_kalphas(elem.matstats[i])
+get_field(elem::GradTrig, ::Type{Kappa}, i::Int) = elem.matstats[i].κ
+
 
 end # module

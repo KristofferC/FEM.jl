@@ -17,7 +17,7 @@ import FEM: SubFun
 import FEM: createinterp, creategps, createstorage, get_field,
             Bmatrix, doftypes, get_ndofs, get_geotype, get_ref_area, get_kalpha, get_kalphas, stiffness, mod_value
 
-import FEM: dNdxmatrix, intf, assemble!, fill_from_start!, stress, weight, mass_matrix, get_area, DofVals
+import FEM: dNdxmatrix, intf, assemble!, fill_from_start!, stress, weight, mass_matrix, get_area, DofVals, τ
 import FEM: AbstractMaterialStatus, AbstractElemStorage, AbstractFElement, AbstractMaterial, FENode2
 import FEM: Vertex3, Vertex6, Point2, GaussPoint2, Du, Dv, K1, K2, GeoQTrig, InvFp, KAlpha, Nvec
 
@@ -67,7 +67,6 @@ function get_κ(ngradnodes::Int, alpha::Int)
     return idxs
 end
 
-get_κ_α
 type GradTrigStorage <: AbstractElemStorage
     B::Matrix{Float64}
     Bdiv::Vector{Float64}
@@ -168,7 +167,7 @@ end
 
 function doftypes(::GradTrig, v::Int)
     if v <= 3
-        return [Du, Dv, K1, K2] # TODO: Fix from arbitrary NSLIP
+        return [Du, Dv, K1, K2] # TODO: Fix for arbitrary NSLIP
     else
         return [Du, Dv]
     end
@@ -284,13 +283,14 @@ function intf_u(elem::GradTrig, mat::AbstractMaterial, nodes::Vector{FENode2}, d
 
 
         ε_full = sym_V9(M_2_V9(H))
+
         N = Nvec(elem.interp_grad, gp.local_coords)
         for α = 1:NSLIP
             dofs_slip_plane = get_dofs_slipplane(elem, α)
             assemble!(elem.storage.u_grad_plane, elem.storage.u_grad, dofs_slip_plane)
             k = dot(N, elem.storage.u_grad_plane)
             γ[α] = -k
-            ε_p += γ[α] * sxm[α] * sign(elem.matstats[i].n_τ[α])
+            ε_p += γ[α] * sxm[α]  * sign(elem.matstats[i].τ[α])
         end
         ε_e = (ε_full - ε_p)
         G = E / (2*(1+ν))
@@ -350,10 +350,12 @@ function intf_grad(elem::GradTrig, mat::AbstractMaterial, nodes::Vector{FENode2}
         κ /= length(elem.gps)
 
         Bts_α = Bt * mat.s[α]
-        Q = mat.Hg * mat.l^2 * (Bts_α * Bts_α')
-        term2 = (M + Q) * k_α
 
-        @devec elem.storage.f_grad[dofs_slip_plane]  += N .* κ[α] .* A + term2
+        Q = (mat.Hg * mat.l^2 * A) * (Bts_α * Bts_α')
+
+        term2 = (mat.Hl * M + Q) * k_α
+
+        @devec elem.storage.f_grad[dofs_slip_plane]  += N .* (κ[α] .* A) + term2
     end
 
     return elem.storage.f_grad
@@ -399,7 +401,8 @@ end
 
 
 # Get the stress/strain in gausspoint i
-get_field(elem::GradTrig, ::Type{InvFp}, i::Int) = (invfp=elem.matstats[i].state[1:9]; invfp[1:3] -= 1.0; invfp)
-get_field(elem::GradTrig, ::Type{KAlpha}, i::Int) = get_kalphas(elem.matstats[i])
+#get_field(elem::GradTrig, ::Type{KAlpha}, i::Int) = get_kalphas(elem.matstats[i])
+get_field(elem::GradTrig, ::Type{Kappa}, i::Int) = elem.matstats[i].κ
+get_field(elem::GradTrig, ::Type{τ}, i::Int) = elem.matstats[i].τ
 
 end # module

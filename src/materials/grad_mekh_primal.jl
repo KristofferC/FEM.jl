@@ -17,7 +17,8 @@ const NSLIP = 2
 type GradMekhPrimalMS <: AbstractMaterialStatus
     n_γ::Vector{Float64}
     κ::Vector{Float64}
-    n_τ::Vector{Float64}
+    τ::Vector{Float64}
+
     strain::Vector{Float64}
     stress::Vector{Float64}
 end
@@ -29,7 +30,7 @@ function GradMekhPrimalMS()
 end
 
 copy(matstat::GradMekhPrimalMS) = GradMekhPrimalMS(copy(matstat.n_γ),
-                                                   copy(matstat.κ), copy(matstat.n_τ),
+                                                   copy(matstat.κ), copy(matstat.τ),
                                                    copy(matstat.strain), copy(matstat.stress))
 
 immutable GradMekh <: AbstractMaterial
@@ -100,46 +101,71 @@ function stress(mat::GradMekh, matstat::GradMekhPrimalMS, temp_matstat::GradMekh
     m = mat.m
 
     κ = zeros(NSLIP)
+    μ = zeros(NSLIP)
     maxiter = 8
+
+
+
     for α = 1:NSLIP
-        ∆γ = γ[α] - matstat.n_γ[α]
-        R = resid(σy, ∆γ, ∆t, τ[α], κ[α])
+        μ[α]  = (γ[α] - matstat.n_γ[α])
         niter = 0
-        abstol = 1e-7
+        abstol = 1e-5
+        κ[α] = resid(mat.σy, μ[α], ∆t, τ[α], mat.m, tstar)
+        #=
         while true
-            if abs(R) < abstol
+            R = resid(mat.σy, ∆γ, ∆t, τ[α], κ[α], mat.m, tstar)
+            if abs(R) < abstol*mat.σy
                 break
             elseif niter > maxiter
+                println(τ)
+                println(γ)
+                println(matstat)
+                println(temp_matstat)
                 error("Material failed to converge")
             else
                 niter += 1
-                H = 1e-7
+                H = 1.0
                 κ[α] += H
-                R_f = resid(mat, ∆γ, ∆t, τ[α], κ[α])
-                J = (R_f - R) / H
+                R_f = resid(mat.σy, ∆γ, ∆t, τ[α], κ[α], mat.m, tstar)
                 κ[α] -= H
+                J = (R_f - R) / H
+                println("num")
+                println(J)
                 κ[α] = κ[α] - R / J
             end
         end
+        =#
     end
 
     @devec temp_matstat.n_γ[:] = γ
-    @devec temp_matstat.n_τ[:] = τ
+    @devec temp_matstat.τ[:] = τ
     return κ
 end
 
-function resid(σy, ∆γ, ∆t, τ, κ)
-    ε_R = 1.0
-    F = abs(τ) - (σy + κ)
+function resid(σy, μ, ∆t, τ, m, tstar)
+
+    F = abs(τ) - σy
+
+
+    #=
     if F <= 0
         ηR = ε_R + ε_R / pi * 2 * atan(F / F_R)
     else
         ηR = ε_R
     end
     ηf = max(0, F)^m + ηR
+    =#
 
-    R = ∆γ/∆t * tstar - ηf
-    return R
+    if F <= 0
+        κ = 0
+    else
+        κ = abs(τ) - σy - max(0,(tstar/∆t * μ))^(1/m)
+        #println(κ)
+        #println(τ)
+        #println((tstar/∆t * μ))
+        #println("---")
+    end
+    return κ
 end
 
 end # module

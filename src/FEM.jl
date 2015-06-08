@@ -28,7 +28,7 @@ export AbstractElemStorage
 
 export FESection, MaterialSection, ElementSection
 export FEProblem
-export Stress, Strain, InvFp, KAlpha, VonMises
+export Stress, Strain, InvFp, KAlpha, VonMises, Kappa, τ
 export Solver, NRSolver, solve
 export meshquad, gencook, read_mphtxt
 export create_feproblem

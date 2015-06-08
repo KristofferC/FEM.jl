@@ -12,24 +12,23 @@ import FEM: AbstractMaterialStatus, AbstractMaterial, GaussPoint2
 
 export GradMekhMS, GradMekh
 
-const NSLIP = 2
+const NSLIP = 3
 
 type GradMekhMS <: AbstractMaterialStatus
     n_ε_p::Vector{Float64}
     n_k::Vector{Float64}
     n_∆λ::Vector{Float64}
+    κ::Vector{Float64}
     strain::Vector{Float64}
     stress::Vector{Float64}
 end
 
-const NSLIP = 2
-
 function GradMekhMS()
-  GradMekhMS(zeros(9), zeros(NSLIP), zeros(NSLIP), zeros(6), zeros(6))
+  GradMekhMS(zeros(9), zeros(NSLIP), zeros(NSLIP), zeros(NSLIP), zeros(6), zeros(6))
 end
 
 copy(matstat::GradMekhMS) = GradMekhMS(copy(matstat.n_ε_p), copy(matstat.n_k), copy(matstat.n_∆λ),
-                                       copy(matstat.strain), copy(matstat.stress))
+                                       copy(matstat.κ), copy(matstat.strain), copy(matstat.stress))
 
 get_kalphas(ms::GradMekhMS) = ms.n_k
 get_kalpha(ms::GradMekhMS, i::Int) = ms.n_k[i]
@@ -45,7 +44,6 @@ immutable GradMekh <: AbstractMaterial
     tstar::Float64
     angles::Vector{Float64}
     s_x_m::Vector{Vector{Float64}}
-    s_x_m22::Vector{Vector{Float64}}
     NSLIP::Int
 end
 
