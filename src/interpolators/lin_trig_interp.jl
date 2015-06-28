@@ -1,9 +1,7 @@
 module LinTrigInterpMod
 
-using FEM
-
 import FEM: AbstractInterpolator, Point2, FENode2, Vertex3, inv2x2t!, det2x2,
-       dNmatrix, Jmatrix, dNdxmatrix, Nvec, get_area, mass_matrix, mass_matrix_big,  get_area
+       dNmatrix, Jmatrix, dNdxmatrix, Nvec, get_area, mass_matrix
 
 export LinTrigInterp
 
@@ -32,19 +30,10 @@ function LinTrigInterp()
     J = Array(Float64, 2, 2)
 
     ref_M = 1/12 *
-                     [[2.0  0.0  1.0  0.0  1.0  0.0];
-                      [0.0  2.0  0.0  1.0  0.0  1.0];
-                      [1.0  0.0  2.0  0.0  1.0  0.0];
-                      [0.0  1.0  0.0  2.0  0.0  1.0];
-                      [1.0  0.0  1.0  0.0  2.0  0.0];
-                      [0.0  1.0  0.0  1.0  0.0  2.0]]
+             [2.0 1.0 1.0;
+              1.0 2.0 1.0;
+              1.0 1.0 2.0]
 
-     ref_M2 = 1/12 *
-                     [2.0 1.0 1.0;
-                      1.0 2.0 1.0;
-                      1.0 1.0 2.0]
-
-    M2 = zeros(3,3)
     M = zeros(6,6)
 
     LinTrigInterp(N, dN, dNdx, J, ref_M, ref_M2, M, M2)
@@ -104,8 +93,8 @@ function dNdxmatrix(interp::LinTrigInterp, local_coords::Point2,
 
         dN = dNmatrix(interp, local_coords)
         J = Jmatrix(interp, vertices, nodes, dN)
-        J = inv2x2t!(J)
-        A_mul_B!(interp.dNdx, dN, J)
+        J_inv = inv2x2t!(J)
+        A_mul_B!(interp.dNdx, dN, J_inv)
         return interp.dNdx
 end
 

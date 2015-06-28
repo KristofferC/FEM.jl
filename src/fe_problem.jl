@@ -128,8 +128,6 @@ function createdofs(fp::FEProblem)
     id = 0
     dofs = Array(Dof, 0)
 
-
-
     # TODO: Optimize
     for node in fp.nodes
         for doftype in node_doftypes[node.n]

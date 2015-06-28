@@ -1,7 +1,6 @@
 abstract Solver
 
-include("linsolver.jl")
-
+# A Newton Raphsoin solver
 immutable NRSolver <: Solver
     rel_tol::Float64
     abs_tol::Float64
@@ -14,6 +13,7 @@ NRSolver(;rel_tol=0.0::Float64, abs_tol=0.0::Float64,
           max_iters=10::Int, err_on_nonconv=true::Bool, alt_tol = 0.0) =
     NRSolver(rel_tol, abs_tol, alt_tol, max_iters, err_on_nonconv)
 
+# Solves a nonlinear problem by iterating until convergence
 function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
     println("Starting Newton-Raphson solver..")
     load = extload(fp)
@@ -21,7 +21,6 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
     iteration = 0
     tstep = 0
     n_print = 0
-
 
     K = create_sparse_structure(fp::FEProblem)
     colptrs = get_colptrs(K, fp::FEProblem)
@@ -43,6 +42,7 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
 
             int_f = assemble_intf(fp)
             @devec force_imbalance[:] = load .- int_f
+
 
             abs_res = norm(force_imbalance)
             rel_res = norm(force_imbalance) / norm(load)
@@ -66,16 +66,7 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
                 break
             end
 
-
-
-          # if iteration > 2 && norm(du) < 1e-6
-          #      println("Converged with alt conv!")
-          #      break
-          #  end
-
-
             assembleK!(K, fp, colptrs, fp.dof_vals)
-
 
 
             #du = cholfact(Symmetric(K, :L)) \ force_imbalance
@@ -97,10 +88,8 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
         end
     update_feproblem(fp)
 
-     if (tstep % 5 == 0)
-            n_print += 1
-            write_data(fp, exporter, n_print)
-        end
+    n_print += 1
+    write_data(fp, exporter, n_print)
     end
 
 end
