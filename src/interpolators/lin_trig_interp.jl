@@ -3,7 +3,7 @@ module LinTrigInterpMod
 using FEM
 
 import FEM: AbstractInterpolator, Point2, FENode2, Vertex3, inv2x2t!, det2x2,
-       dNmatrix, Jmatrix, dNdxmatrix, Nvec, get_area, mass_matrix, get_area
+       dNmatrix, Jmatrix, dNdxmatrix, Nvec, get_area, mass_matrix, mass_matrix_big,  get_area
 
 export LinTrigInterp
 
@@ -13,7 +13,9 @@ immutable LinTrigInterp <: AbstractInterpolator
     dNdx::Matrix{Float64}
     J::Matrix{Float64}
     ref_M::Matrix{Float64}
+    ref_M2::Matrix{Float64}
     M::Matrix{Float64}
+    M2::Matrix{Float64}
 end
 
 function LinTrigInterp()
@@ -37,9 +39,15 @@ function LinTrigInterp()
                       [1.0  0.0  1.0  0.0  2.0  0.0];
                       [0.0  1.0  0.0  1.0  0.0  2.0]]
 
+     ref_M2 = 1/12 *
+                     [2.0 1.0 1.0;
+                      1.0 2.0 1.0;
+                      1.0 1.0 2.0]
+
+    M2 = zeros(3,3)
     M = zeros(6,6)
 
-    LinTrigInterp(N, dN, dNdx, J, ref_M, M)
+    LinTrigInterp(N, dN, dNdx, J, ref_M, ref_M2, M, M2)
 end
 get_allocated_N(i::LinTrigInterp) = i.N
 get_allocated_dN(i::LinTrigInterp) = i.dN
@@ -117,10 +125,18 @@ function get_area(::LinTrigInterp, vertices::Vertex3, nodes::Vector{FENode2})
 end
 
 function mass_matrix(interp::LinTrigInterp, vertices::Vertex3, nodes::Vector{FENode2})
+    fill!(interp.M2, 0.0)
+    area = get_area(interp, vertices, nodes)
+    scale!(interp.M2, interp.ref_M2, area)
+    return interp.M2
+end
+
+function mass_matrix_big(interp::LinTrigInterp, vertices::Vertex3, nodes::Vector{FENode2})
     fill!(interp.M, 0.0)
     area = get_area(interp, vertices, nodes)
     scale!(interp.M, interp.ref_M, area)
     return interp.M
 end
+
 
 end # module

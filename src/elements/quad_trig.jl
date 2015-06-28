@@ -1,6 +1,5 @@
 FEM.linquadinterpmod()
 using FEM.LinQuadInterpMod
-println("Rand this shit")
 
 module QuadTrigMod
 
@@ -10,6 +9,9 @@ using FEM.QuadTrigInterpMod
 
 import FEM: AbstractMaterialStatus, Vertex6, Point2, GaussPoint2, Du, Dv, createstorage,
        createinterp, creategps, get_field, Bmatrix, doftypes, get_ndofs
+
+import FEM: dNdxmatrix
+
 
 export QuadTrig
 

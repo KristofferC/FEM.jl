@@ -8,7 +8,7 @@ using Codecs
 
 import Base.push!
 import FEM: write_data, get_coord, get_geotype, get_ncomponents, get_cell_data,
-            get_displacement, get_field, DofVals
+            get_displacement, get_field, get_galphas, DofVals
 export VTKExporter, set_binary!, set_compress!
 
 
@@ -238,6 +238,9 @@ function _write_VTKXML_section(filename::ASCIIString, nodes::Vector{FENode2}, do
         end
     end
     write_data!(vtkw, xdisp)
+
+
+
 
     println("Finished writing data")
 

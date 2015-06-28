@@ -5,13 +5,14 @@ include("linsolver.jl")
 immutable NRSolver <: Solver
     rel_tol::Float64
     abs_tol::Float64
+    alt_tol::Float64
     max_iters::Int
     err_on_nonconv::Bool
 end
 
 NRSolver(;rel_tol=0.0::Float64, abs_tol=0.0::Float64,
-          max_iters=10::Int, err_on_nonconv=true::Bool) =
-    NRSolver(rel_tol, abs_tol, max_iters, err_on_nonconv)
+          max_iters=10::Int, err_on_nonconv=true::Bool, alt_tol = 0.0) =
+    NRSolver(rel_tol, abs_tol, alt_tol, max_iters, err_on_nonconv)
 
 function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
     println("Starting Newton-Raphson solver..")
@@ -66,6 +67,7 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
             end
 
 
+
           # if iteration > 2 && norm(du) < 1e-6
           #      println("Converged with alt conv!")
           #      break
@@ -85,12 +87,15 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
                 @printf("%s: %1.2e   \t", dof_type, sqrt(r))
             end
             updatedofs!(fp, du)
+
+            if norm(du) < solver.alt_tol
+                     println("\n Converged with alternative tolerance!")
+                break
+            end
+
             print("\n\n")
-
-
-
         end
-        update_feproblem(fp)
+    update_feproblem(fp)
 
      if (tstep % 5 == 0)
             n_print += 1

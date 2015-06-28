@@ -8,15 +8,15 @@ using FEM.VTKExportMod
 # Possible mesh elements are GeoTrig for 3 node triangles,
 # GeoQTrig for 6 node triangles and GeoQuad for 4 node quadraterials
 n_ele = 100
-geomesh = gencook(n_ele, n_ele, GeoTrig)
+geomesh = gencook(n_ele, n_ele, GeoQTrig)
 
 
 # We create two node sets, one on the right edge and one on the left.
 # This is done by giving an anonymous function that is satisfied by
 # the edges.
 
-push!(geomesh, gennodeset(n->n.coords[1]>47.999999, "right", geomesh.nodes))
-push!(geomesh, gennodeset(n->n.coords[1]<0.00001, "left", geomesh.nodes))
+push!(geomesh, gennodeset(n->n.coords.x>47.999999, "right", geomesh.nodes))
+push!(geomesh, gennodeset(n->n.coords.x<0.00001, "left", geomesh.nodes))
 
 # We create an element set containing all the elements
 push!(geomesh, ElementSet("all", collect(1:length(geomesh.elements))))
@@ -28,7 +28,7 @@ push!(mat_section, geomesh.element_sets["all"])
 
 # We create an element section and assign it to all the
 # elements.
-ele_section = ElementSection(FEM.lintrigmod().LinTrig)
+ele_section = ElementSection(FEM.quadtrigmod().QuadTrig)
 push!(ele_section, geomesh.element_sets["all"])
 
 # Apply Dirichlet BC to the left side in both x (Du) and y (Dv)

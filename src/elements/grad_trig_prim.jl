@@ -5,7 +5,7 @@ using FEM.LinTrigInterpMod
 FEM.quadtriginterpmod()
 using FEM.QuadTrigInterpMod
 
-module GradTrigMod
+module GradTrigPrimalMod
 
 using Devectorize
 using FEM
@@ -17,14 +17,14 @@ import FEM: SubFun
 import FEM: createinterp, creategps, createstorage, get_field,
             Bmatrix, doftypes, get_ndofs, get_geotype, get_ref_area, get_kalpha, get_kalphas, stiffness, mod_value
 
-import FEM: dNdxmatrix, intf, assemble!, fill_from_start!, stress, weight, mass_matrix, mass_matrix_big, get_area, DofVals
+import FEM: dNdxmatrix, intf, assemble!, fill_from_start!, stress, weight, mass_matrix, get_area, DofVals, τ
 import FEM: AbstractMaterialStatus, AbstractElemStorage, AbstractFElement, AbstractMaterial, FENode2
-import FEM: Vertex3, Vertex6, Point2, GaussPoint2, Du, Dv, Gu1, Gv1, Gu2, Gv2, Gu3, Gv3, GeoQTrig, InvFp, KAlpha, Kappa
+import FEM: Vertex3, Vertex6, Point2, GaussPoint2, Du, Dv, K1, K2, GeoQTrig, InvFp, KAlpha, Nvec
 
 export GradTrig
 
-const NSLIP = 3
-const STRESS_INDEX = [1,2,3,4,5,6]
+const NSLIP = 2
+
 
 function get_u_dof_idxs(nunodes::Int, nuvars::Int, ngradnodes::Int, ngradvars::Int)
     idxs = Array(Int, nunodes * nuvars)
@@ -42,7 +42,7 @@ function get_u_dof_idxs(nunodes::Int, nuvars::Int, ngradnodes::Int, ngradvars::I
     return idxs
 end
 
-function get_grad_dof_idxs(nunodes::Int, nuvars::Int, ngradnodes::Int, ngradvars::Int)
+function get_κ_α(nunodes::Int, nuvars::Int, ngradnodes::Int, ngradvars::Int)
     idxs = Array(Int, ngradnodes * ngradvars)
     count = 1
     for i = 1:ngradnodes
@@ -54,8 +54,8 @@ function get_grad_dof_idxs(nunodes::Int, nuvars::Int, ngradnodes::Int, ngradvars
     return idxs
 end
 
-function get_grad_idxs_plane(ngradnodes::Int, alpha::Int)
-    ngradvars = 2
+function get_κ(ngradnodes::Int, alpha::Int)
+    ngradvars = 1
     idxs = Array(Int, ngradvars * ngradnodes)
     count = 1
     for i=1:ngradnodes
@@ -66,7 +66,6 @@ function get_grad_idxs_plane(ngradnodes::Int, alpha::Int)
     end
     return idxs
 end
-
 
 type GradTrigStorage <: AbstractElemStorage
     B::Matrix{Float64}
@@ -89,26 +88,27 @@ type GradTrigStorage <: AbstractElemStorage
 end
 
 function GradTrigStorage()
+
     B = zeros(4, 12)
     Bdiv = zeros(6)
     DeBe = zeros(4,12)
-    Ke = zeros(12 + 2*3*NSLIP, 12 + 2*3*NSLIP)
+    Ke = zeros(12 + 3*NSLIP, 12 + 3*NSLIP)
     ɛ = zeros(4)
-    u_field = zeros(12 + 2*3*NSLIP)
+    u_field = zeros(12 + 3*NSLIP)
     u_u = zeros(12)
-    u_grad = zeros(2 * 3 * NSLIP)
-    u_grad_plane = zeros(6)
-    f = zeros(12 + 2*3*NSLIP)
+    u_grad = zeros(3 * NSLIP)
+    u_grad_plane = zeros(3)
+    f = zeros(12 + 3*NSLIP)
     f_u = zeros(12)
-    f_grad = zeros(2 * 3 * NSLIP)
-    f_grad_plane = zeros(6)
-    dofs_idx_u = get_u_dof_idxs(6, 2, 3, 2*NSLIP)
-    dofs_idx_grad = get_grad_dof_idxs(6, 2, 3, 2*NSLIP)
+    f_grad = zeros(3 * NSLIP)
+    f_grad_plane = zeros(3)
+    dofs_idx_u = get_u_dof_idxs(6, 2, 3, NSLIP)
+    dofs_idx_grad = get_κ_α(6, 2, 3, NSLIP)
     kappas = zeros(NSLIP)
 
     dofs_slip_plane = Array(Vector{Int}, NSLIP)
     for i = 1:NSLIP
-        dofs_slip_plane[i] = get_grad_idxs_plane(3, i)
+        dofs_slip_plane[i] = get_κ(3, i)
     end
 
    GradTrigStorage(B, Bdiv, DeBe, Ke, ɛ, u_field, u_u, u_grad, u_grad_plane,
@@ -167,35 +167,10 @@ end
 
 function doftypes(::GradTrig, v::Int)
     if v <= 3
-        return [Du, Dv, Gu1, Gv1, Gu2, Gv2, Gu3, Gv3] # TODO: Fix from arbitrary NSLIP
+        return [Du, Dv, K1, K2] # TODO: Fix for arbitrary NSLIP
     else
         return [Du, Dv]
     end
-end
-
-
-function compute_hardening(elem::GradTrig, nodes::Vector{FENode2}, dof_vals::DofVals)
-
-
-    l = 1e-2
-    Hg = 4e7
-    factor = 1
-
-    u = get_field(elem, nodes, dof_vals)
-    assemble!(elem.storage.u_grad, u, elem.storage.dofs_idx_grad)
-    vertslin = Vertex3(elem.vertices[1],elem.vertices[2], elem.vertices[3])
-    # Dummy gp
-
-    dNdx = dNdxmatrix(elem.interp_grad, elem.gps[1].local_coords, vertslin, nodes)
-    kappas = elem.storage.kappas
-    B = Bdiv(elem, elem.gps[1], nodes)
-    for i = 1:NSLIP
-        slips = get_dofs_slipplane(elem, i)
-        assemble!(elem.storage.u_grad_plane, elem.storage.u_grad, slips)
-        kappas[i] = Hg * l * l * factor * dot(B, elem.storage.u_grad_plane)
-    end
-
-    return kappas
 end
 
 
@@ -203,7 +178,7 @@ function stiffness(elem::GradTrig,
                   nodes::Vector{FENode2},
                   material::AbstractMaterial,
                   dofvals::DofVals)
-   const H = 1e-7
+    H = 1e-7
     Ke = elem.storage.Ke
     fill!(Ke, 0.0)
     f = intf(elem, material, nodes, dofvals)
@@ -224,46 +199,114 @@ function stiffness(elem::GradTrig,
             col += 1
         end
     end
+    # Reset int variables
     intf(elem, material, nodes, dofvals)
     return Ke
 end
 
+M_2_V9(b) = M_2_V9!(zeros(9), b)
+@inbounds function M_2_V9!(a, b::Matrix{Float64})
+    a[1]=b[1,1]
+    a[2]=b[2,2]
+    a[3]=b[3,3]
+    a[4]=b[1,2]
+    a[9]=b[3,2]
+    a[5]=b[2,3]
+    a[8]=b[2,1]
+    a[7]=b[1,3]
+    a[6]=b[3,1]
+    return a
+end
+
+
+sym_V9(b) = sym_V9!(zeros(9), b)
+@inbounds function sym_V9!(a, b)
+
+    a[1:3] =  b[1:3]
+    a[4]   = (b[4]+b[8])/2
+    a[8]   = (b[4]+b[8])/2
+    a[5]   = (b[5]+b[9])/2
+    a[9]   = (b[5]+b[9])/2
+    a[6]   = (b[6]+b[7])/2
+    a[7]   = (b[6]+b[7])/2
+    return a
+end
+
+V9_d_V9(a, b) = zeros(9, a, b)
+@inbounds function V9_d_V9!(c, a, b)
+    c[1]=a[1]*b[1] + a[7]* b[6] + a[4]* b[8]
+    c[2]=a[2]*b[2] + a[8]* b[4] + a[5]* b[9]
+    c[3]=a[3]*b[3] + a[9]* b[5] + a[6]* b[7]
+    c[4]=a[4]*b[2] + a[1]* b[4] + a[7]* b[9]
+    c[5]=a[5]*b[3] + a[2]* b[5] + a[8]* b[7]
+    c[6]=a[6]*b[1] + a[3]* b[6] + a[9]* b[8]
+    c[7]=a[7]*b[3] + a[4]* b[5] + a[1]* b[7]
+    c[8]=a[8]*b[1] + a[5]* b[6] + a[2]* b[8]
+    c[9]=a[9]*b[2] + a[6]* b[4] + a[3]* b[9]
+    return c
+end
+
+const I = Float64[1,1,1,0,0,0,0,0,0]
+const STRESS_INDEX = [1,2,3,4,5,6]
 
 function intf_u(elem::GradTrig, mat::AbstractMaterial, nodes::Vector{FENode2}, dof_vals::DofVals)
+    E = mat.E
+    ν = mat.ν
+    sxm = mat.s_x_m
+
     u = get_field(elem, nodes, dof_vals)
 
     assemble!(elem.storage.u_u, u, elem.storage.dofs_idx_u) # 12 dofs
+    assemble!(elem.storage.u_grad, u, elem.storage.dofs_idx_grad) # 6 dofs
     uu = elem.storage.u_u
-    #println("u: $uu")
+
     fill!(elem.storage.f_u, 0.0)
     ɛ = elem.storage.ɛ
-    F = zeros(3,3)
+    ε_p = zeros(9)
+    γ = zeros(NSLIP)
+    H = zeros(3,3)
+    τ = zeros(NSLIP)
     for (i, gp) in enumerate(elem.gps)
         B = Bmatrix(elem, gp, nodes)
         A_mul_B!(ɛ, B, elem.storage.u_u) # B = 4 x 12
         fill_from_start!(elem.temp_matstats[i].strain, ɛ)
 
-        # TODO:
-        kappas = compute_hardening(elem, nodes, dof_vals)
-        fill_from_start!(elem.temp_matstats[i].κ, kappas)
-
         dNdx = dNdxmatrix(elem.interp, gp.local_coords, elem.vertices, nodes)
-        fill!(F, 0.0)
-        @devec F[1,1:2] = uu[1].*dNdx[1,1:2].+uu[3].*dNdx[2,1:2].+
+        fill!(H, 0.0)
+        H[1,1:2] = uu[1].*dNdx[1,1:2].+uu[3].*dNdx[2,1:2].+
                           uu[5].*dNdx[3,1:2].+uu[7].*dNdx[4,1:2].+
                           uu[9].*dNdx[5,1:2].+uu[11].*dNdx[6,1:2]
 
-        @devec F[2,1:2]=uu[2].*dNdx[1,1:2].+uu[4].*dNdx[2,1:2].+
+        H[2,1:2]=uu[2].*dNdx[1,1:2].+uu[4].*dNdx[2,1:2].+
                         uu[6].*dNdx[3,1:2].+uu[8].*dNdx[4,1:2].+
                         uu[10].*dNdx[5,1:2].+uu[12].*dNdx[6,1:2]
 
-        F[1,1] += 1
-        F[2,2] += 1
-        F[3,3] += 1
 
-        σ = stress(mat, elem.matstats[i], elem.temp_matstats[i], kappas, F)
+        ε_full = sym_V9(M_2_V9(H))
 
+        N = Nvec(elem.interp_grad, gp.local_coords)
+        for α = 1:NSLIP
+            dofs_slip_plane = get_dofs_slipplane(elem, α)
+            assemble!(elem.storage.u_grad_plane, elem.storage.u_grad, dofs_slip_plane)
+            k = dot(N, elem.storage.u_grad_plane)
+            γ[α] = -k
+            ε_p += γ[α] * sxm[α]  * sign(elem.matstats[i].τ[α])
+        end
+        ε_e = (ε_full - ε_p)
+        G = E / (2*(1+ν))
+        L = E*ν / ((1+ν)*(1-2*ν))
+        # Calculate Mandel stress
+        σ = L * dot(I, ε_e)*I + 2*G*ε_e
         fill_from_start!(elem.temp_matstats[i].stress, σ[STRESS_INDEX])
+
+        for α = 1:NSLIP
+            τ[α] = dot(σ, sxm[α])
+        end
+
+
+        κ = stress(mat, elem.matstats[i], elem.temp_matstats[i], τ, γ)
+        fill_from_start!(elem.temp_matstats[i].κ, κ)
+
 
         dV = weight(elem, gp, nodes)
         fe = zeros(12)
@@ -284,43 +327,35 @@ end
 function intf_grad(elem::GradTrig, mat::AbstractMaterial, nodes::Vector{FENode2}, dof_vals::DofVals)
     fill!(elem.storage.f_grad, 0.0)
     u = get_field(elem, nodes, dof_vals)
-
     assemble!(elem.storage.u_grad, u, elem.storage.dofs_idx_grad)
 
     vertslin = Vertex3(elem.vertices[1],elem.vertices[2], elem.vertices[3])
-    M = mass_matrix_big(elem.interp_grad, vertslin, nodes)
+    M = mass_matrix(elem.interp_grad, vertslin, nodes)
 
     # Dummy gp, constant
-    B = Bdiv(elem, elem.gps[1], nodes)
     A = get_area(elem.interp_grad, vertslin, nodes)
+    N = Nvec(elem.interp_grad, FEM.Point2(1/3,1/3))
+    Bt = dNdxmatrix(elem.interp_grad, FEM.Point2(1/3,1/3),
+                       vertslin, nodes)
 
-    buff = zeros(6)
-    for i in 1:NSLIP
-        dofs_slip_plane = get_dofs_slipplane(elem, i)
+    for α in 1:NSLIP
+        dofs_slip_plane = get_dofs_slipplane(elem, α)
         assemble!(elem.storage.u_grad_plane, elem.storage.u_grad, dofs_slip_plane)
+        k_α = elem.storage.u_grad_plane
 
-        k_alpha_tot = 0.0
+        κ = 0.0
         for j in 1:length(elem.gps)
-            k_alpha = get_kalpha(elem.temp_matstats[j], i)
-            k_alpha_tot += k_alpha
+            κ += elem.temp_matstats[j].κ
         end
-        k_alpha_tot /= length(elem.gps)
+        κ /= length(elem.gps)
 
-        A_mul_B!(buff, M, elem.storage.u_grad_plane)
-        @devec elem.storage.f_grad[dofs_slip_plane] += buff
+        Bts_α = Bt * mat.s[α]
 
-      #  println("k_alph_tot $(k_alpha_tot)")
+        Q = (mat.Hg * mat.l^2 * A) * (Bts_α * Bts_α')
 
-        # f_grad += k_alpha * B * A
-        @devec elem.storage.f_grad[dofs_slip_plane] += k_alpha_tot .* B .* A
+        term2 = (mat.Hl * M + Q) * k_α
 
-      #  println("f_grad: $(elem.storage.f_grad[dofs_slip_plane])")
-
-       #  if abs(k_alpha_tot) > 0
-       #     println(elem.storage.f_grad[dofs_slip_plane])
-       #     println("UELEM")
-       #     println(elem.storage.u_grad)
-       # end
+        @devec elem.storage.f_grad[dofs_slip_plane]  += N .* (κ[α] .* A) + term2
     end
 
     return elem.storage.f_grad
@@ -366,9 +401,8 @@ end
 
 
 # Get the stress/strain in gausspoint i
-
-get_field(elem::GradTrig, ::Type{KAlpha}, i::Int) = get_kalphas(elem.matstats[i])
+#get_field(elem::GradTrig, ::Type{KAlpha}, i::Int) = get_kalphas(elem.matstats[i])
 get_field(elem::GradTrig, ::Type{Kappa}, i::Int) = elem.matstats[i].κ
-
+get_field(elem::GradTrig, ::Type{τ}, i::Int) = elem.matstats[i].τ
 
 end # module
