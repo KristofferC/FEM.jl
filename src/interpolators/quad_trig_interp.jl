@@ -49,7 +49,7 @@ end
 
 function dNmatrix(interp::QuadTrigInterp, loc_coords::Point2)
     ξ = loc_coords.(1)
-    η = loc_coords.(1)
+    η = loc_coords.(2)
     γ = 1 - ξ - η
 
 

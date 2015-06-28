@@ -11,9 +11,7 @@ immutable LinTrigInterp <: AbstractInterpolator
     dNdx::Matrix{Float64}
     J::Matrix{Float64}
     ref_M::Matrix{Float64}
-    ref_M2::Matrix{Float64}
     M::Matrix{Float64}
-    M2::Matrix{Float64}
 end
 
 function LinTrigInterp()
@@ -36,7 +34,7 @@ function LinTrigInterp()
 
     M = zeros(6,6)
 
-    LinTrigInterp(N, dN, dNdx, J, ref_M, ref_M2, M, M2)
+    LinTrigInterp(N, dN, dNdx, J, ref_M, M)
 end
 get_allocated_N(i::LinTrigInterp) = i.N
 get_allocated_dN(i::LinTrigInterp) = i.dN

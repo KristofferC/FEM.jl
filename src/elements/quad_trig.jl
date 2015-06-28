@@ -7,11 +7,11 @@ using FEM
 FEM.quadtriginterpmod()
 using FEM.QuadTrigInterpMod
 
-import FEM: AbstractMaterialStatus, Vertex6, Point2, GaussPoint2, Du, Dv, createstorage,
-       createinterp, creategps, get_field, Bmatrix, doftypes, get_ndofs
+import FEM: createinterp, creategps, createstorage, get_field,
+            Bmatrix, doftypes, get_ndofs, get_geotype, get_ref_area, dNdxmatrix
 
-import FEM: dNdxmatrix
-
+import FEM: AbstractMaterialStatus, AbstractElemStorage, AbstractFElement, FENode2
+import FEM: Vertex6, Point2, GaussPoint2, Du, Dv, GeoTrig
 
 export QuadTrig
 

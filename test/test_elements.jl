@@ -32,7 +32,7 @@ context("FEM.Element.LinTrig") do
     ms = create_matstat(typeof(mat))
     elem = LinTrig(Vertex3(1, 2, 3), 1, interp, storage, gps, ms)
 
-    Ke = stiffness(elem, nodes, mat)
+    Ke = stiffness(elem, nodes, mat, :dof_vals)
 
     # Calculated with plante([0.0, 1.0, 1.0], [0.0, 1.0, 2.0], [2, 1], hooke(2, 200e9, 0.3))
     Ke_calfem =  1.0e+11 * [
@@ -59,7 +59,7 @@ context("FEM.Element.LinQuad") do
     ms = create_matstat(typeof(mat))
     elem = LinQuad(Vertex4(1, 2, 3, 4), 1, interp, storage, gps, ms)
 
-    Ke = stiffness(elem, nodes, mat)
+    Ke = stiffness(elem, nodes, mat, :dof_vals)
 
     # Calculated with plani4e([0.0, 1.0, 1.0, 0.0], [0.0, 0.0, 2.5, 1.5], [2, 1, 2], hooke(2, 200e9, 0.3))
     Ke_calfem = 1.0e+11 * [
