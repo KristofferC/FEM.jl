@@ -46,7 +46,7 @@ function stiffness(elem::AbstractFElement,
     return elem.storage.Ke
 end
 
-
+# Extracts the values of the dofs for an element.
 function get_field(elem::AbstractFElement, nodes::Vector{FENode2}, dof_vals::DofVals)
     u = elem.storage.u_field
     i = 1
@@ -59,7 +59,7 @@ function get_field(elem::AbstractFElement, nodes::Vector{FENode2}, dof_vals::Dof
     return u
 end
 
-
+# Computes the internal forces for an element.
 function intf(elem::AbstractFElement, mat::AbstractMaterial, nodes::Vector{FENode2}, dof_vals::DofVals)
     u = get_field(elem, nodes, dof_vals)
     ɛ = elem.storage.ɛ

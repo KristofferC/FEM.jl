@@ -26,7 +26,7 @@ function solve(solver::NRSolver, fp::FEProblem, exporter::AbstractDataExporter)
     K = create_sparse_structure(fp::FEProblem)
     colptrs = get_colptrs(K, fp::FEProblem)
 
-    for t in 0:2.0/1000.0:1.0
+    for t in 0.0 #TODO Implement proper time stepping
         println("Current time $t")
         iteration = 0
         tstep += 1
